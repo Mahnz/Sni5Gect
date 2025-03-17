@@ -7,17 +7,20 @@
 uint16_t           rnti      = c_rnti;
 srsran_rnti_type_t rnti_type = srsran_rnti_type_c;
 #if TEST_TYPE == 1
-uint32_t    symbol_in_last_slot = 480;
-uint32_t    rach_msg2_slot_idx  = 6290;
-uint32_t    rach_msg3_slot_idx  = 6296;
-std::string sample_file         = "shadower/test/data/srsran/rach_msg3.fc32";
-uint8_t     half                = 1;
+uint32_t    rach_msg2_slot_idx = 6290;
+uint32_t    rach_msg3_slot_idx = 6296;
+std::string sample_file        = "shadower/test/data/srsran/rach_msg3.fc32";
+uint8_t     half               = 1;
 #elif TEST_TYPE == 2
-uint32_t    symbol_in_last_slot = 480;
-uint32_t    rach_msg2_slot_idx  = 11645;
-uint32_t    rach_msg3_slot_idx  = 11648;
-std::string sample_file         = "shadower/test/data/rach_msg3.fc32";
-uint8_t     half                = 1;
+uint32_t    rach_msg2_slot_idx = 11645;
+uint32_t    rach_msg3_slot_idx = 11648;
+std::string sample_file        = "shadower/test/data/rach_msg3.fc32";
+uint8_t     half               = 1;
+#elif TEST_TYPE == 3
+uint32_t    rach_msg2_slot_idx = 12570;
+uint32_t    rach_msg3_slot_idx = 12576;
+std::string sample_file        = "shadower/test/data/srsran-n78-40MHz/rach_msg3.fc32";
+uint8_t     half               = 1;
 #endif // TEST_TYPE
 int main()
 {
@@ -75,11 +78,12 @@ int main()
   }
 
   bool found = false;
-  for (uint32_t symbol_in_last_slot = 460; symbol_in_last_slot < 462; symbol_in_last_slot += 10) {
+  for (uint32_t symbol_in_last_slot = ul_sample_offset - 10; symbol_in_last_slot < ul_sample_offset + 10;
+       symbol_in_last_slot += 1) {
     if (found) {
       break;
     }
-    for (double cfo = -0.02; cfo < 0.02; cfo += 0.02) {
+    for (double cfo = uplink_cfo - 0.0001; cfo < uplink_cfo + 0.0001; cfo += 0.00001) {
       /* Add rar grant to phy_state */
       if (!set_rar_grant(rnti, rnti_type, rach_msg2_slot_idx, ul_grant_raw, phy_cfg, phy_state, logger)) {
         logger.error("Failed to set RAR grant");
@@ -126,16 +130,18 @@ int main()
 
       /* Decode PUSCH */
       if (!gnb_ul_pusch_decode(gnb_ul, pusch_cfg, slot_cfg, pusch_res, softbuffer_rx, logger)) {
+        logger.error("Error running gnb_ul_pusch_decode");
         continue;
       }
 
       /* if the message is not decoded correctly, then return */
       if (!pusch_res.tb[0].crc) {
+        // logger.error("Error PUSCH got wrong CRC");
         continue;
       } else {
         logger.info("PUSCH CRC passed Delay: %u CFO: %f", symbol_in_last_slot, cfo);
-        // found = true;
-        // break;
+        //   found = true;
+        //   break;
       }
     }
   }

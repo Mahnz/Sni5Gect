@@ -9,6 +9,8 @@
 std::string sample_file = "shadower/test/data/srsran/prach.fc32";
 #elif TEST_TYPE == 2
 std::string sample_file = "shadower/test/data/prach.fc32";
+#elif TEST_TYPE == 3
+std::string sample_file = "shadower/test/data/srsran-n78-40MHz/prach.fc32";
 #endif // TEST_TYPE
 
 int main()

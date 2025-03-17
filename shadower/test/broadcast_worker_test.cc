@@ -12,6 +12,11 @@ std::string sib_sample_file    = "shadower/test/data/sib1.fc32";
 uint32_t    sib_slot_idx       = 5484;
 std::string rach_msg2_file     = "shadower/test/data/rach_msg2.fc32";
 uint32_t    rach_msg2_slot_idx = 5564;
+#elif TEST_TYPE == 3
+std::string sib_sample_file    = "shadower/test/data/srsran-n78-40MHz/sib.fc32";
+uint32_t    sib_slot_idx       = 0;
+std::string rach_msg2_file     = "shadower/test/data/srsran-n78-40MHz/rach_msg2.fc32";
+uint32_t    rach_msg2_slot_idx = 12570;
 #endif // TEST_TYPE
 
 int main()

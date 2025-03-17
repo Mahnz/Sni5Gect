@@ -37,7 +37,9 @@
 #include "srsran/phy/fec/ldpc/ldpc_encoder.h"
 #include "srsran/phy/fec/ldpc/ldpc_rm.h"
 #include "srsran/phy/phch/phch_cfg_nr.h"
-
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 /**
  * @brief Maximum number of codeblocks for a NR shared channel transmission. It assumes a rate of 1.0 for the maximum
  * amount of bits a resource grid can fit
@@ -192,4 +194,7 @@ SRSRAN_API int srsran_ulsch_nr_decode(srsran_sch_nr_t*        q,
 SRSRAN_API int
 srsran_sch_nr_tb_info(const srsran_sch_tb_t* tb, const srsran_sch_tb_res_nr_t* res, char* str, uint32_t str_len);
 
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 #endif // SRSRAN_SCH_NR_H

@@ -16,6 +16,9 @@ uint32_t    slot_number = 1;
 std::string sample_file = "shadower/test/data/sib1.fc32";
 uint32_t    slot_number = 11604;
 float       cfo         = 0;
+#elif TEST_TYPE == 3
+std::string sample_file = "shadower/test/data/srsran-n78-40MHz/sib.fc32";
+uint32_t    slot_number = 1;
 #endif // TEST_TYPE
 int main()
 {

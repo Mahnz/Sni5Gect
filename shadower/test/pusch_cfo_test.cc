@@ -9,17 +9,17 @@ uint16_t           rnti      = c_rnti;
 srsran_rnti_type_t rnti_type = srsran_rnti_type_c;
 
 #if TEST_TYPE == 1
-std::string dci_sample_file     = "shadower/test/data/srsran/dci_6382.fc32";
-std::string sample_file         = "shadower/test/data/srsran/pusch_6386.fc32";
-uint8_t     half                = 1;
-uint32_t    symbol_in_last_slot = 480;
-double      cfo                 = -0.00054;
+std::string dci_sample_file = "shadower/test/data/srsran/dci_6382.fc32";
+std::string sample_file     = "shadower/test/data/srsran/pusch_6386.fc32";
+uint8_t     half            = 1;
 #elif TEST_TYPE == 2
-std::string dci_sample_file     = "shadower/test/data/dci_11686.fc32";
-std::string sample_file         = "shadower/test/data/dci_11688.fc32";
-uint8_t     half                = 1;
-uint32_t    symbol_in_last_slot = 480;
-double      cfo                 = 0;
+std::string dci_sample_file = "shadower/test/data/dci_11686.fc32";
+std::string sample_file     = "shadower/test/data/dci_11688.fc32";
+uint8_t     half            = 1;
+#elif TEST_TYPE == 3
+std::string dci_sample_file = "shadower/test/data/srsran-n78-40MHz/ul_dci_12662.fc32";
+std::string sample_file     = "shadower/test/data/srsran-n78-40MHz/pusch_12666.fc32";
+uint8_t     half            = 1;
 #endif // TEST_TYPE
 
 int main(int argc, char* argv[])
@@ -123,14 +123,14 @@ int main(int argc, char* argv[])
   }
 
   if (args.cfo != 0) {
-    cfo = args.cfo;
+    uplink_cfo = args.cfo;
   }
 
   uint32_t correct_count = 0;
-  uint32_t start         = symbol_in_last_slot - 50;
-  uint32_t end           = symbol_in_last_slot + 50;
+  uint32_t start         = ul_sample_offset - 50;
+  uint32_t end           = ul_sample_offset + 50;
   /* We are aiming to see if the same cfo can still decode the message if offset exists */
-  for (symbol_in_last_slot = start; symbol_in_last_slot < end; symbol_in_last_slot += 1) {
+  for (ul_sample_offset = start; ul_sample_offset < end; ul_sample_offset += 1) {
     /* Run dci search first */
     for (int i = 0; i < slots_per_sf; i++) {
       /* copy samples to ue_dl processing buffer */
@@ -155,14 +155,14 @@ int main(int argc, char* argv[])
     }
 
     /* copy samples to gnb_ul processing buffer */
-    if (half == 0 && symbol_in_last_slot > 0) {
+    if (half == 0 && ul_sample_offset > 0) {
       /* Copy the last samples to current buffer */
-      srsran_vec_cf_copy(gnb_ul_buffer, last_samples.data() + sf_len - symbol_in_last_slot, symbol_in_last_slot);
+      srsran_vec_cf_copy(gnb_ul_buffer, last_samples.data() + sf_len - ul_sample_offset, ul_sample_offset);
       /* Copy the remaining samples from the sample file */
-      srsran_vec_cf_copy(gnb_ul_buffer + symbol_in_last_slot, samples.data(), slot_len - symbol_in_last_slot);
+      srsran_vec_cf_copy(gnb_ul_buffer + ul_sample_offset, samples.data(), slot_len - ul_sample_offset);
     } else {
       /* Copy the samples to the buffer */
-      srsran_vec_cf_copy(gnb_ul_buffer, samples.data() + half * slot_len - symbol_in_last_slot, slot_len);
+      srsran_vec_cf_copy(gnb_ul_buffer, samples.data() + half * slot_len - ul_sample_offset, slot_len);
     }
 
     /* run gnb_ul estimate fft */
@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
     }
 
     /* Apply the cfo to the signal with magic number */
-    srsran_vec_apply_cfo(gnb_ul.sf_symbols[0], cfo, gnb_ul.sf_symbols[0], nof_re);
+    srsran_vec_apply_cfo(gnb_ul.sf_symbols[0], uplink_cfo, gnb_ul.sf_symbols[0], nof_re);
 
     /* Initialize the buffer for output*/
     srsran::unique_byte_buffer_t data = srsran::make_byte_buffer();

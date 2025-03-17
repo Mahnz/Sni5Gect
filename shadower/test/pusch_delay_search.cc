@@ -9,17 +9,17 @@ uint16_t           rnti      = c_rnti;
 srsran_rnti_type_t rnti_type = srsran_rnti_type_c;
 
 #if TEST_TYPE == 1
-std::string dci_sample_file     = "shadower/test/data/srsran/dci_10222.fc32";
-std::string sample_file         = "shadower/test/data/srsran/dci_10226.fc32";
-uint8_t     half                = 1;
-uint32_t    symbol_in_last_slot = 480;
-double      cfo                 = -0.00054;
+std::string dci_sample_file = "shadower/test/data/srsran/dci_10222.fc32";
+std::string sample_file     = "shadower/test/data/srsran/dci_10226.fc32";
+uint8_t     half            = 1;
 #elif TEST_TYPE == 2
-std::string dci_sample_file     = "shadower/test/data/dci_11686.fc32";
-std::string sample_file         = "shadower/test/data/dci_11688.fc32";
-uint8_t     half                = 1;
-uint32_t    symbol_in_last_slot = 480;
-double      cfo                 = 0;
+std::string dci_sample_file = "shadower/test/data/dci_11686.fc32";
+std::string sample_file     = "shadower/test/data/dci_11688.fc32";
+uint8_t     half            = 1;
+#elif TEST_TYPE == 3
+std::string dci_sample_file = "shadower/test/data/srsran-n78-40MHz/ul_dci_12662.fc32";
+std::string sample_file     = "shadower/test/data/srsran-n78-40MHz/pusch_12666.fc32";
+uint8_t     half            = 1;
 #endif // TEST_TYPE
 
 int main(int argc, char* argv[])
@@ -124,7 +124,8 @@ int main(int argc, char* argv[])
 
   uint32_t max_advancement = 0;
   double   max_snr         = 0;
-  for (uint32_t symbol_in_last_slot = 0; symbol_in_last_slot < 1000; symbol_in_last_slot++) {
+  for (uint32_t symbol_in_last_slot = ul_sample_offset - 10; symbol_in_last_slot < ul_sample_offset + 10;
+       symbol_in_last_slot++) {
     /* Run dci search first */
     for (int i = 0; i < slots_per_sf; i++) {
       /* copy samples to ue_dl processing buffer */

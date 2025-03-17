@@ -40,6 +40,7 @@ uint32_t    rrc_setup_size = 299;
 
 std::string rach_msg2_ul_grant_file = "shadower/test/data/srsran/rach_msg2_ul_grant.raw";
 int32_t     ul_sample_offset        = 480;
+double      uplink_cfo              = -0.00054;
 #elif TEST_TYPE == 2
 const uint32_t ncellid = 1;
 /* Frequency */
@@ -72,6 +73,40 @@ uint32_t    rrc_setup_size = 176;
 
 std::string rach_msg2_ul_grant_file = "shadower/test/data/rach_msg2_ul_grant.raw";
 int32_t     ul_sample_offset        = 480;
+double      uplink_cfo              = 0.0;
+#elif TEST_TYPE == 3
+const uint32_t ncellid = 1;
+/* Frequency */
+const double dl_freq  = 3427.5e6;
+const double ul_freq  = 3427.5e6;
+const double ssb_freq = 3413.28e6;
+/* Band number */
+const uint16_t band = 78;
+/* Sample rate */
+const double srate = 46.08e6;
+/* Band width */
+const uint32_t nof_prb = 106;
+/* Subcarrier spacing */
+srsran_subcarrier_spacing_t scs          = srsran_subcarrier_spacing_30kHz;
+int                         slots_per_sf = 1 << (uint32_t)scs;
+/* SSB Patter */
+srsran_ssb_pattern_t pattern = SRSRAN_SSB_PATTERN_C;
+/* RNTI */
+const uint16_t ra_rnti = 267;
+const uint16_t si_rnti = 0xffff;
+const uint16_t c_rnti  = 17921;
+
+std::string mib_config_raw = "shadower/test/data/srsran-n78-40MHz/mib.raw";
+
+std::string sib1_config_raw = "shadower/test/data/srsran-n78-40MHz/sib1.raw";
+uint32_t    sib1_size       = 101;
+
+std::string rrc_setup_raw  = "shadower/test/data/srsran-n78-40MHz/rrc_setup.raw";
+uint32_t    rrc_setup_size = 316;
+
+std::string rach_msg2_ul_grant_file = "shadower/test/data/srsran-n78-40MHz/rach_msg2_ul_grant.raw";
+int32_t     ul_sample_offset        = 800;
+double      uplink_cfo              = -0.00054;
 #endif // TEST_TYPE
 
 /* Duplex mode */

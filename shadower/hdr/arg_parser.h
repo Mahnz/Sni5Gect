@@ -56,6 +56,8 @@ struct ShadowerConfig {
   uint32_t close_timeout;  // Close timeout, after how long haven't received a message should stop tracking the UE (ms)
   bool     parse_messages; // Whether we should parse the messages or not
 
+  bool enable_gpu_acceleration = false; // Enable GPU acceleration
+
   // Recorder configurations
   bool        enable_recorder = false; // Enable recording the IQ samples to file
   std::string recorder_file;           // Recorder file path
@@ -135,6 +137,7 @@ inline int parse_args(ShadowerConfig& config, int argc, char* argv[])
       // pool section
       ("worker.pool_size", bpo::value<size_t>(&config.pool_size)->default_value(20), "Pool size")
       ("worker.num_ues", bpo::value<uint32_t>(&config.num_ues)->default_value(10), "Number of UEs to pre-initialize")
+      ("worker.enable_gpu_acceleration", bpo::value<bool>(&config.enable_gpu_acceleration)->default_value(false), "Use GPU to accelerate tasks such as FFT")
       // exploit section
       ("exploit.module", bpo::value<std::string>(&config.exploit_module)->default_value(""), "Exploit module");
   // clang-format on

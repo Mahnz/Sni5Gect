@@ -15,6 +15,10 @@ uint8_t     half        = 0;
 std::string sample_file = "shadower/test/data/rach_msg2.fc32";
 uint32_t    slot_number = 11645;
 uint8_t     half        = 1;
+#elif TEST_TYPE == 3
+std::string sample_file = "shadower/test/data/srsran-n78-40MHz/rach_msg2.fc32";
+uint32_t    slot_number = 12570;
+uint8_t     half        = 0;
 #endif // TEST_TYPE
 int main()
 {
@@ -66,77 +70,80 @@ int main()
 
   /* Write OFDM symbols to file for debug purpose */
   char filename[64];
+
+  sprintf(filename, "rach_msg2_raw");
+  write_record_to_file(buffer, slot_len, filename);
+
   sprintf(filename, "ofdm_rach_msg2_fft%u", nof_sc);
   write_record_to_file(ue_dl.sf_symbols[0], nof_re, filename);
 
-  for (uint32_t rnti = 0; rnti < 0xffff; rnti++) { /* search for dci */
-    ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, rnti, rnti_type, phy_state, logger);
+  ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, rnti, rnti_type, phy_state, logger);
 
-    /* get grant from dci search */
-    uint32_t                   pid          = 0;
-    srsran_sch_cfg_nr_t        pdsch_cfg    = {};
-    srsran_harq_ack_resource_t ack_resource = {};
-    if (!phy_state.get_dl_pending_grant(slot_cfg.idx, pdsch_cfg, ack_resource, pid)) {
-      continue;
-    }
-
-    /* Initialize the buffer for output*/
-    srsran::unique_byte_buffer_t data = srsran::make_byte_buffer();
-    if (data == nullptr) {
-      logger.error("Error creating byte buffer");
-      return -1;
-    }
-    data->N_bytes = pdsch_cfg.grant.tb[0].tbs / 8U;
-
-    /* Initialize pdsch result*/
-    srsran_pdsch_res_nr_t pdsch_res      = {};
-    pdsch_res.tb[0].payload              = data->msg;
-    srsran_softbuffer_rx_t softbuffer_rx = {};
-    if (srsran_softbuffer_rx_init_guru(&softbuffer_rx, SRSRAN_SCH_NR_MAX_NOF_CB_LDPC, SRSRAN_LDPC_MAX_LEN_ENCODED_CB) !=
-        0) {
-      logger.error("Couldn't allocate and/or initialize softbuffer");
-      return -1;
-    }
-
-    /* Decode PDSCH */
-    if (!ue_dl_pdsch_decode(ue_dl, pdsch_cfg, slot_cfg, pdsch_res, softbuffer_rx, logger)) {
-      continue;
-    }
-    /* if the message is not decoded correctly, then return */
-    if (!pdsch_res.tb[0].crc) {
-      logger.debug("Error PDSCH got wrong CRC");
-      continue;
-    }
-
-    /* Decode the message as mac_rar_pdu */
-    srsran::mac_rar_pdu_nr rar_pdu;
-    if (!rar_pdu.unpack(data->msg, data->N_bytes)) {
-      logger.error("Error decoding RACH msg2");
-      return -1;
-    }
-    /* Get the first subpdu */
-    uint32_t num_subpdus = rar_pdu.get_num_subpdus();
-    if (num_subpdus == 0) {
-      logger.error("No subpdus in RAR");
-      return -1;
-    }
-    const srsran::mac_rar_subpdu_nr subpdu = rar_pdu.get_subpdu(0);
-    /* Extract the rnti */
-    uint16_t tc_rnti = subpdu.get_temp_crnti();
-    if (tc_rnti == SRSRAN_INVALID_RNTI) {
-      logger.error("Invalid RNTI in RAR");
-      return -1;
-    }
-    logger.info("TC-RNTI: %u RA-RNTI: %u", tc_rnti, ra_rnti);
-
-    /* Extract the time advance info */
-    uint32_t time_advance = subpdu.get_ta();
-    logger.info("Time advance: %u", time_advance);
-
-    /* Extract the UL grant */
-    std::array<uint8_t, srsran::mac_rar_subpdu_nr::UL_GRANT_NBITS> ul_grant = subpdu.get_ul_grant();
-    std::ofstream rach_msg2_ul_grant(rach_msg2_ul_grant_file, std::ios::binary);
-    rach_msg2_ul_grant.write(reinterpret_cast<char*>(ul_grant.data()), ul_grant.size());
-    return 0;
+  /* get grant from dci search */
+  uint32_t                   pid          = 0;
+  srsran_sch_cfg_nr_t        pdsch_cfg    = {};
+  srsran_harq_ack_resource_t ack_resource = {};
+  if (!phy_state.get_dl_pending_grant(slot_cfg.idx, pdsch_cfg, ack_resource, pid)) {
+    logger.error("Failed to get grant from dci search");
+    return -1;
   }
+
+  /* Initialize the buffer for output*/
+  srsran::unique_byte_buffer_t data = srsran::make_byte_buffer();
+  if (data == nullptr) {
+    logger.error("Error creating byte buffer");
+    return -1;
+  }
+  data->N_bytes = pdsch_cfg.grant.tb[0].tbs / 8U;
+
+  /* Initialize pdsch result*/
+  srsran_pdsch_res_nr_t pdsch_res      = {};
+  pdsch_res.tb[0].payload              = data->msg;
+  srsran_softbuffer_rx_t softbuffer_rx = {};
+  if (srsran_softbuffer_rx_init_guru(&softbuffer_rx, SRSRAN_SCH_NR_MAX_NOF_CB_LDPC, SRSRAN_LDPC_MAX_LEN_ENCODED_CB) !=
+      0) {
+    logger.error("Couldn't allocate and/or initialize softbuffer");
+    return -1;
+  }
+
+  /* Decode PDSCH */
+  if (!ue_dl_pdsch_decode(ue_dl, pdsch_cfg, slot_cfg, pdsch_res, softbuffer_rx, logger)) {
+    return -1;
+  }
+  /* if the message is not decoded correctly, then return */
+  if (!pdsch_res.tb[0].crc) {
+    logger.debug("Error PDSCH got wrong CRC");
+    return -1;
+  }
+
+  /* Decode the message as mac_rar_pdu */
+  srsran::mac_rar_pdu_nr rar_pdu;
+  if (!rar_pdu.unpack(data->msg, data->N_bytes)) {
+    logger.error("Error decoding RACH msg2");
+    return -1;
+  }
+  /* Get the first subpdu */
+  uint32_t num_subpdus = rar_pdu.get_num_subpdus();
+  if (num_subpdus == 0) {
+    logger.error("No subpdus in RAR");
+    return -1;
+  }
+  const srsran::mac_rar_subpdu_nr subpdu = rar_pdu.get_subpdu(0);
+  /* Extract the rnti */
+  uint16_t tc_rnti = subpdu.get_temp_crnti();
+  if (tc_rnti == SRSRAN_INVALID_RNTI) {
+    logger.error("Invalid RNTI in RAR");
+    return -1;
+  }
+  logger.info("TC-RNTI: %u RA-RNTI: %u", tc_rnti, ra_rnti);
+
+  /* Extract the time advance info */
+  uint32_t time_advance = subpdu.get_ta();
+  logger.info("Time advance: %u", time_advance);
+
+  /* Extract the UL grant */
+  std::array<uint8_t, srsran::mac_rar_subpdu_nr::UL_GRANT_NBITS> ul_grant = subpdu.get_ul_grant();
+  std::ofstream rach_msg2_ul_grant(rach_msg2_ul_grant_file, std::ios::binary);
+  rach_msg2_ul_grant.write(reinterpret_cast<char*>(ul_grant.data()), ul_grant.size());
+  return 0;
 }

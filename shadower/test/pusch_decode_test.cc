@@ -13,19 +13,20 @@ uint16_t           rnti      = c_rnti;
 srsran_rnti_type_t rnti_type = srsran_rnti_type_c;
 
 #if TEST_TYPE == 1
-std::string dci_sample_file     = "shadower/test/data/srsran/dci_6382.fc32";
-std::string sample_file         = "shadower/test/data/srsran/pusch_6386.fc32";
-std::string last_sample_file    = sample_file;
-uint8_t     half                = 1;
-uint32_t    symbol_in_last_slot = 480;
-double      cfo                 = -0.00054;
+std::string dci_sample_file  = "shadower/test/data/srsran/dci_6382.fc32";
+std::string sample_file      = "shadower/test/data/srsran/pusch_6386.fc32";
+std::string last_sample_file = sample_file;
+uint8_t     half             = 1;
 #elif TEST_TYPE == 2
-std::string dci_sample_file     = "shadower/test/data/dci_11686.fc32";
-std::string sample_file         = "shadower/test/data/dci_11688.fc32";
-std::string last_sample_file    = dci_sample_file;
-uint8_t     half                = 1;
-uint32_t    symbol_in_last_slot = 480;
-double      cfo                 = 0;
+std::string dci_sample_file  = "shadower/test/data/dci_11686.fc32";
+std::string sample_file      = "shadower/test/data/dci_11688.fc32";
+std::string last_sample_file = dci_sample_file;
+uint8_t     half             = 1;
+#elif TEST_TYPE == 3
+std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/ul_dci_12662.fc32";
+std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_12666.fc32";
+std::string last_sample_file = dci_sample_file;
+uint8_t     half             = 1;
 #endif // TEST_TYPE
 
 int main(int argc, char* argv[])
@@ -143,7 +144,7 @@ int main(int argc, char* argv[])
   /* Get the slot cfg for pusch */
   srsran_slot_cfg_t slot_cfg = {.idx = slot_idx_pusch + half};
   if (args.delay != 0) {
-    symbol_in_last_slot = args.delay;
+    ul_sample_offset = args.delay;
   }
 
   /* get uplink grant */
@@ -155,14 +156,14 @@ int main(int argc, char* argv[])
   }
 
   /* copy samples to gnb_ul processing buffer */
-  if (half == 0 && symbol_in_last_slot > 0) {
+  if (half == 0 && ul_sample_offset > 0) {
     /* Copy the last samples to current buffer */
-    srsran_vec_cf_copy(gnb_ul_buffer, last_samples.data() + sf_len - symbol_in_last_slot, symbol_in_last_slot);
+    srsran_vec_cf_copy(gnb_ul_buffer, last_samples.data() + sf_len - ul_sample_offset, ul_sample_offset);
     /* Copy the remaining samples from the sample file */
-    srsran_vec_cf_copy(gnb_ul_buffer + symbol_in_last_slot, samples.data(), slot_len - symbol_in_last_slot);
+    srsran_vec_cf_copy(gnb_ul_buffer + ul_sample_offset, samples.data(), slot_len - ul_sample_offset);
   } else {
     /* Copy the samples to the buffer */
-    srsran_vec_cf_copy(gnb_ul_buffer, samples.data() + half * slot_len - symbol_in_last_slot, slot_len);
+    srsran_vec_cf_copy(gnb_ul_buffer, samples.data() + half * slot_len - ul_sample_offset, slot_len);
   }
 
   /* run gnb_ul estimate fft */
@@ -173,14 +174,14 @@ int main(int argc, char* argv[])
 
   /* Write OFDM symbols to file for debug purpose */
   char filename[64];
-  sprintf(filename, "ofdm_pusch_%u_fft%u", symbol_in_last_slot, nof_sc);
+  sprintf(filename, "ofdm_pusch_%u_fft%u", ul_sample_offset, nof_sc);
   write_record_to_file(gnb_ul.sf_symbols[0], nof_re, filename);
 
   /* Apply the cfo to the signal with magic number */
   if (args.cfo != 0) {
-    cfo = args.cfo;
+    uplink_cfo = args.cfo;
   }
-  srsran_vec_apply_cfo(gnb_ul.sf_symbols[0], cfo, gnb_ul.sf_symbols[0], nof_re);
+  srsran_vec_apply_cfo(gnb_ul.sf_symbols[0], uplink_cfo, gnb_ul.sf_symbols[0], nof_re);
 
   /* Initialize the buffer for output*/
   srsran::unique_byte_buffer_t data = srsran::make_byte_buffer();

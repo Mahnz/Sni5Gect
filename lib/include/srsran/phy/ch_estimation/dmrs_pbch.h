@@ -23,7 +23,9 @@
 #define SRSRAN_DMRS_PBCH_H
 
 #include "srsran/phy/common/phy_common_nr.h"
-
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 /**
  * @brief Describes the DeModulation Reference Signals (DMRS) for NR PBCH configuration
  */
@@ -77,4 +79,7 @@ SRSRAN_API int srsran_dmrs_pbch_estimate(const srsran_dmrs_pbch_cfg_t* cfg,
                                          const cf_t                    ssb_grid[SRSRAN_SSB_NOF_RE],
                                          cf_t                          ce[SRSRAN_SSB_NOF_RE]);
 
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 #endif // SRSRAN_DMRS_PBCH_H

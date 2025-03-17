@@ -671,11 +671,11 @@ int srsran_ssb_add(srsran_ssb_t* q, uint32_t N_id, const srsran_pbch_msg_nr_t* m
   return SRSRAN_SUCCESS;
 }
 
-static int ssb_demodulate(srsran_ssb_t* q,
-                          const cf_t*   in,
-                          uint32_t      t_offset,
-                          float         coarse_cfo_hz,
-                          cf_t          ssb_grid[SRSRAN_SSB_NOF_RE])
+int ssb_demodulate(srsran_ssb_t* q,
+                   const cf_t*   in,
+                   uint32_t      t_offset,
+                   float         coarse_cfo_hz,
+                   cf_t          ssb_grid[SRSRAN_SSB_NOF_RE])
 {
   const cf_t* in_ptr = &in[t_offset];
   for (uint32_t l = 0; l < SRSRAN_SSB_DURATION_NSYMB; l++) {
@@ -727,8 +727,10 @@ static int ssb_demodulate(srsran_ssb_t* q,
   return SRSRAN_SUCCESS;
 }
 
-static int
-ssb_measure(srsran_ssb_t* q, const cf_t ssb_grid[SRSRAN_SSB_NOF_RE], uint32_t N_id, srsran_csi_trs_measurements_t* meas)
+int ssb_measure(srsran_ssb_t*                  q,
+                const cf_t                     ssb_grid[SRSRAN_SSB_NOF_RE],
+                uint32_t                       N_id,
+                srsran_csi_trs_measurements_t* meas)
 {
   uint32_t N_id_1 = SRSRAN_NID_1_NR(N_id);
   uint32_t N_id_2 = SRSRAN_NID_2_NR(N_id);
@@ -1096,12 +1098,12 @@ int srsran_ssb_csi_measure(srsran_ssb_t*                  q,
   return SRSRAN_SUCCESS;
 }
 
-static int ssb_select_pbch(srsran_ssb_t*            q,
-                           uint32_t                 N_id,
-                           const cf_t               ssb_grid[SRSRAN_SSB_NOF_RE],
-                           uint32_t*                found_n_hf,
-                           uint32_t*                found_ssb_idx_4lsb,
-                           srsran_dmrs_pbch_meas_t* pbch_meas)
+int ssb_select_pbch(srsran_ssb_t*            q,
+                    uint32_t                 N_id,
+                    const cf_t               ssb_grid[SRSRAN_SSB_NOF_RE],
+                    uint32_t*                found_n_hf,
+                    uint32_t*                found_ssb_idx_4lsb,
+                    srsran_dmrs_pbch_meas_t* pbch_meas)
 {
   // Prepare PBCH DMRS configuration
   srsran_dmrs_pbch_cfg_t pbch_dmrs_cfg = {};
@@ -1148,12 +1150,12 @@ static int ssb_select_pbch(srsran_ssb_t*            q,
   return SRSRAN_SUCCESS;
 }
 
-static int ssb_decode_pbch(srsran_ssb_t*         q,
-                           uint32_t              N_id,
-                           uint32_t              n_hf,
-                           uint32_t              ssb_idx,
-                           const cf_t            ssb_grid[SRSRAN_SSB_NOF_RE],
-                           srsran_pbch_msg_nr_t* msg)
+int ssb_decode_pbch(srsran_ssb_t*         q,
+                    uint32_t              N_id,
+                    uint32_t              n_hf,
+                    uint32_t              ssb_idx,
+                    const cf_t            ssb_grid[SRSRAN_SSB_NOF_RE],
+                    srsran_pbch_msg_nr_t* msg)
 {
   // Prepare PBCH DMRS configuration
   srsran_dmrs_pbch_cfg_t pbch_dmrs_cfg = {};

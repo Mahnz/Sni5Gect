@@ -31,7 +31,9 @@
 
 #ifndef SRSRAN_LDPCDECODER_H
 #define SRSRAN_LDPCDECODER_H
-
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 #include "srsran/phy/fec/crc.h"
 #include "srsran/phy/fec/ldpc/base_graph.h"
 
@@ -179,4 +181,7 @@ SRSRAN_API int srsran_ldpc_decoder_decode_crc_c(srsran_ldpc_decoder_t* q,
                                                 uint32_t               cdwd_rm_length,
                                                 srsran_crc_t*          crc);
 
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 #endif // SRSRAN_LDPCDECODER_H

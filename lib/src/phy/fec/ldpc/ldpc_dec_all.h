@@ -314,6 +314,9 @@ int update_ldpc_soft_bits_c_flood(void* p, const int8_t (*these_var_indices)[MAX
  */
 int extract_ldpc_message_c_flood(void* p, uint8_t* message, uint16_t liftK);
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 /*!
  * Creates the registers used by the optimized 8-bit-based implementation of the LDPC decoder (LS <= \ref
  * SRSRAN_AVX2_B_SIZE). \param[in] bgN          Codeword length. \param[in] bgM          Number of check nodes.
@@ -600,6 +603,10 @@ int update_ldpc_soft_bits_c_avx2long_flood(void* p, const int8_t (*these_var_ind
  * \return An integer: 0 if the function executes correctly, -1 otherwise.
  */
 int extract_ldpc_message_c_avx2long_flood(void* p, uint8_t* message, uint16_t liftK);
+
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 /*!
  * Creates the registers used by the optimized 8-bit-based implementation of the LDPC decoder (LS > \ref

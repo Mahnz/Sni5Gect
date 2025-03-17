@@ -30,7 +30,7 @@ endif(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 ########################################################################
 # Project setup
 ########################################################################
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 project( SRSRAN )
 message( STATUS "CMAKE_SYSTEM: " ${CMAKE_SYSTEM} )
 message( STATUS "CMAKE_SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR} )
@@ -91,6 +91,7 @@ option(ENABLE_TIDY           "Enable clang tidy"                        OFF)
 
 option(USE_LTE_RATES         "Use standard LTE sampling rates"          OFF)
 option(USE_MKL               "Use MKL instead of fftw"                  OFF)
+option(USE_CUDA              "Use CUDA for acceleration"                OFF) 
 
 option(ENABLE_TIMEPROF       "Enable time profiling"                    ON)
 
@@ -335,6 +336,18 @@ if(Backward_FOUND)
     message(STATUS "Backward-cpp found, but external libraries are missing.")
   endif()
 endif()
+
+if (USE_CUDA)
+  find_package(CUDAToolkit REQUIRED)
+  if(CUDAToolkit_FOUND)
+    message(STATUS "CUDA found")
+    enable_language(CUDA)
+    add_definitions(-DENABLE_CUDA)
+    set(CMAKE_CUDA_ARCHITECTURES 60 70 75 80 86 90)
+    include_directories(${CUDAToolkit_INCLUDE_DIRS})
+    link_directories(${CUDAToolkit_LIBRARY_DIR})
+  endif(CUDAToolkit_FOUND)
+endif(USE_CUDA)
 
 ########################################################################
 # Install Dirs

@@ -17,6 +17,10 @@ uint8_t     half        = 0;
 std::string sample_file = "shadower/test/data/contention_resolution.fc32";
 uint32_t    slot_number = 11656;
 uint8_t     half        = 0;
+#elif TEST_TYPE == 3
+std::string sample_file = "shadower/test/data/srsran-n78-40MHz/rrc_setup.fc32";
+uint32_t    slot_number = 12590;
+uint8_t     half        = 1;
 #endif // TEST_TYPE
 
 int main()
@@ -63,7 +67,7 @@ int main()
   /* copy samples to ue_dl processing buffer */
   srsran_vec_cf_copy(buffer, samples.data() + slot_len * half, slot_len);
   /* Initialize slot cfg */
-  srsran_slot_cfg_t slot_cfg = {.idx = slot_number};
+  srsran_slot_cfg_t slot_cfg = {.idx = slot_number + half};
   /* run ue_dl estimate fft */
   srsran_ue_dl_nr_estimate_fft(&ue_dl, &slot_cfg);
 
