@@ -75,7 +75,7 @@ if(GLIB_FOUND)
   message("C Flags: ${GLIB_CFLAGS}")
 endif()
 
-set(WDISSECTOR_PATH ${PROJECT_SOURCE_DIR}/wdissector)
+set(WDISSECTOR_PATH /root/wdissector)
 set(WDISSECTOR_INCLUDES
   ${GLIB_INCLUDE_DIRS}
   ${WDISSECTOR_PATH}/src/
