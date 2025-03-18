@@ -13,7 +13,7 @@ uint16_t           rnti      = si_rnti;
 srsran_rnti_type_t rnti_type = srsran_rnti_type_si;
 
 #if TEST_TYPE == 1
-std::string sample_file = "shadower/test/data/srsran/sib.fc32";
+std::string sample_file = "shadower/test/data/srsran-n78-20MHz/sib.fc32";
 uint32_t    slot_number = 1;
 #elif TEST_TYPE == 2
 std::string sample_file = "shadower/test/data/sib1.fc32";

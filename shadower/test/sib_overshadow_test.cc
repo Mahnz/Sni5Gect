@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
     logger.info("Initialized source using SDR: %s", config.source_params.c_str());
   } else {
     create_source_t file_source = load_source(file_source_module_path);
-    config.source_params        = "/root/records/example.fc32";
+    config.source_params        = "shadower/test/data/srsran-n78-20MHz/sib1.fc32";
     source                      = file_source(config);
     logger.info("Initialized source using file: %s", config.source_params.c_str());
   }

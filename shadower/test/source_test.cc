@@ -3,7 +3,7 @@
 #include "shadower/hdr/utils.h"
 double      sample_rate     = 23.04e6;
 double      center_freq     = 3427.5e6;
-std::string source_filename = "shadower/test/data/srsran/sib.fc32";
+std::string source_filename = "shadower/test/data/srsran-n78-20MHz/sib.fc32";
 std::string sdr_args        = "type=b200";
 uint32_t    rx_gain         = 40;
 uint32_t    tx_gain         = 80;

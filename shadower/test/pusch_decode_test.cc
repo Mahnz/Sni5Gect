@@ -8,13 +8,24 @@
 #include "srsran/phy/ue/ue_dl_nr.h"
 #include "test_variables.h"
 #include <fstream>
+#if ENABLE_CUDA
+#include "shadower/hdr/fft_processor.cuh"
+#endif // ENABLE_CUDA
 
 uint16_t           rnti      = c_rnti;
 srsran_rnti_type_t rnti_type = srsran_rnti_type_c;
 
 #if TEST_TYPE == 1
-std::string dci_sample_file  = "shadower/test/data/srsran/dci_6382.fc32";
-std::string sample_file      = "shadower/test/data/srsran/pusch_6386.fc32";
+// std::string dci_sample_file  = "shadower/test/data/srsran-n78-20MHz/dci_ul_3422.fc32";
+// std::string sample_file      = "shadower/test/data/srsran-n78-20MHz/pusch_3426.fc32";
+// std::string last_sample_file = sample_file;
+// uint8_t     half             = 1;
+// std::string dci_sample_file  = "shadower/test/data/srsran-n78-20MHz/dci_ul_3462.fc32";
+// std::string sample_file      = "shadower/test/data/srsran-n78-20MHz/pusch_3466.fc32";
+// std::string last_sample_file = sample_file;
+// uint8_t     half             = 1;
+std::string dci_sample_file  = "shadower/test/data/srsran-n78-20MHz/dci_ul_3622.fc32";
+std::string sample_file      = "shadower/test/data/srsran-n78-20MHz/pusch_3626.fc32";
 std::string last_sample_file = sample_file;
 uint8_t     half             = 1;
 #elif TEST_TYPE == 2

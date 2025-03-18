@@ -11,7 +11,11 @@ uint16_t           rnti      = c_rnti;
 srsran_rnti_type_t rnti_type = srsran_rnti_type_c;
 
 #if TEST_TYPE == 1
-std::string sample_file = "shadower/test/data/srsran/pdsch_6400.fc32";
+// std::string sample_file = "shadower/test/data/srsran-n78-20MHz/pdsch_3440.fc32";
+// uint8_t     half        = 0;
+// std::string sample_file = "shadower/test/data/srsran-n78-20MHz/pdsch_3640.fc32";
+// uint8_t     half        = 1;
+std::string sample_file = "shadower/test/data/srsran-n78-20MHz/pdsch_3684.fc32";
 uint8_t     half        = 1;
 #elif TEST_TYPE == 2
 std::string sample_file = "/root/overshadow/effnet/sf_152_11864.fc32";

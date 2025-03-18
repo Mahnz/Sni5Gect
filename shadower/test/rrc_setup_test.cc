@@ -10,8 +10,8 @@ uint16_t           rnti      = c_rnti;
 srsran_rnti_type_t rnti_type = srsran_rnti_type_c;
 
 #if TEST_TYPE == 1
-std::string sample_file = "shadower/test/data/srsran/rrc_setup.fc32";
-uint32_t    slot_number = 6330;
+std::string sample_file = "shadower/test/data/srsran-n78-20MHz/rrc_setup.fc32";
+uint32_t    slot_number = 3350;
 uint8_t     half        = 0;
 #elif TEST_TYPE == 2
 std::string sample_file = "shadower/test/data/rrc_setup.fc32";

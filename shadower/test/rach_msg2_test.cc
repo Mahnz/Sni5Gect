@@ -8,8 +8,8 @@
 uint16_t           rnti      = ra_rnti;
 srsran_rnti_type_t rnti_type = srsran_rnti_type_ra;
 #if TEST_TYPE == 1
-std::string sample_file = "shadower/test/data/srsran/rach_msg2.fc32";
-uint32_t    slot_number = 6290;
+std::string sample_file = "shadower/test/data/srsran-n78-20MHz/rach_msg2.fc32";
+uint32_t    slot_number = 3330;
 uint8_t     half        = 0;
 #elif TEST_TYPE == 2
 std::string sample_file = "shadower/test/data/rach_msg2.fc32";
@@ -140,6 +140,11 @@ int main()
   /* Extract the time advance info */
   uint32_t time_advance = subpdu.get_ta();
   logger.info("Time advance: %u", time_advance);
+
+  uint32_t n_timing_advance = subpdu.get_ta() * 16 * 64 / (1 << config.scs_common) + phy_cfg.t_offset;
+  double   ta_time          = static_cast<double>(n_timing_advance) * Tc;
+  uint32_t ta_samples       = ta_time * srate;
+  logger.info("Uplink sample offset: %u", ta_samples);
 
   /* Extract the UL grant */
   std::array<uint8_t, srsran::mac_rar_subpdu_nr::UL_GRANT_NBITS> ul_grant = subpdu.get_ul_grant();

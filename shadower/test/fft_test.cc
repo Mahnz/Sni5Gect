@@ -9,7 +9,7 @@
 #include <vector>
 
 #if TEST_TYPE == 1
-std::string sample_file = "shadower/test/data/srsran/sib.fc32";
+std::string sample_file = "shadower/test/data/srsran-n78-20MHz/sib.fc32";
 uint8_t     half        = 1;
 #elif TEST_TYPE == 2
 std::string sample_file = "shadower/test/data/ssb.fc32";
@@ -18,7 +18,7 @@ uint8_t     half        = 1;
 std::string sample_file = "shadower/test/data/srsran-n78-40MHz/sib.fc32";
 uint8_t     half        = 1;
 #endif // TEST_TYPE
-uint32_t test_round = 1;
+uint32_t test_round = 10000;
 
 int main()
 {

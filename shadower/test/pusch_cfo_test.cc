@@ -9,8 +9,8 @@ uint16_t           rnti      = c_rnti;
 srsran_rnti_type_t rnti_type = srsran_rnti_type_c;
 
 #if TEST_TYPE == 1
-std::string dci_sample_file = "shadower/test/data/srsran/dci_6382.fc32";
-std::string sample_file     = "shadower/test/data/srsran/pusch_6386.fc32";
+std::string dci_sample_file = "shadower/test/data/srsran-n78-20MHz/dci_ul_3422.fc32";
+std::string sample_file     = "shadower/test/data/srsran-n78-20MHz/pusch_3426.fc32";
 uint8_t     half            = 1;
 #elif TEST_TYPE == 2
 std::string dci_sample_file = "shadower/test/data/dci_11686.fc32";

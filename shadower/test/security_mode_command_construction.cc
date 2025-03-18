@@ -15,13 +15,6 @@ int main()
   SafeQueue<std::vector<uint8_t> > ul_msg_queue;
   DummyExploit*                    exploit = new DummyExploit(dl_msg_queue, ul_msg_queue);
 
-  // std::string nas_msg       = "7e0396c832e9007e005d020002f0f0e1360102";
-  // uint8_t     rrc_nr_mac[4] = {0};
-
-  // /* Pack the message to rrc nr first */
-  // srsran::unique_byte_buffer_t rrc_nr_buffer = srsran::make_byte_buffer();
-  // asn1::rrc_nr::dl_dcch_msg_s  dl_dcch_msg   = pack_nas_to_dl_dcch(nas_msg);
-
   srsran::unique_byte_buffer_t       rrc_nr_buffer = srsran::make_byte_buffer();
   uint8_t                            rrc_nr_mac[4] = {0};
   asn1::rrc_nr::dl_dcch_msg_s        dl_dcch_msg;

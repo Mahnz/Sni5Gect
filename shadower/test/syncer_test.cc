@@ -39,7 +39,7 @@ int main()
       .duplex_mode = config.duplex_mode,
   };
   /* Initialize source */
-  // config.source_params        = "/root/records/example.fc32";
+  // config.source_params        = "records/example.fc32";
   // create_source_t file_source = load_source(file_source_module_path);
   // Source*         source      = file_source(config);
 

@@ -26,20 +26,20 @@ int                         slots_per_sf = 1 << (uint32_t)scs;
 /* SSB Patter */
 srsran_ssb_pattern_t pattern = SRSRAN_SSB_PATTERN_C;
 /* RNTI */
-const uint16_t ra_rnti = 127;
+const uint16_t ra_rnti = 267;
 const uint16_t si_rnti = 0xffff;
 const uint16_t c_rnti  = 17921;
 
-std::string mib_config_raw = "shadower/test/data/srsran/mib.raw";
+std::string mib_config_raw = "shadower/test/data/srsran-n78-20MHz/mib.raw";
 
-std::string sib1_config_raw = "shadower/test/data/srsran/sib1.raw";
-uint32_t    sib1_size       = 92;
+std::string sib1_config_raw = "shadower/test/data/srsran-n78-20MHz/sib1.raw";
+uint32_t    sib1_size       = 101;
 
-std::string rrc_setup_raw  = "shadower/test/data/srsran/rrc_setup.raw";
-uint32_t    rrc_setup_size = 299;
+std::string rrc_setup_raw  = "shadower/test/data/srsran-n78-20MHz/rrc_setup.raw";
+uint32_t    rrc_setup_size = 316;
 
-std::string rach_msg2_ul_grant_file = "shadower/test/data/srsran/rach_msg2_ul_grant.raw";
-int32_t     ul_sample_offset        = 480;
+std::string rach_msg2_ul_grant_file = "shadower/test/data/srsran-n78-20MHz/rach_msg2_ul_grant.raw";
+int32_t     ul_sample_offset        = 468;
 double      uplink_cfo              = -0.00054;
 #elif TEST_TYPE == 2
 const uint32_t ncellid = 1;

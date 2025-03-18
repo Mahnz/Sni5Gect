@@ -3,10 +3,10 @@
 #include "test_variables.h"
 
 #if TEST_TYPE == 1
-std::string sib_sample_file    = "shadower/test/data/srsran/sib.fc32";
+std::string sib_sample_file    = "shadower/test/data/srsran-n78-20MHz/sib.fc32";
 uint32_t    sib_slot_idx       = 0;
-std::string rach_msg2_file     = "shadower/test/data/srsran/rach_msg2.fc32";
-uint32_t    rach_msg2_slot_idx = 10130;
+std::string rach_msg2_file     = "shadower/test/data/srsran-n78-20MHz/rach_msg2.fc32";
+uint32_t    rach_msg2_slot_idx = 3330;
 #elif TEST_TYPE == 2
 std::string sib_sample_file    = "shadower/test/data/sib1.fc32";
 uint32_t    sib_slot_idx       = 5484;
