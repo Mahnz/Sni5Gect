@@ -69,7 +69,7 @@ public:
   std::function<void()> on_deactivate = []() {};
 
   /* Update timing advance */
-  void update_timing_advance(uint32_t ta_command);
+  void update_timing_advance(int32_t ta_command);
 
 private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("UETracker");
@@ -111,7 +111,7 @@ private:
 
   srsran::phy_cfg_nr_t phy_cfg   = {};   // physical configuration
   srsue::nr::state     phy_state = {};   // UE side grant tracker
-  uint32_t             n_timing_advance; // Timing advance steps
+  int32_t              n_timing_advance; // Timing advance steps
   double               ta_time;          // Timing advance time
 
   /* cell group config */

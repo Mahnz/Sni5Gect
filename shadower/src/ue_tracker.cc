@@ -90,11 +90,11 @@ void UETracker::deactivate()
   on_deactivate();
 }
 
-void UETracker::update_timing_advance(uint32_t ta_command)
+void UETracker::update_timing_advance(int32_t ta_command)
 {
-  uint32_t n_ta_old = n_timing_advance;
-  n_timing_advance  = n_ta_old + (ta_command - 31) * 16 * 64 / (1 << config.scs_common);
-  ta_time           = static_cast<double>(n_timing_advance) * Tc;
+  int32_t n_ta_old = n_timing_advance;
+  n_timing_advance = n_ta_old + ((int32_t)ta_command - 31) * 16 * 64 / (1 << config.scs_common);
+  ta_time          = static_cast<double>(n_timing_advance) * Tc;
   for (uint32_t i = 0; i < config.n_gnb_ul_worker; i++) {
     GNBULWorker* w = gnb_ul_workers[i];
     w->set_ta_samples(ta_time);

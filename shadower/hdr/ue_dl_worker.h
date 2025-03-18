@@ -51,7 +51,7 @@ public:
   std::function<void()> update_rx_timestamp = []() {};
 
   /* Update timing advance command */
-  std::function<void(uint32_t)> update_timing_advance = [](uint32_t) {};
+  std::function<void(int32_t)> update_timing_advance = [](int32_t) {};
 
 private:
   srslog::basic_logger&             logger;
