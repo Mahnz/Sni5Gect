@@ -48,7 +48,11 @@ bool Syncer::init()
 
   tracer_status.init("ipc:///tmp/sni5gect");
   tracer_status.set_throttle_ms(200);
-
+#if ENABLE_CUDA
+  if (config.enable_gpu_acceleration) {
+    ssb_cuda = new SSBCuda(srate, args.dl_freq, args.ssb_freq, args.scs, args.pattern, args.duplex_mode);
+  }
+#endif // ENABLE_CUDA
   running.store(true);
   return true;
 }
@@ -61,6 +65,9 @@ void Syncer::stop()
   if (recorder.joinable()) {
     recorder.join();
   }
+#if ENABLE_CUDA
+  ssb_cuda->cleanup();
+#endif // ENABLE_CUDA
 }
 
 void Syncer::run_tti()
@@ -235,10 +242,21 @@ bool Syncer::run_sync_find(cf_t* buffer)
 {
   srsran_csi_trs_measurements_t measurements_tmp = {};
   srsran_pbch_msg_nr_t          pbch_msg_tmp     = {};
-  if (srsran_ssb_find(&ssb, buffer, ncellid, &measurements_tmp, &pbch_msg_tmp) < SRSRAN_SUCCESS) {
-    logger.debug("Error srsran_ssb_find");
-    return false;
+#if ENABLE_CUDA
+  if (config.enable_gpu_acceleration) {
+    if (ssb_cuda->ssb_run_sync_find(buffer, ncellid, &measurements_tmp, &pbch_msg_tmp) < 0) {
+      logger.debug("Error ssb_run_sync_find");
+      return false;
+    }
+  } else {
+#endif // ENABLE_CUDA
+    if (srsran_ssb_find(&ssb, buffer, ncellid, &measurements_tmp, &pbch_msg_tmp) < SRSRAN_SUCCESS) {
+      logger.debug("Error srsran_ssb_find");
+      return false;
+    }
+#if ENABLE_CUDA
   }
+#endif /// ENABLE_CUDA
   if (!pbch_msg_tmp.crc) {
     logger.debug("run_sync_find PBCH CRC error %u", (uint32_t)tti);
     return false;
@@ -323,6 +341,11 @@ void Syncer::run_thread()
   }
   on_cell_found(mib, ncellid);
   std::shared_ptr<std::vector<cf_t> > last_sample = history_queue.back();
+#if ENABLE_CUDA
+  if (config.enable_gpu_acceleration) {
+    ssb_cuda->init(SRSRAN_NID_2_NR(ncellid));
+  }
+#endif /// ENABLE_CUDA
   run_sync_find(last_sample->data());
   while (running.load()) {
     std::shared_ptr<std::vector<cf_t> > last_slot = history_queue.back();

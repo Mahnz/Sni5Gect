@@ -5,15 +5,24 @@ target_link_libraries(source_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRA
 
 add_executable(cell_search_test cell_search_test.cc ${TestCommonSources})
 target_link_libraries(cell_search_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES})
+if (USE_CUDA)
+  target_link_libraries(cell_search_test ssb_cuda)
+endif(USE_CUDA)
 
 add_executable(search_ssb_freq_test search_ssb_freq_test.cc ${TestCommonSources})
 target_link_libraries(search_ssb_freq_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(syncer_test syncer_test.cc ${TestCommonSources} ${SHADOWER_DIR}/syncer.cc)
 target_link_libraries(syncer_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} zmq)
+if (USE_CUDA)
+  target_link_libraries(syncer_test ssb_cuda)
+endif(USE_CUDA)
 
 add_executable(sib_search_test sib_search_test.cc ${TestCommonSources})
 target_link_libraries(sib_search_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES})
+if (USE_CUDA)
+  target_link_libraries(sib_search_test fft_processor)
+endif(USE_CUDA)
 
 add_executable(rach_msg2_test rach_msg2_test.cc ${TestCommonSources})
 target_link_libraries(rach_msg2_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES})
@@ -63,15 +72,24 @@ add_executable(sib_overshadow_test sib_overshadow_test.cc ${TestCommonSources}
     ${SHADOWER_DIR}/ring_buffer.cc
 )
 target_link_libraries(sib_overshadow_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} zmq)
+if (USE_CUDA)
+  target_link_libraries(sib_overshadow_test ssb_cuda)
+endif(USE_CUDA)
 
 add_executable(prach_detect_test prach_detect_test.cc ${TestCommonSources})
 target_link_libraries(prach_detect_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(prach_search_test prach_search_test.cc ${TestCommonSources} ${SHADOWER_DIR}/file_source.cc ${SHADOWER_DIR}/syncer.cc)
 target_link_libraries(prach_search_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES})
+if (USE_CUDA)
+  target_link_libraries(prach_search_test ssb_cuda)
+endif(USE_CUDA)
 
 add_executable(sdr_timing_test sdr_timing_test.cc ${TestCommonSources} ${SHADOWER_DIR}/uhd_source.cc ${SHADOWER_DIR}/syncer.cc)
 target_link_libraries(sdr_timing_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES})
+if (USE_CUDA)
+  target_link_libraries(sdr_timing_test ssb_cuda)
+endif(USE_CUDA)
 
 add_executable(exploit_rrc_setup_test exploit_rrc_setup_test.cc ${TestCommonSources} ${SHADOWER_DIR}/wd_worker.cc)
 target_link_libraries(exploit_rrc_setup_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} wdissector)
@@ -84,6 +102,14 @@ target_link_libraries(security_mode_command_construction ${SRSUE_SOURCES} ${SRSR
 
 add_executable(registration_accept_constructor registration_accept_constructor.cc ${TestCommonSources} ${SHADOWER_DIR}/msg_helper.cc ${SHADOWER_DIR}/wd_worker.cc)
 target_link_libraries(registration_accept_constructor ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} wdissector)
+
+if (USE_CUDA)
+    add_executable(fft_test fft_test.cc ${SHADOWER_DIR}/fft_processor.cu ${TestCommonSources})
+    target_link_libraries(fft_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} ${FFT_LIBRARIES} fft_processor)
+endif(USE_CUDA)
+
+add_executable(ldpc_test ldpc_test.cc)
+target_link_libraries(ldpc_test PRIVATE ${SRSUE_SOURCES} ${SRSRAN_SOURCES} srsran_phch srsran_fec)
 
 add_executable(pcap_writer pcap_writer.cc)
 target_link_libraries(pcap_writer ${SRSUE_SOURCES} ${SRSRAN_SOURCES})

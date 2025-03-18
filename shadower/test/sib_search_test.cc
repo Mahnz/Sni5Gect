@@ -5,6 +5,9 @@
 #include "srsran/srslog/srslog.h"
 #include "test_variables.h"
 #include <fstream>
+#if ENABLE_CUDA
+#include "shadower/hdr/fft_processor.cuh"
+#endif // ENABLE_CUDA
 
 uint16_t           rnti      = si_rnti;
 srsran_rnti_type_t rnti_type = srsran_rnti_type_si;
@@ -54,7 +57,7 @@ int main()
     logger.error("Failed to load data from %s", sample_file.c_str());
     return -1;
   }
-#if TEST_TYPE == 1
+#if TEST_TYPE == 1 || TEST_TYPE == 3
   /* copy samples to ue_dl processing buffer */
   srsran_vec_cf_copy(buffer, samples.data() + slot_len, slot_len);
 #elif TEST_TYPE == 2
@@ -66,10 +69,10 @@ int main()
   /* run ue_dl estimate fft */
   srsran_ue_dl_nr_estimate_fft(&ue_dl, &slot_cfg);
 
-  /* Write OFDM symbols to file for debug purpose */
-  char filename[64];
-  sprintf(filename, "ofdm_sib1_fft%u", nof_sc);
-  write_record_to_file(ue_dl.sf_symbols[0], nof_re, filename);
+#if ENABLE_CUDA
+  FFTProcessor fft_processor(config.sample_rate, scs, config.nof_prb, config.dl_freq);
+  fft_processor.process_samples(buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
+#endif // ENABLE_CUDA
 
   /* search for dci */
   ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, rnti, rnti_type, phy_state, logger);

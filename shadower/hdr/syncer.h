@@ -10,6 +10,9 @@
 #include <atomic>
 #include <queue>
 #include <thread>
+#if ENABLE_CUDA
+#include "shadower/hdr/ssb_cuda.cuh"
+#endif // ENABLE_CUDA
 
 struct syncer_args_t {
   double                      srate;
@@ -51,6 +54,9 @@ private:
   uint32_t     slot_per_sf;
   Source*      source = nullptr;
   TraceSamples tracer_sib1;
+#if ENABLE_CUDA
+  SSBCuda* ssb_cuda = nullptr;
+#endif // ENABLE_CUDA
 
   float    cfo_hz          = 0;
   uint32_t task_idx        = 0;

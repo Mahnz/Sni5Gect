@@ -12,6 +12,9 @@
 #include "srsran/mac/mac_sch_pdu_nr.h"
 #include "srsran/phy/common/phy_common_nr.h"
 #include "srsue/hdr/phy/nr/state.h"
+#if ENABLE_CUDA
+#include "shadower/hdr/fft_processor.cuh"
+#endif // ENABLE_CUDA
 class UEDLWorker : public srsran::thread_pool::worker
 {
 public:
@@ -59,6 +62,10 @@ private:
   srsran::phy_cfg_nr_t              phy_cfg = {};
   static TraceSamples               tracer_dl_pdsch;  // DCI DL + PDSCH
   static TraceSamples               tracer_dl_dci_ul; // DCI UL
+
+#if ENABLE_CUDA
+  FFTProcessor* fft_processor = nullptr;
+#endif // ENABLE_CUDA
 
   double             srate             = 0;
   uint32_t           sf_len            = 0;

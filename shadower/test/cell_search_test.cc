@@ -4,6 +4,9 @@
 #include "srsran/srslog/srslog.h"
 #include "test_variables.h"
 #include <fstream>
+#if ENABLE_CUDA
+#include "shadower/hdr/ssb_cuda.cuh"
+#endif // ENABLE_CUDA
 
 #if TEST_TYPE == 1
 std::string sample_file = "shadower/test/data/srsran/ssb.fc32";
@@ -65,5 +68,73 @@ int main()
   logger.info("Cell id: %u", res.N_id);
   logger.info("Offset: %u", res.t_offset);
   logger.info("CFO: %f", res.measurements.cfo_hz);
+
+  /* Measure SSB find time */
+  auto                          t_start_ssb_find     = std::chrono::high_resolution_clock::now();
+  srsran_csi_trs_measurements_t ssb_find_measurement = {};
+  srsran_pbch_msg_nr_t          ssb_find_pbch_msg    = {};
+  if (srsran_ssb_find(&ssb, samples.data(), res.N_id, &ssb_find_measurement, &ssb_find_pbch_msg) != SRSRAN_SUCCESS) {
+    logger.error("Error running srsran_ssb_find");
+    return -1;
+  }
+  if (!ssb_find_pbch_msg.crc) {
+    logger.error("PBCH CRC not match (srsran_ssb_find)");
+  } else {
+    logger.info("PBCH CRC matched (srsran_ssb_find)");
+  }
+  auto t_end_ssb_find      = std::chrono::high_resolution_clock::now();
+  auto t_duration_ssb_find = std::chrono::duration_cast<std::chrono::microseconds>(t_end_ssb_find - t_start_ssb_find);
+  logger.info("srsran_ssb_find: %ld us", t_duration_ssb_find.count());
+
+  /* Measure SSB track time */
+  auto                          t_start_ssb_track      = std::chrono::high_resolution_clock::now();
+  srsran_csi_trs_measurements_t ssb_track_measurements = {};
+  srsran_pbch_msg_nr_t          ssb_track_pbch_msg     = {};
+  uint32_t                      half_frame             = 0;
+  if (srsran_ssb_track(&ssb,
+                       samples.data(),
+                       res.N_id,
+                       res.pbch_msg.ssb_idx,
+                       half_frame,
+                       &ssb_track_measurements,
+                       &ssb_track_pbch_msg) != SRSRAN_SUCCESS) {
+    logger.error("Error running srsran_ssb_track");
+    return -1;
+  }
+  auto t_end_ssb_track = std::chrono::high_resolution_clock::now();
+  auto t_duration_ssb_track =
+      std::chrono::duration_cast<std::chrono::microseconds>(t_end_ssb_track - t_start_ssb_track);
+  logger.info("srsran_ssb_track: %ld us", t_duration_ssb_track.count());
+
+  SSBCuda ssb_cuda(srate, dl_freq, ssb_freq, scs, pattern, duplex);
+  if (!ssb_cuda.init(SRSRAN_NID_2_NR(res.N_id))) {
+    logger.error("Failed to initialize SSB CUDA");
+    return -1;
+  }
+#if ENABLE_CUDA
+  /* SSB cuda run sync find time */
+  srsran_csi_trs_measurements_t cuda_measurements = {};
+  srsran_pbch_msg_nr_t          cuda_pbch_msg     = {};
+  auto                          t_start_cuda      = std::chrono::high_resolution_clock::now();
+  ssb_cuda.ssb_run_sync_find(samples.data(), res.N_id, &cuda_measurements, &cuda_pbch_msg);
+  auto t_end_cuda      = std::chrono::high_resolution_clock::now();
+  auto t_duration_cuda = std::chrono::duration_cast<std::chrono::microseconds>(t_end_cuda - t_start_cuda);
+  logger.info("ssb_run_sync_find: %ld us", t_duration_cuda.count());
+
+  srsran_mib_nr_t mib_cuda = {};
+  if (cuda_pbch_msg.crc) {
+    logger.info("PBCH CRC matched");
+  } else {
+    logger.error("PBCH CRC not match");
+    return -1;
+  }
+  if (srsran_pbch_msg_nr_mib_unpack(&cuda_pbch_msg, &mib_cuda) < SRSRAN_SUCCESS) {
+    logger.error("Error running srsran_pbch_msg_nr_mib_unpack");
+    return -1;
+  }
+  srsran_pbch_msg_nr_mib_info(&mib_cuda, mib_info_str.data(), (uint32_t)mib_info_str.size());
+  logger.info(YELLOW "Found cell: %s" RESET, mib_info_str.data());
+  ssb_cuda.cleanup();
+#endif // ENABLE_CUDA
   return 0;
 }
