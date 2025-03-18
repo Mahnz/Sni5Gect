@@ -105,13 +105,13 @@ int main()
   auto t_duration_ssb_track =
       std::chrono::duration_cast<std::chrono::microseconds>(t_end_ssb_track - t_start_ssb_track);
   logger.info("srsran_ssb_track: %ld us", t_duration_ssb_track.count());
-
+#if ENABLE_CUDA
   SSBCuda ssb_cuda(srate, dl_freq, ssb_freq, scs, pattern, duplex);
   if (!ssb_cuda.init(SRSRAN_NID_2_NR(res.N_id))) {
     logger.error("Failed to initialize SSB CUDA");
     return -1;
   }
-#if ENABLE_CUDA
+
   /* SSB cuda run sync find time */
   srsran_csi_trs_measurements_t cuda_measurements = {};
   srsran_pbch_msg_nr_t          cuda_pbch_msg     = {};
