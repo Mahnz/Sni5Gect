@@ -114,7 +114,7 @@ void FFTProcessor::process_samples(cf_t* buffer, cf_t* ofdm_symbols, uint32_t sl
 {
   uint32_t start_idx      = slot_idx % slots_per_subframe * symbols_per_slot;
   uint32_t current_offset = 0;
-  uint32_t idx, cyclic_prefix_length;
+  uint32_t cyclic_prefix_length;
 
   // Use regular memcpy instead of cudaMemcpyHostToHost
   for (uint32_t i = 0; i < symbols_per_slot; i++) {

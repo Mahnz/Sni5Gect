@@ -54,9 +54,6 @@ target_link_libraries(pusch_decode_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD
 add_executable(pusch_cfo_test pusch_cfo_test.cc ${TestCommonSources} ${SHADOWER_DIR}/wd_worker.cc)
 target_link_libraries(pusch_cfo_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} wdissector)
 
-add_executable(pusch_delay_search pusch_delay_search.cc ${TestCommonSources} ${SHADOWER_DIR}/wd_worker.cc)
-target_link_libraries(pusch_delay_search ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} wdissector)
-
 add_executable(pdsch_encode_test pdsch_encode_test.cc ${TestCommonSources} ${SHADOWER_DIR}/wd_worker.cc)
 target_link_libraries(pdsch_encode_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} wdissector)
 
@@ -74,15 +71,6 @@ add_executable(sib_overshadow_test sib_overshadow_test.cc ${TestCommonSources}
 target_link_libraries(sib_overshadow_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} zmq)
 if (USE_CUDA)
   target_link_libraries(sib_overshadow_test ssb_cuda)
-endif(USE_CUDA)
-
-add_executable(prach_detect_test prach_detect_test.cc ${TestCommonSources})
-target_link_libraries(prach_detect_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES})
-
-add_executable(prach_search_test prach_search_test.cc ${TestCommonSources} ${SHADOWER_DIR}/file_source.cc ${SHADOWER_DIR}/syncer.cc)
-target_link_libraries(prach_search_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES})
-if (USE_CUDA)
-  target_link_libraries(prach_search_test ssb_cuda)
 endif(USE_CUDA)
 
 add_executable(sdr_timing_test sdr_timing_test.cc ${TestCommonSources} ${SHADOWER_DIR}/uhd_source.cc ${SHADOWER_DIR}/syncer.cc)
