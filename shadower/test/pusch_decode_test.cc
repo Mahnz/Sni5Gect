@@ -194,6 +194,10 @@ int main(int argc, char* argv[])
     logger.error("Error running srsran_gnb_ul_fft");
     return -1;
   }
+#if ENABLE_CUDA
+  FFTProcessor fft_processor(config.sample_rate, scs, config.nof_prb, config.dl_freq);
+  fft_processor.process_samples(gnb_ul_buffer, gnb_ul.sf_symbols[0], slot_cfg.idx);
+#endif // ENABLE_CUDA
 
   /* Write OFDM symbols to file for debug purpose */
   char filename[64];
@@ -204,7 +208,9 @@ int main(int argc, char* argv[])
   if (args.cfo != 0) {
     uplink_cfo = args.cfo;
   }
+#if !ENABLE_CUDA
   srsran_vec_apply_cfo(gnb_ul.sf_symbols[0], uplink_cfo, gnb_ul.sf_symbols[0], nof_re);
+#endif // ENABLE_CUDA
 
   /* Initialize the buffer for output*/
   srsran::unique_byte_buffer_t data = srsran::make_byte_buffer();

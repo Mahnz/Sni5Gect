@@ -50,6 +50,9 @@ target_link_libraries(rach_msg3_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LI
 
 add_executable(pusch_decode_test pusch_decode_test.cc ${TestCommonSources} ${SHADOWER_DIR}/wd_worker.cc)
 target_link_libraries(pusch_decode_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} wdissector)
+if (USE_CUDA)
+  target_link_libraries(pusch_decode_test fft_processor)
+endif(USE_CUDA)
 
 add_executable(pusch_cfo_test pusch_cfo_test.cc ${TestCommonSources} ${SHADOWER_DIR}/wd_worker.cc)
 target_link_libraries(pusch_cfo_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} wdissector)

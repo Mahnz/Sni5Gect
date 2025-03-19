@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
   }
 
   /* We are aiming to see if the same cfo can still decode the message if offset exists */
-  for (uplink_cfo = -0.2; uplink_cfo < 0.2; uplink_cfo += 0.00001) {
+  for (uplink_cfo = -0.02; uplink_cfo < 0.02; uplink_cfo += 0.00001) {
     /* Run dci search first */
     for (int i = 0; i < slots_per_sf; i++) {
       /* copy samples to ue_dl processing buffer */
