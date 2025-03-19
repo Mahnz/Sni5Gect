@@ -17,8 +17,8 @@ uint32_t    rach_msg3_slot_idx = 11648;
 std::string sample_file        = "shadower/test/data/rach_msg3.fc32";
 uint8_t     half               = 1;
 #elif TEST_TYPE == 3
-uint32_t    rach_msg2_slot_idx = 12570;
-uint32_t    rach_msg3_slot_idx = 12576;
+uint32_t    rach_msg2_slot_idx = 13550;
+uint32_t    rach_msg3_slot_idx = 13556;
 std::string sample_file        = "shadower/test/data/srsran-n78-40MHz/rach_msg3.fc32";
 uint8_t     half               = 1;
 #endif // TEST_TYPE

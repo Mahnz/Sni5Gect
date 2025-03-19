@@ -17,9 +17,22 @@ std::string dci_sample_file = "shadower/test/data/dci_11686.fc32";
 std::string sample_file     = "shadower/test/data/dci_11688.fc32";
 uint8_t     half            = 1;
 #elif TEST_TYPE == 3
-std::string dci_sample_file = "shadower/test/data/srsran-n78-40MHz/ul_dci_12662.fc32";
-std::string sample_file     = "shadower/test/data/srsran-n78-40MHz/pusch_12666.fc32";
-uint8_t     half            = 1;
+// std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_13622.fc32";
+// std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_13626.fc32";
+// std::string last_sample_file = sample_file;
+// uint8_t     half             = 1;
+// std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_13662.fc32";
+// std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_13666.fc32";
+// std::string last_sample_file = sample_file;
+// uint8_t     half             = 1;
+// std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_13702.fc32";
+// std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_13706.fc32";
+// std::string last_sample_file = sample_file;
+// uint8_t     half             = 1;
+std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_13782.fc32";
+std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_13786.fc32";
+std::string last_sample_file = sample_file;
+uint8_t     half             = 1;
 #endif // TEST_TYPE
 
 int main(int argc, char* argv[])
@@ -126,11 +139,8 @@ int main(int argc, char* argv[])
     uplink_cfo = args.cfo;
   }
 
-  uint32_t correct_count = 0;
-  uint32_t start         = ul_sample_offset - 50;
-  uint32_t end           = ul_sample_offset + 50;
   /* We are aiming to see if the same cfo can still decode the message if offset exists */
-  for (ul_sample_offset = start; ul_sample_offset < end; ul_sample_offset += 1) {
+  for (uplink_cfo = -0.2; uplink_cfo < 0.2; uplink_cfo += 0.00001) {
     /* Run dci search first */
     for (int i = 0; i < slots_per_sf; i++) {
       /* copy samples to ue_dl processing buffer */
@@ -196,9 +206,8 @@ int main(int argc, char* argv[])
     if (!pusch_res.tb[0].crc) {
       continue;
     } else {
-      correct_count += 1;
+      logger.info("CRC passed for cfo: %u", uplink_cfo);
     }
   }
-  logger.info("Correct: %u", correct_count);
   return 0;
 }

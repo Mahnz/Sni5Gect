@@ -105,7 +105,7 @@ std::string rrc_setup_raw  = "shadower/test/data/srsran-n78-40MHz/rrc_setup.raw"
 uint32_t    rrc_setup_size = 316;
 
 std::string rach_msg2_ul_grant_file = "shadower/test/data/srsran-n78-40MHz/rach_msg2_ul_grant.raw";
-int32_t     ul_sample_offset        = 800;
+int32_t     ul_sample_offset        = 768;
 double      uplink_cfo              = -0.00054;
 #endif // TEST_TYPE
 

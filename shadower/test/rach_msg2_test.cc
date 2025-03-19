@@ -17,7 +17,7 @@ uint32_t    slot_number = 11645;
 uint8_t     half        = 1;
 #elif TEST_TYPE == 3
 std::string sample_file = "shadower/test/data/srsran-n78-40MHz/rach_msg2.fc32";
-uint32_t    slot_number = 12570;
+uint32_t    slot_number = 13550;
 uint8_t     half        = 0;
 #endif // TEST_TYPE
 int main()

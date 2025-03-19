@@ -20,9 +20,9 @@ float       cfo         = 0;
 std::string sample_file = "/root/overshadow/effnet/sf_152_11864.fc32";
 uint8_t     half        = 1;
 #elif TEST_TYPE == 3
-std::string sample_file = "shadower/test/data/srsran-n78-40MHz/pdsch_12722.fc32";
-std::string last_file   = "shadower/test/data/srsran-n78-40MHz/pdsch_12722.fc32";
-uint8_t     half        = 1;
+std::string sample_file = "shadower/test/data/srsran-n78-40MHz/pdsch_13726.fc32";
+std::string last_file   = sample_file;
+uint8_t     half        = 0;
 #endif // TEST_TYPE
 
 int main(int argc, char* argv[])

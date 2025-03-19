@@ -34,9 +34,21 @@ std::string sample_file      = "shadower/test/data/dci_11688.fc32";
 std::string last_sample_file = dci_sample_file;
 uint8_t     half             = 1;
 #elif TEST_TYPE == 3
-std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/ul_dci_12662.fc32";
-std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_12666.fc32";
-std::string last_sample_file = dci_sample_file;
+// std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_13622.fc32";
+// std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_13626.fc32";
+// std::string last_sample_file = sample_file;
+// uint8_t     half             = 1;
+// std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_13662.fc32";
+// std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_13666.fc32";
+// std::string last_sample_file = sample_file;
+// uint8_t     half             = 1;
+// std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_13702.fc32";
+// std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_13706.fc32";
+// std::string last_sample_file = sample_file;
+// uint8_t     half             = 1;
+std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_13782.fc32";
+std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_13786.fc32";
+std::string last_sample_file = sample_file;
 uint8_t     half             = 1;
 #endif // TEST_TYPE
 
