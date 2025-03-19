@@ -178,7 +178,7 @@ int modify_sib1(srslog::basic_logger& logger, std::shared_ptr<std::vector<uint8_
   asn1::rrc_nr::rach_cfg_common_s& rach_cfg_common =
       sib1.serving_cell_cfg_common.ul_cfg_common.init_ul_bwp.rach_cfg_common.setup();
   rach_cfg_common.rach_cfg_generic.msg1_freq_start      = 20;
-  rach_cfg_common.rach_cfg_generic.preamb_rx_target_pwr = -60;
+  rach_cfg_common.rach_cfg_generic.preamb_rx_target_pwr = -61;
 
   /* Initialize the buffer to pack sib1 to raw bytes */
   srsran::unique_byte_buffer_t packed_sib1 = srsran::make_byte_buffer();

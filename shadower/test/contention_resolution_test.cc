@@ -143,5 +143,6 @@ int main()
       logger.info("Contention resolution ID: %s", oss.str().c_str());
     }
   }
+  usleep(10000);
   return 0;
 }

@@ -135,5 +135,6 @@ int main()
 
   /* search for dci */
   ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, rnti, rnti_type, phy_state, logger);
+  usleep(10000);
   return 0;
 }
