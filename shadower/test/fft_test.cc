@@ -57,7 +57,7 @@ int main()
   std::cout << "CPU time: " << elapsed_seconds_cpu.count() << "s\n";
 
   // Initialize FFT Processor
-  FFTProcessor fft_processor(srate, scs, nof_prb, dl_freq);
+  FFTProcessor fft_processor(srate, dl_freq, scs, &ue_dl.fft[0]);
   cf_t*        output_ofdm_symbols = srsran_vec_cf_malloc(fft_processor.fft_size * 14);
 
   /* GPU processing of samples */
@@ -74,7 +74,7 @@ int main()
   sprintf(filename, "raw");
   write_record_to_file(samples.data() + half * slot_len, slot_len, filename);
 
-  sprintf(filename, "ofdm_output_fft%u", fft_processor.nof_sc);
-  write_record_to_file(output_ofdm_symbols, fft_processor.nof_sc * 14, filename);
+  sprintf(filename, "ofdm_output_fft%u", fft_processor.nof_re);
+  write_record_to_file(output_ofdm_symbols, fft_processor.nof_re * 14, filename);
   return 0;
 }

@@ -30,6 +30,9 @@ target_link_libraries(rach_msg2_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LI
 add_executable(broadcast_worker_test broadcast_worker_test.cc ${TestCommonSources}
     ${SHADOWER_DIR}/broadcast_worker.cc
 )
+if (USE_CUDA)
+  target_link_libraries(broadcast_worker_test fft_processor)
+endif(USE_CUDA)
 
 add_executable(rrc_setup_test rrc_setup_test.cc ${TestCommonSources})
 target_link_libraries(rrc_setup_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES})
@@ -39,6 +42,9 @@ target_link_libraries(contention_resolution_test ${SRSUE_SOURCES} ${SRSRAN_SOURC
 
 add_executable(pdsch_decode_test pdsch_decode_test.cc ${TestCommonSources} ${SHADOWER_DIR}/wd_worker.cc)
 target_link_libraries(pdsch_decode_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} wdissector)
+if (USE_CUDA)
+  target_link_libraries(pdsch_decode_test fft_processor)
+endif(USE_CUDA)
 
 add_executable(pdsch_decode_search pdsch_decode_search.cc ${TestCommonSources} ${SHADOWER_DIR}/wd_worker.cc)
 target_link_libraries(pdsch_decode_search ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} wdissector)

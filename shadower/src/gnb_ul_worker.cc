@@ -63,6 +63,12 @@ bool GNBULWorker::init(srsran::phy_cfg_nr_t& phy_cfg_)
   GNBULWorker::tracer_ul_pusch.init("ipc:///tmp/sni5gect.ul-pusch");
   GNBULWorker::tracer_ul_pusch.set_throttle_ms(250);
 
+#if ENABLE_CUDA
+  if (config.enable_gpu_acceleration) {
+    fft_processor =
+        new FFTProcessor(config.sample_rate, gnb_ul.carrier.ul_center_frequency_hz, gnb_ul.carrier.scs, &gnb_ul.fft);
+  }
+#endif // ENABLE_CUDA
   return true;
 }
 
@@ -119,8 +125,17 @@ void GNBULWorker::work_imp()
       /* only copy half of the subframe to the buffer */
       srsran_vec_cf_copy(buffer, task->buffer->data() + slot_in_sf * slot_len - ta_samples, slot_len);
     }
-    /* estimate FFT will run on first slot */
+/* estimate FFT will run on first slot */
+#if ENABLE_CUDA
+    if (config.enable_gpu_acceleration) {
+      fft_processor->process_samples(buffer, gnb_ul.sf_symbols[0], slot_cfg.idx);
+    } else {
+      srsran_gnb_ul_fft(&gnb_ul);
+    }
+#else
     srsran_gnb_ul_fft(&gnb_ul);
+#endif // ENABLE_CUDA
+
     /* PUSCH search and decoding */
     handle_pusch(slot_cfg);
 

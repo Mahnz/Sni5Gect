@@ -23,11 +23,6 @@ UEDLWorker::UEDLWorker(srslog::basic_logger&             logger_,
   wd_worker(wd_worker_),
   exploit(exploit_)
 {
-#if ENABLE_CUDA
-  if (config.enable_gpu_acceleration) {
-    fft_processor = new FFTProcessor(config.sample_rate, config.scs_common, config.nof_prb, config.dl_freq);
-  }
-#endif // ENABLE_CUDA
 }
 
 UEDLWorker::~UEDLWorker()
@@ -75,6 +70,12 @@ bool UEDLWorker::init(srsran::phy_cfg_nr_t& phy_cfg_)
   UEDLWorker::tracer_dl_dci_ul.init("ipc:///tmp/sni5gect.dl-dci-ul");
   UEDLWorker::tracer_dl_dci_ul.set_throttle_ms(100);
 
+#if ENABLE_CUDA
+  if (config.enable_gpu_acceleration) {
+    fft_processor =
+        new FFTProcessor(config.sample_rate, ue_dl.carrier.dl_center_frequency_hz, ue_dl.carrier.scs, &ue_dl.fft[0]);
+  }
+#endif // ENABLE_CUDA
   return true;
 }
 

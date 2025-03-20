@@ -195,7 +195,8 @@ int main(int argc, char* argv[])
     return -1;
   }
 #if ENABLE_CUDA
-  FFTProcessor fft_processor(config.sample_rate, scs, config.nof_prb, config.dl_freq);
+  FFTProcessor fft_processor(
+      config.sample_rate, gnb_ul.carrier.ul_center_frequency_hz, gnb_ul.carrier.scs, &gnb_ul.fft);
   fft_processor.process_samples(gnb_ul_buffer, gnb_ul.sf_symbols[0], slot_cfg.idx);
 #endif // ENABLE_CUDA
 
@@ -208,9 +209,7 @@ int main(int argc, char* argv[])
   if (args.cfo != 0) {
     uplink_cfo = args.cfo;
   }
-#if !ENABLE_CUDA
   srsran_vec_apply_cfo(gnb_ul.sf_symbols[0], uplink_cfo, gnb_ul.sf_symbols[0], nof_re);
-#endif // ENABLE_CUDA
 
   /* Initialize the buffer for output*/
   srsran::unique_byte_buffer_t data = srsran::make_byte_buffer();
@@ -238,7 +237,7 @@ int main(int argc, char* argv[])
 
   /* if the message is not decoded correctly, then return */
   if (!pusch_res.tb[0].crc) {
-    logger.debug("Error PDSCH got wrong CRC");
+    logger.debug("Error PUSCH got wrong CRC");
     return -1;
   } else {
     logger.info("PUSCH CRC passed");

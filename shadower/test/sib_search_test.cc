@@ -70,7 +70,8 @@ int main()
   srsran_ue_dl_nr_estimate_fft(&ue_dl, &slot_cfg);
 
 #if ENABLE_CUDA
-  FFTProcessor fft_processor(config.sample_rate, scs, config.nof_prb, config.dl_freq);
+  FFTProcessor fft_processor(
+      config.sample_rate, ue_dl.carrier.dl_center_frequency_hz, ue_dl.carrier.scs, &ue_dl.fft[0]);
   fft_processor.process_samples(buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
 #endif // ENABLE_CUDA
 

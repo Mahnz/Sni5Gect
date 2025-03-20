@@ -32,6 +32,13 @@ BroadCastWorker::BroadCastWorker(ShadowerConfig& config_) :
     logger.error("Couldn't allocate and/or initialize softbuffer");
     throw std::runtime_error("Error initializing softbuffer");
   }
+
+#if ENABLE_CUDA
+  if (config.enable_gpu_acceleration) {
+    fft_processor =
+        new FFTProcessor(config.sample_rate, ue_dl.carrier.dl_center_frequency_hz, phy_cfg.carrier.scs, &ue_dl.fft[0]);
+  }
+#endif // ENABLE_CUDA
 }
 
 bool BroadCastWorker::work(const std::shared_ptr<Task>& task)
@@ -44,8 +51,16 @@ bool BroadCastWorker::work(const std::shared_ptr<Task>& task)
     slot_cfg.idx = task->slot_idx + slot_in_sf;
     /* only copy half of the subframe to the buffer */
     srsran_vec_cf_copy(rx_buffer, task->buffer->data() + slot_in_sf * slot_len, slot_len);
-    /* estimate FFT will run on first slot */
+/* estimate FFT will run on first slot */
+#if ENABLE_CUDA
+    if (config.enable_gpu_acceleration) {
+      fft_processor->process_samples(rx_buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
+    } else {
+      srsran_ue_dl_nr_estimate_fft(&ue_dl, &slot_cfg);
+    }
+#else
     srsran_ue_dl_nr_estimate_fft(&ue_dl, &slot_cfg);
+#endif // ENABLE_CUDA
     /* Estimate PDCCH channel and search for both dci ul and dci dl */
     ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, rnti, rnti_type, phy_state, logger);
     /* PDSCH decoding */

@@ -9,6 +9,9 @@
 #include "srsran/srslog/srslog.h"
 #include "srsue/hdr/phy/nr/state.h"
 #include <atomic>
+#if ENABLE_CUDA
+#include "shadower/hdr/fft_processor.cuh"
+#endif // ENABLE_CUDA
 class BroadCastWorker
 {
 public:
@@ -52,6 +55,10 @@ private:
   uint16_t             rnti        = 0xffff;              // RNTI for broadcasting
   uint16_t             ra_rnti     = SRSRAN_INVALID_RNTI; // Here use fixed RA-RNTI
   srsran_rnti_type_t   rnti_type   = srsran_rnti_type_si;
+
+#if ENABLE_CUDA
+  FFTProcessor* fft_processor = nullptr;
+#endif // ENABLE_CUDA
 
   srsran_harq_ack_resource_t ack_resource  = {};
   srsran_softbuffer_rx_t     softbuffer_rx = {};

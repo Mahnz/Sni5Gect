@@ -11,7 +11,9 @@
 #include "srsran/common/thread_pool.h"
 #include "srsran/phy/gnb/gnb_ul.h"
 #include "srsue/hdr/phy/nr/state.h"
-
+#if ENABLE_CUDA
+#include "shadower/hdr/fft_processor.cuh"
+#endif // ENABLE_CUDA
 class GNBULWorker : public srsran::thread_pool::worker
 {
 public:
@@ -53,6 +55,9 @@ private:
   std::shared_ptr<srsran::mac_pcap> pcap_writer;
   srsran::phy_cfg_nr_t              phy_cfg = {};
   static TraceSamples               tracer_ul_pusch;
+#if ENABLE_CUDA
+  FFTProcessor* fft_processor = nullptr;
+#endif // ENABLE_CUDA
 
   double             srate          = 0;
   uint32_t           sf_len         = 0;

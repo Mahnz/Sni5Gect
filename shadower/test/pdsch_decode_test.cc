@@ -6,7 +6,9 @@
 #include "srsran/phy/phch/pbch_msg_nr.h"
 #include "srsran/phy/ue/ue_dl_nr.h"
 #include "test_variables.h"
-
+#if ENABLE_CUDA
+#include "shadower/hdr/fft_processor.cuh"
+#endif // ENABLE_CUDA
 uint16_t           rnti      = c_rnti;
 srsran_rnti_type_t rnti_type = srsran_rnti_type_c;
 
@@ -118,6 +120,11 @@ int main(int argc, char* argv[])
 
   /* run ue_dl estimate fft on corrected buffer */
   srsran_ue_dl_nr_estimate_fft(&ue_dl, &slot_cfg);
+#if ENABLE_CUDA
+  FFTProcessor fft_processor(
+      config.sample_rate, ue_dl.carrier.dl_center_frequency_hz, ue_dl.carrier.scs, &ue_dl.fft[0]);
+  fft_processor.process_samples(ue_dl_buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
+#endif // ENABLE_CUDA
 
   /* Initialize the buffer for output*/
   srsran::unique_byte_buffer_t data = srsran::make_byte_buffer();
