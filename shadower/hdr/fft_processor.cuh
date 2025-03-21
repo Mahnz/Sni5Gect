@@ -24,8 +24,20 @@ public:
     if (d_signal) {
       cudaFree(d_signal);
     }
+    if (h_pinned_buffer) {
+      cudaFree(h_pinned_buffer);
+    }
+    if (d_phase_compensation) {
+      cudaFree(d_phase_compensation);
+    }
+    if (d_window_offset_buffer) {
+      cudaFree(d_window_offset_buffer);
+    }
     if (plan) {
       cufftDestroy(*plan);
+    }
+    if (stream) {
+      cudaStreamDestroy(*stream);
     }
   }
 
