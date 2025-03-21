@@ -72,7 +72,7 @@ int main()
 #if ENABLE_CUDA
   FFTProcessor fft_processor(
       config.sample_rate, ue_dl.carrier.dl_center_frequency_hz, ue_dl.carrier.scs, &ue_dl.fft[0]);
-  fft_processor.process_samples(buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
+  fft_processor.to_ofdm(buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
 #endif // ENABLE_CUDA
 
   /* search for dci */

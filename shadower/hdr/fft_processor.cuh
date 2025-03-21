@@ -28,7 +28,10 @@ public:
       cufftDestroy(plan);
     }
   }
-  void     process_samples(cf_t* buffer, cf_t* ofdm_symbols, uint32_t slot_idx);
+
+  /* Convert IQ samples to OFDM symbols */
+  void to_ofdm(cf_t* buffer, cf_t* ofdm_symbols, uint32_t slot_idx);
+
   uint32_t fft_size; // FFT size
   uint32_t nof_re;   // Number of Resource element
 

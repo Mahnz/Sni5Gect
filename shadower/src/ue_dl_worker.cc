@@ -131,7 +131,7 @@ void UEDLWorker::work_imp()
     /* estimate FFT will run on first slot */
 #if ENABLE_CUDA
     if (config.enable_gpu_acceleration) {
-      fft_processor->process_samples(buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
+      fft_processor->to_ofdm(buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
     } else {
       srsran_ue_dl_nr_estimate_fft(&ue_dl, &slot_cfg);
     }

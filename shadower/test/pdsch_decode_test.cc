@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
 #if ENABLE_CUDA
   FFTProcessor fft_processor(
       config.sample_rate, ue_dl.carrier.dl_center_frequency_hz, ue_dl.carrier.scs, &ue_dl.fft[0]);
-  fft_processor.process_samples(ue_dl_buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
+  fft_processor.to_ofdm(ue_dl_buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
 #endif // ENABLE_CUDA
 
   /* Initialize the buffer for output*/

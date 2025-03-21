@@ -128,7 +128,7 @@ void GNBULWorker::work_imp()
 /* estimate FFT will run on first slot */
 #if ENABLE_CUDA
     if (config.enable_gpu_acceleration) {
-      fft_processor->process_samples(buffer, gnb_ul.sf_symbols[0], slot_cfg.idx);
+      fft_processor->to_ofdm(buffer, gnb_ul.sf_symbols[0], slot_cfg.idx);
     } else {
       srsran_gnb_ul_fft(&gnb_ul);
     }

@@ -136,7 +136,7 @@ FFTProcessor::FFTProcessor(double                      sample_rate_,
 }
 
 /* Process the samples from a slot at a time */
-void FFTProcessor::process_samples(cf_t* buffer, cf_t* ofdm_symbols, uint32_t slot_idx)
+void FFTProcessor::to_ofdm(cf_t* buffer, cf_t* ofdm_symbols, uint32_t slot_idx)
 {
   /* Copy the to GPU pinned buffer */
   memcpy(h_pinned_buffer, buffer, slot_sz * sizeof(cufftComplex));

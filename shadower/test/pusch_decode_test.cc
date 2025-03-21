@@ -38,16 +38,28 @@ uint8_t     half             = 1;
 // std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_13626.fc32";
 // std::string last_sample_file = sample_file;
 // uint8_t     half             = 1;
-// std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_13662.fc32";
-// std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_13666.fc32";
+// std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_12062.fc32";
+// std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_12066.fc32";
 // std::string last_sample_file = sample_file;
 // uint8_t     half             = 1;
-// std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_13702.fc32";
-// std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_13706.fc32";
+// std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_12102.fc32";
+// std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_12106.fc32";
 // std::string last_sample_file = sample_file;
 // uint8_t     half             = 1;
-std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_13782.fc32";
-std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_13786.fc32";
+// std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_12142.fc32";
+// std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_12146.fc32";
+// std::string last_sample_file = sample_file;
+// uint8_t     half             = 1;
+// std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_12262.fc32";
+// std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_12266.fc32";
+// std::string last_sample_file = sample_file;
+// uint8_t     half             = 1;
+// std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_12302.fc32";
+// std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_12306.fc32";
+// std::string last_sample_file = sample_file;
+// uint8_t     half             = 1;
+std::string dci_sample_file  = "shadower/test/data/srsran-n78-40MHz/dci_ul_12382.fc32";
+std::string sample_file      = "shadower/test/data/srsran-n78-40MHz/pusch_12386.fc32";
 std::string last_sample_file = sample_file;
 uint8_t     half             = 1;
 #endif // TEST_TYPE
@@ -197,7 +209,7 @@ int main(int argc, char* argv[])
 #if ENABLE_CUDA
   FFTProcessor fft_processor(
       config.sample_rate, gnb_ul.carrier.ul_center_frequency_hz, gnb_ul.carrier.scs, &gnb_ul.fft);
-  fft_processor.process_samples(gnb_ul_buffer, gnb_ul.sf_symbols[0], slot_cfg.idx);
+  fft_processor.to_ofdm(gnb_ul_buffer, gnb_ul.sf_symbols[0], slot_cfg.idx);
 #endif // ENABLE_CUDA
 
   /* Write OFDM symbols to file for debug purpose */

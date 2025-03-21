@@ -4,13 +4,11 @@
 #include "shadower/hdr/source.h"
 #include "shadower/hdr/syncer.h"
 #include "srsran/srslog/srslog.h"
-// Configuration for the overshadower
-ShadowerConfig config = {};
-// Source pointer
-Source* source = nullptr;
 
 int main(int argc, char* argv[])
 {
+  // Configuration for the overshadower
+  ShadowerConfig config = {};
   // load configurations from file
   if (parse_args(config, argc, argv)) {
     printf("Error parsing args\n");
@@ -22,6 +20,8 @@ int main(int argc, char* argv[])
   // Wait 100ms to allow the logger to initialize
   usleep(100000);
 
+  // Source pointer
+  Source* source = nullptr;
   // Initialize the source based on the configuration
   if (config.source_type == "file") {
     std::string     module_path         = config.source_module.empty() ? config.source_module : file_source_module_path;

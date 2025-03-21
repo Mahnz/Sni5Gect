@@ -63,7 +63,7 @@ int main()
   /* GPU processing of samples */
   auto start_gpu = std::chrono::high_resolution_clock::now();
   for (uint32_t i = 0; i < test_round; i++) {
-    fft_processor.process_samples(samples.data() + half * slot_len, output_ofdm_symbols, 1);
+    fft_processor.to_ofdm(samples.data() + half * slot_len, output_ofdm_symbols, 1);
   }
   auto end_gpu = std::chrono::high_resolution_clock::now();
 
