@@ -39,9 +39,9 @@ private:
   int      round;        // Total round of correlation
   uint32_t last_len = 0; // last slot length
 
-  cufftHandle   fft_plan  = {};
-  cufftHandle   ifft_plan = {};
-  cudaStream_t  stream;               // CUDA stream for asynchronous data transfer
+  cufftHandle   fft_plan   = {};
+  cufftHandle   ifft_plan  = {};
+  cudaStream_t* stream     = nullptr; // CUDA stream for asynchronous data transfer
   cufftComplex* h_pin_time = nullptr; // Pin host time domain buffer
   cufftComplex* d_time     = nullptr; // Device time domain buffer
   cufftComplex* d_freq     = nullptr; // Device frequency domain buffer

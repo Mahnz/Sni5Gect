@@ -79,9 +79,9 @@ void SSBCuda::find_max(float* d_data, int size, float* max_val, int* max_idx)
   find_max_kernel<<<compareBlocksPerGrid, THREADS_PER_BLOCK, THREADS_PER_BLOCK * (sizeof(float) + sizeof(int))>>>(d_data, size, d_block_max_vals, d_block_max_idxs);
   // clang-format on
   cudaMemcpyAsync(
-      h_block_max_vals, d_block_max_vals, compareBlocksPerGrid * sizeof(float), cudaMemcpyDeviceToHost, stream);
+      h_block_max_vals, d_block_max_vals, compareBlocksPerGrid * sizeof(float), cudaMemcpyDeviceToHost, *stream);
   cudaMemcpyAsync(
-      h_block_max_idxs, d_block_max_idxs, compareBlocksPerGrid * sizeof(int), cudaMemcpyDeviceToHost, stream);
+      h_block_max_idxs, d_block_max_idxs, compareBlocksPerGrid * sizeof(int), cudaMemcpyDeviceToHost, *stream);
   // Final reduction on CPU
   *max_val = h_block_max_vals[0];
   *max_idx = h_block_max_idxs[0];
@@ -141,7 +141,7 @@ void SSBCuda::cleanup()
     free(h_block_max_vals);
   }
   if (stream) {
-    cudaStreamDestroy(stream);
+    cudaStreamDestroy(*stream);
   }
   srsran_ssb_free(&ssb);
 }
@@ -198,8 +198,9 @@ bool SSBCuda::init(uint32_t N_id_2_)
   h_block_max_idxs = (int*)malloc(compareBlocksPerGrid * sizeof(int));
 
   // Create a CUDA stream for asynchronous data transfer
-  cudaStreamCreate(&stream);
-  cufftSetStream(fft_plan, stream);
+  stream = new cudaStream_t();
+  cudaStreamCreate(stream);
+  cufftSetStream(fft_plan, *stream);
   return true;
 }
 
@@ -218,7 +219,7 @@ int SSBCuda::ssb_pss_find_cuda(cf_t* in, uint32_t nof_samples, uint32_t* found_d
   memset(h_pin_time + last_len, 0, sizeof(cufftComplex) * (total_len - last_len));
 
   /* Copy the data to cuda device */
-  cudaMemcpyAsync(d_time, h_pin_time, sizeof(cufftComplex) * last_len, cudaMemcpyHostToDevice, stream);
+  cudaMemcpyAsync(d_time, h_pin_time, sizeof(cufftComplex) * last_len, cudaMemcpyHostToDevice, *stream);
 
   /* Convert time domain data to frequency domain */
   cufftExecC2C(fft_plan, d_time, d_freq, CUFFT_FORWARD);
@@ -310,7 +311,7 @@ int SSBCuda::ssb_run_sync_find(cf_t*                          buffer,
     ERROR("Error decoding PBCH");
     return SRSRAN_ERROR;
   }
-  
+
   // SSB delay in SF
   float ssb_delay_us = (float)(1e6 * (((double)t_offset - (double)ssb.ssb_sz - (double)ssb_offset) / ssb.cfg.srate_hz));
 
