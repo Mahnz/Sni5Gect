@@ -87,6 +87,11 @@ bool UEDLWorker::update_cfg(srsran::phy_cfg_nr_t& phy_cfg_)
     logger.error("Failed to update ue_dl with new phy_cfg");
     return false;
   }
+#if ENABLE_CUDA
+  if (config.enable_gpu_acceleration) {
+    fft_processor->set_phase_compensation(phy_cfg.carrier.dl_center_frequency_hz);
+  }
+#endif // ENABLE_CUDA
   return true;
 }
 

@@ -171,6 +171,11 @@ bool BroadCastWorker::apply_config_from_mib(srsran_mib_nr_t& mib_, uint32_t ncel
     return false;
   }
   update_ue_dl(ue_dl, phy_cfg);
+#if ENABLE_CUDA
+  if (config.enable_gpu_acceleration) {
+    fft_processor->set_phase_compensation(phy_cfg.carrier.dl_center_frequency_hz);
+  }
+#endif // ENABLE_CUDA
   logger.info("MIB applied to broadcast worker");
   return true;
 }
@@ -180,6 +185,11 @@ bool BroadCastWorker::apply_config_from_sib1(asn1::rrc_nr::sib1_s& sib1_)
   sib1 = std::move(sib1_);
   update_phy_cfg_from_sib1(phy_cfg, sib1);
   update_ue_dl(ue_dl, phy_cfg);
+#if ENABLE_CUDA
+  if (config.enable_gpu_acceleration) {
+    fft_processor->set_phase_compensation(phy_cfg.carrier.dl_center_frequency_hz);
+  }
+#endif // ENABLE_CUDA
   logger.info("SIB1 applied to broadcast worker");
   return true;
 }
