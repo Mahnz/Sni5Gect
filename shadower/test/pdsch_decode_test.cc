@@ -223,22 +223,23 @@ int main(int argc, char* argv[])
         }
         /* rrc reconfiguration */
         if (dl_dcch_msg.msg.type().value == asn1::rrc_nr::dl_dcch_msg_type_c::types_opts::c1) {
-          asn1::rrc_nr::rrc_recfg_s& rrc_recfg = dl_dcch_msg.msg.c1().rrc_recfg();
-          if (rrc_recfg.crit_exts.rrc_recfg().non_crit_ext_present) {
-            asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
-            asn1::cbit_ref bref_cg(rrc_recfg.crit_exts.rrc_recfg().non_crit_ext.master_cell_group.data(),
-                                   rrc_recfg.crit_exts.rrc_recfg().non_crit_ext.master_cell_group.size());
-            if (cell_group_cfg.unpack(bref_cg) != asn1::SRSASN_SUCCESS) {
-              logger.error("Could not unpack master cell group config");
+          if (dl_dcch_msg.msg.c1().type() == asn1::rrc_nr::dl_dcch_msg_type_c::c1_c_::types::rrc_recfg) {
+            asn1::rrc_nr::rrc_recfg_s& rrc_recfg = dl_dcch_msg.msg.c1().rrc_recfg();
+            if (rrc_recfg.crit_exts.rrc_recfg().non_crit_ext_present) {
+              asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
+              asn1::cbit_ref bref_cg(rrc_recfg.crit_exts.rrc_recfg().non_crit_ext.master_cell_group.data(),
+                                     rrc_recfg.crit_exts.rrc_recfg().non_crit_ext.master_cell_group.size());
+              if (cell_group_cfg.unpack(bref_cg) != asn1::SRSASN_SUCCESS) {
+                logger.error("Could not unpack master cell group config");
+                return -1;
+              }
+              asn1::json_writer json_writer;
+              cell_group_cfg.to_json(json_writer);
+              logger.info("RRC Reconfiguration: %s", json_writer.to_string().c_str());
+              std::ofstream file{"logs/rrc_reconfiguration.json"};
+              file << json_writer.to_string();
               return -1;
             }
-            asn1::json_writer json_writer;
-            cell_group_cfg.to_json(json_writer);
-            logger.info("RRC Reconfiguration: %s", json_writer.to_string().c_str());
-
-            std::ofstream file{"logs/rrc_reconfiguration.json"};
-            file << json_writer.to_string();
-            return -1;
           }
         }
         break;
