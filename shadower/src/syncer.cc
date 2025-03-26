@@ -39,9 +39,6 @@ bool Syncer::init()
     logger.debug("Error srsran_ssb_set_cfg");
     return false;
   }
-  if (config.enable_recorder) {
-    recorder = std::thread(&Syncer::record_to_file, this);
-  }
 
   tracer_sib1.init("ipc:///tmp/sni5gect.dl-sib1");
   tracer_sib1.set_throttle_ms(500);
@@ -54,6 +51,9 @@ bool Syncer::init()
   }
 #endif // ENABLE_CUDA
   running.store(true);
+  if (config.enable_recorder) {
+    recorder = std::thread(&Syncer::record_to_file, this);
+  }
   return true;
 }
 
@@ -304,9 +304,11 @@ bool Syncer::run_sync_track(cf_t* buffer)
 void Syncer::record_to_file()
 {
   if (!source->is_sdr()) {
+    logger.info("Source is not SDR, exit recorder thread");
     return;
   }
   if (!config.enable_recorder) {
+    logger.info("Recorder is not enabled, exit recorder thread");
     return;
   }
 
@@ -316,7 +318,7 @@ void Syncer::record_to_file()
     return;
   }
 
-  while (running) {
+  while (running.load()) {
     std::shared_ptr<std::vector<cf_t> > buffer = recorder_queue.retrieve();
     if (!buffer || !buffer->data()) {
       continue;
