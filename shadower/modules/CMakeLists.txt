@@ -58,6 +58,12 @@ target_include_directories(mac_sch_mtk_rrc_setup_crash_7 PRIVATE ${WDISSECTOR_IN
 set_target_properties(mac_sch_mtk_rrc_setup_crash_7 PROPERTIES OUTPUT_NAME _mac_sch_mtk_rrc_setup_crash_7)
 set_target_properties(mac_sch_mtk_rrc_setup_crash_7 PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/modules)
 
+add_library(mac_sch_rrc_setup_crash_var SHARED mac_sch_rrc_setup_crash_var.cc ${SHADOWER_DIR}/utils.cc)
+target_link_libraries(mac_sch_rrc_setup_crash_var wdissector ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES})
+target_include_directories(mac_sch_rrc_setup_crash_var PRIVATE ${WDISSECTOR_INCLUDES})
+set_target_properties(mac_sch_rrc_setup_crash_var PROPERTIES OUTPUT_NAME _mac_sch_rrc_setup_crash_var)
+set_target_properties(mac_sch_rrc_setup_crash_var PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/modules)
+
 add_library(plaintext_registration_accept SHARED plaintext_registration_accept.cc ${SHADOWER_DIR}/msg_helper.cc ${SHADOWER_DIR}/utils.cc)
 target_link_libraries(plaintext_registration_accept wdissector ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
 target_include_directories(plaintext_registration_accept PRIVATE ${WDISSECTOR_INCLUDES})
