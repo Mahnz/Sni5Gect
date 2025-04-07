@@ -15,10 +15,10 @@ extern "C" {
 SafeQueue<Task>   task_queue = {};
 std::atomic<bool> running{true};
 std::atomic<bool> cell_found{false};
-double            test_ssb_freq = 3426.24e6;
+double            test_ssb_freq = 3424.80e6;
 std::string       sdr_args      = "type=b200";
 uint32_t          ssb_offset    = 1650;
-uint32_t          advancement   = 7;
+uint32_t          advancement   = 9;
 uint32_t          test_round    = 1000;
 
 /* When a cell is found log the cell information */
@@ -208,6 +208,15 @@ int main(int argc, char* argv[])
   create_source_t uhd_source = load_source(uhd_source_module_path);
   config.source_params       = sdr_args;
   Source* source             = uhd_source(config);
+
+  // create_source_t limesdr_source = load_source(limesdr_source_module_path);
+  // config.source_params =
+  //     "logLevel:5,port0:\"dev0\",dev0:\"XTRX\",dev0_chipIndex:0,"
+  //     "dev0_linkFormat:\"I12\",dev0_rx_path:\"LNAH\",dev0_tx_path:\"Band1\","
+  //     "dev0_max_channels_to_use:1,dev0_calibration:\"none\",dev0_rx_gfir_enable:0,dev0_tx_gfir_enable:0";
+  // config.rx_gain = 50;
+  // config.tx_gain = 50;
+  // Source* source = limesdr_source(config);
   logger.info("Selected target test SSB frequency %.3f MHz", test_ssb_freq / 1e6);
 
   /* initialize SSB */
