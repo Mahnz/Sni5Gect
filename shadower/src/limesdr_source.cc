@@ -16,6 +16,7 @@ public:
                 double      tx_gain) :
     srate(srate_)
   {
+    logger.set_level(srslog::basic_levels::info);
     /* Register the logger call back */
     parse_parameters(device_args);
     lime::registerLogHandler(
@@ -27,43 +28,43 @@ public:
     }
 
     for (size_t i = 0; i < handles.size(); i++) {
-      printf("Device: %zu: %s\n", i, handles[i].Serialize().c_str());
+      printf(GREEN "[LimeSDR]" RESET "Device: %zu: %s\n", i, handles[i].Serialize().c_str());
     }
 
     if (params.find("serial") != params.end()) {
       /* Select device with same serial */
       for (auto handle : handles) {
         if (handle.serial == params["serial"]) {
-          printf("Using device with serial: %s\n", params["serial"].c_str());
+          printf(GREEN "[LimeSDR]" RESET "Using device with serial: %s\n", params["serial"].c_str());
           device = lime::DeviceRegistry::makeDevice(handle);
         }
       }
     } else {
       /* Select the first available handle */
-      printf("Using first available device\n");
+      printf(GREEN "[LimeSDR]" RESET "Using first available device\n");
       device = lime::DeviceRegistry::makeDevice(handles.at(0));
     }
 
     if (device == nullptr) {
       throw std::runtime_error("Failed to create LimeSDR device, no matching device found");
     }
-    printf("Connected to device: %s\n", device->GetDescriptor().name.c_str());
+    printf(GREEN "[LimeSDR]" RESET "Connected to device: %s\n", device->GetDescriptor().name.c_str());
     device->SetMessageLogCallback(
         std::bind(&LimeSDRSource::log_callback, this, std::placeholders::_1, std::placeholders::_2));
     device->Init();
 
     /* Specify the chip descriptor */
     const lime::RFSOCDescriptor& chipDescriptor = device->GetDescriptor().rfSOC[chipIndex];
-    printf("Chip Descriptor: %s\n", chipDescriptor.name.c_str());
+    printf(GREEN "[LimeSDR]" RESET "Chip Descriptor: %s\n", chipDescriptor.name.c_str());
 
     /* Specify RX antenna path */
     if (!rx_antenna_name.empty()) {
       for (size_t j = 0; j < chipDescriptor.pathNames.at(lime::TRXDir::Rx).size(); j++) {
         std::string path_name = chipDescriptor.pathNames.at(lime::TRXDir::Rx).at(j);
-        printf("RX Path %zu: %s\n", j, path_name.c_str());
+        printf(GREEN "[LimeSDR]" RESET "RX Path %zu: %s\n", j, path_name.c_str());
         if (rx_antenna_name == path_name) {
           rx_path = j;
-          printf("Using RX Path: %s\n", path_name.c_str());
+          printf(GREEN "[LimeSDR]" RESET "Using RX Path: %s\n", path_name.c_str());
           break;
         }
       }
@@ -77,10 +78,10 @@ public:
     if (!tx_antenna_name.empty()) {
       for (size_t j = 0; j < chipDescriptor.pathNames.at(lime::TRXDir::Tx).size(); j++) {
         std::string path_name = chipDescriptor.pathNames.at(lime::TRXDir::Tx).at(j);
-        printf("TX Path %zu: %s\n", j, path_name.c_str());
+        printf(GREEN "[LimeSDR]" RESET "TX Path %zu: %s\n", j, path_name.c_str());
         if (tx_antenna_name == path_name) {
           tx_path = j;
-          printf("Using TX Path: %s\n", path_name.c_str());
+          printf(GREEN "[LimeSDR]" RESET "Using TX Path: %s\n", path_name.c_str());
           break;
         }
       }
@@ -92,10 +93,14 @@ public:
 
     lime::Range<double> rx_range = chipDescriptor.gainRange.at(lime::TRXDir::Rx).at(lime::eGainTypes::GENERIC);
     lime::Range<double> tx_range = chipDescriptor.gainRange.at(lime::TRXDir::Tx).at(lime::eGainTypes::GENERIC);
-    printf("Chip Gain Range RX: %f - %f\n", rx_range.min, rx_range.max);
-    printf("Chip Gain Range TX: %f - %f\n", tx_range.min, tx_range.max);
-    printf("Frequency Range: %f - %f\n", chipDescriptor.frequencyRange.min, chipDescriptor.frequencyRange.max);
-    printf("Sample Rate Range: %f - %f\n", chipDescriptor.samplingRateRange.min, chipDescriptor.samplingRateRange.max);
+    printf(GREEN "[LimeSDR]" RESET "Chip Gain Range RX: %f - %f\n", rx_range.min, rx_range.max);
+    printf(GREEN "[LimeSDR]" RESET "Chip Gain Range TX: %f - %f\n", tx_range.min, tx_range.max);
+    printf(GREEN "[LimeSDR]" RESET "Frequency Range: %f - %f\n",
+           chipDescriptor.frequencyRange.min,
+           chipDescriptor.frequencyRange.max);
+    printf(GREEN "[LimeSDR]" RESET "Sample Rate Range: %f - %f\n",
+           chipDescriptor.samplingRateRange.min,
+           chipDescriptor.samplingRateRange.max);
 
     /* Specify the configuration */
     config.channel[0].rx.enabled            = true;
@@ -291,10 +296,14 @@ private:
 
     if (params.find("freq_corr") != params.end()) {
       frequency_correction = std::stof(params["freq_corr"]);
+      printf(GREEN "[LimeSDR]" RESET "Using Frequency Correction: %f\n", frequency_correction);
+    } else {
+      printf(GREEN "[LimeSDR]" RESET "Using default Frequency Correction: %f\n", frequency_correction);
     }
   }
 
-  // void log_callback(lime::LogLevel level, const std::string& msg) { logger.info("%s", msg.c_str()); }
+  // void log_callback(lime::LogLevel level, const std::string& msg) { printf(GREEN "[LimeSDR]" RESET "%s",
+  // msg.c_str()); }
   void log_callback(lime::LogLevel level, const std::string& msg)
   {
     if (level <= log_level) {
