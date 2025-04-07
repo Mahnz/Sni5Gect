@@ -9,8 +9,11 @@ if (USE_CUDA)
   target_link_libraries(cell_search_test ssb_cuda)
 endif(USE_CUDA)
 
-add_executable(search_ssb_freq_test search_ssb_freq_test.cc ${TestCommonSources})
-target_link_libraries(search_ssb_freq_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES})
+add_executable(search_ssb_freq_test search_ssb_freq_test.cc ${SHADOWER_DIR}/syncer.cc ${TestCommonSources})
+target_link_libraries(search_ssb_freq_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} Threads::Threads)
+if (USE_CUDA)
+  target_link_libraries(search_ssb_freq_test ssb_cuda)
+endif(USE_CUDA)
 
 add_executable(syncer_test syncer_test.cc ${TestCommonSources} ${SHADOWER_DIR}/syncer.cc)
 target_link_libraries(syncer_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES} zmq)
