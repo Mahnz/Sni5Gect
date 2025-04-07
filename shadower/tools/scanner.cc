@@ -103,15 +103,23 @@ int main(int argc, char* argv[])
 
   /* Initialize source */
   ShadowerConfig config = {};
-  config.source_params  = "type=b200";
   config.sample_rate    = srate;
   config.dl_freq        = center_frequency;
   config.ul_freq        = center_frequency;
   config.rx_gain        = 40;
   config.tx_gain        = 80;
 
+  config.source_params               = "type=b200";
   create_source_t uhd_source_creator = load_source(uhd_source_module_path);
   source                             = uhd_source_creator(config);
+
+  // create_source_t limesdr_source = load_source(limesdr_source_module_path);
+  // config.source_params =
+  //     "logLevel:3,port0:\"dev0\",dev0:\"XTRX\",dev0_chipIndex:0,"
+  //     "dev0_linkFormat:\"I12\",dev0_rx_path:\"LNAH\",dev0_tx_path:\"Band1\","
+  //     "dev0_max_channels_to_use:1,dev0_calibration:\"none\",dev0_rx_gfir_enable:0,dev0_tx_gfir_enable:0";
+  // config.rx_gain = 50;
+  // source         = limesdr_source(config);
 
   /* If sample rate config is provided */
   if (argc > 4) {

@@ -47,6 +47,15 @@ int main()
   config.source_params       = "type=b200";
   Source* source             = uhd_source(config);
 
+  // create_source_t limesdr_source = load_source(limesdr_source_module_path);
+  // config.source_params =
+  //     "logLevel:5,port0:\"dev0\",dev0:\"XTRX\",dev0_chipIndex:0,"
+  //     "dev0_linkFormat:\"I12\",dev0_rx_path:\"LNAH\",dev0_tx_path:\"Band1\","
+  //     "dev0_max_channels_to_use:1,dev0_calibration:\"none\",dev0_rx_gfir_enable:0,dev0_tx_gfir_enable:0";
+  // config.rx_gain         = 50;
+  // config.enable_recorder = true;
+  // Source* source         = limesdr_source(config);
+
   /* Initialize syncer */
   Syncer* syncer = new Syncer(syncer_args, source, config);
   syncer->init();

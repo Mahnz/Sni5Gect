@@ -141,6 +141,10 @@ endif(USE_CUDA)
 
 add_executable(srsran_recorder tools/srsran_recorder.cc)
 target_link_libraries(srsran_recorder ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
+
+add_executable(source_recorder tools/source_recorder.cc src/utils.cc)
+target_link_libraries(source_recorder ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
+
 add_executable(shadower 
   main.cc 
   src/syncer.cc

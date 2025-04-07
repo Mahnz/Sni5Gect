@@ -9,12 +9,12 @@ using namespace lime;
 double         center_freq   = 2550.15e6;
 double         sample_rate   = 23.04e6;
 double         subframe_time = 1e-3;
-double         gain          = 40;
+double         gain          = 61;
 std::string    output_file   = "output.fc32";
 int            num_frames    = 1200000;
 static uint8_t chipIndex     = 0;
 
-static LogLevel logverbosity = LogLevel::Info;
+static LogLevel logverbosity = LogLevel::Debug;
 static void     LogCallback(LogLevel level, const std::string& msg)
 {
   if (level > logverbosity)
@@ -73,8 +73,8 @@ int main(int argc, char* argv[])
   const auto& chipDescriptor = dev->GetDescriptor().rfSOC[chipIndex];
   std::cout << "Chip descriptor: " << chipDescriptor.name << std::endl;
 
-  int               rxPath        = 2;
-  const std::string rxAntennaName = "LNAW";
+  int               rxPath        = -1;
+  const std::string rxAntennaName = "LNAH";
   if (!rxAntennaName.empty()) {
     for (size_t j = 0; j < chipDescriptor.pathNames.at(TRXDir::Rx).size(); j++) {
       std::cout << "Path " << j << ": " << chipDescriptor.pathNames.at(TRXDir::Rx).at(j) << std::endl;
@@ -100,6 +100,7 @@ int main(int argc, char* argv[])
   config.channel[0].rx.path               = rxPath;
   config.channel[0].rx.calibrate          = CalibrationFlag::NONE;
   config.channel[0].rx.testSignal.enabled = false;
+  config.channel[0].rx.gain.emplace(lime::eGainTypes::GENERIC, 50);
 
   config.channel[0].tx.enabled            = false;
   config.channel[0].tx.centerFrequency    = center_freq;
@@ -116,15 +117,17 @@ int main(int argc, char* argv[])
   streamCfg.format               = DataFormat::F32;
   streamCfg.linkFormat           = DataFormat::I12;
 
-  std::unique_ptr<RFStream> stream = dev->StreamCreate(streamCfg, chipIndex);
-  stream->Start();
-  std::cout << "Streaming started" << std::endl;
   signal(SIGINT, sigIntHandler);
 
-  complex32f_t**    rxSamples = new complex32f_t*[2];
-  std::vector<cf_t> buffer(sf_len);
+  complex32f_t**            rxSamples = new complex32f_t*[2];
+  std::vector<complex32f_t> buffer(sf_len);
   rxSamples[0] = (complex32f_t*)buffer.data();
   rxSamples[1] = new complex32f_t[sf_len];
+
+  // complex16_t**            rxSamples = new complex16_t*[2];
+  // std::vector<complex16_t> buffer(sf_len);
+  // rxSamples[0] = (complex16_t*)buffer.data();
+  // rxSamples[1] = new complex16_t[sf_len];
 
   std::ofstream out(output_file, std::ios::binary);
   if (!out.is_open()) {
@@ -132,13 +135,17 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  StreamMeta rxMeta{};
-  uint32_t   subframe_count = 0;
+  StreamMeta                rxMeta{};
+  uint32_t                  subframe_count = 0;
+  std::unique_ptr<RFStream> stream         = dev->StreamCreate(streamCfg, chipIndex);
+  stream->Start();
+  std::cout << "Streaming started" << std::endl;
   while (!stopProgram) {
     uint32_t samplesRead = stream->StreamRx(rxSamples, sf_len, &rxMeta);
     if (samplesRead == 0)
       continue;
-    out.write(reinterpret_cast<char*>(buffer.data()), samplesRead * sizeof(cf_t));
+    out.write(reinterpret_cast<char*>(buffer.data()), samplesRead * sizeof(complex32f_t));
+    // out.write(reinterpret_cast<char*>(buffer.data()), samplesRead * sizeof(complex16_t));
     if (subframe_count++ % 100 == 0) {
       printf(".");
       fflush(stdout);

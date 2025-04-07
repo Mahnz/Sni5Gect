@@ -6,7 +6,7 @@
 #include <fstream>
 
 #if TEST_TYPE == 1
-std::string sample_file = "shadower/test/data/srsran-n78-20MHz/sib.fc32";
+std::string sample_file = "/root/records/ssb.fc32";
 #elif TEST_TYPE == 2
 std::string sample_file = "shadower/test/data/sib1.fc32";
 #elif TEST_TYPE == 3
@@ -26,7 +26,9 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  for (double ssb_freq = config.ssb_freq - 30e3; ssb_freq < config.ssb_freq + 30e3; ssb_freq += 1e3) {
+  logger.info("SSB target frequency: %f", ssb_freq / 1e6);
+
+  for (double ssb_freq = config.ssb_freq - 50e3; ssb_freq < config.ssb_freq + 50e3; ssb_freq += 1e3) {
     /* initialize ssb */
     std::shared_ptr<srsran_ssb_t> ssb = std::make_shared<srsran_ssb_t>();
     if (!init_ssb(*ssb,
@@ -50,10 +52,7 @@ int main(int argc, char* argv[])
     if (res.N_id != ncellid) {
       continue;
     }
-    logger.info("\n############################\nSSB Freq: %f MHz", ssb_freq / 1e6);
-    logger.info("Cell id: %u", res.N_id);
-    logger.info("Offset: %u", res.t_offset);
-    logger.info("CFO: %f", res.measurements.cfo_hz);
+    logger.info("SSB Freq: %f MHz Offset: %u CFO: %f", ssb_freq / 1e6, res.t_offset, res.measurements.cfo_hz);
   }
   return 0;
 }

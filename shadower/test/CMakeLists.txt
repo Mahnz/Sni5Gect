@@ -1,7 +1,7 @@
 set(TestCommonSources ${SHADOWER_DIR}/utils.cc ${SHADOWER_DIR}/trace_samples.cc)
 
 add_executable(source_test source_test.cc ${TestCommonSources})
-target_link_libraries(source_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(source_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
 
 add_executable(cell_search_test cell_search_test.cc ${TestCommonSources})
 target_link_libraries(cell_search_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${UHD_LIBRARIES} ${Boost_LIBRARIES})
