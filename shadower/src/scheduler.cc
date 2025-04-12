@@ -5,8 +5,8 @@ Scheduler::Scheduler(ShadowerConfig& config_, Source* source_, Syncer* syncer_, 
 {
   /* Initialize phy config */
   init_phy_cfg(phy_cfg, config);
-  /* Initialize broadcast worker */
-  broadcast_worker = new BroadCastWorker(config);
+  /* Initialize broadcast worker for SIB worker */
+  broadcast_worker = std::make_shared<BroadCastWorker>(config);
   /* Attach the handler to create new UE tracker when new RACH msg2 is found */
   broadcast_worker->on_ue_found = std::bind(&Scheduler::handle_new_ue_found,
                                             this,
@@ -16,6 +16,7 @@ Scheduler::Scheduler(ShadowerConfig& config_, Source* source_, Syncer* syncer_, 
                                             std::placeholders::_4);
   /* Attach the handler to apply the configuration from SIB1 */
   broadcast_worker->on_sib1_found = std::bind(&Scheduler::handle_sib1, this, std::placeholders::_1);
+  broadcast_workers.push_back(broadcast_worker);
 
   /* bind the cell found handler to broadcast worker, when cell is found, apply the configuration to broadcast worker */
   syncer->on_cell_found = std::bind(&Scheduler::handle_mib, this, std::placeholders::_1, std::placeholders::_2);
@@ -93,27 +94,26 @@ void Scheduler::on_ue_deactivate()
 }
 
 /* handler to apply MIB configuration to multiple workers */
-void Scheduler::handle_mib(srsran_mib_nr_t& mib, uint32_t ncellid)
+void Scheduler::handle_mib(srsran_mib_nr_t& mib_, uint32_t ncellid_)
 {
+  mib     = std::move(mib_);
+  ncellid = ncellid_;
   broadcast_worker->apply_config_from_mib(mib, ncellid);
-  thread_pool->enqueue([this, &mib, ncellid]() {
-    for (const std::shared_ptr<UETracker>& ue : ue_trackers) {
-      ue->apply_config_from_mib(mib, ncellid);
-    }
-    logger.info(CYAN "MIB applied to all workers" RESET);
-  });
+  for (const std::shared_ptr<UETracker>& ue : ue_trackers) {
+    ue->apply_config_from_mib(mib, ncellid);
+  }
+  logger.info(CYAN "MIB applied to all workers" RESET);
 }
 
 /* handler to apply sib1 configuration to multiple workers */
-void Scheduler::handle_sib1(asn1::rrc_nr::sib1_s& sib1)
+void Scheduler::handle_sib1(asn1::rrc_nr::sib1_s& sib1_)
 {
+  sib1 = std::move(sib1_);
   broadcast_worker->apply_config_from_sib1(sib1);
-  thread_pool->enqueue([this, &sib1]() {
-    for (const std::shared_ptr<UETracker>& ue : ue_trackers) {
-      ue->apply_config_from_sib1(sib1);
-    }
-    logger.info(CYAN "SIB1 applied to all workers" RESET);
-  });
+  for (const std::shared_ptr<UETracker>& ue : ue_trackers) {
+    ue->apply_config_from_sib1(sib1);
+  }
+  logger.info(CYAN "SIB1 applied to all workers" RESET);
 
   // Update cell status
   asn1::rrc_nr::plmn_id_info_s& plmn = sib1.cell_access_related_info.plmn_id_list[0];
@@ -134,6 +134,29 @@ void Scheduler::handle_sib1(asn1::rrc_nr::sib1_s& sib1)
                                                 mcc[2],
                                                 mnc_str),
                                     true);
+
+  /* Track each RA-RNTI with an Broadcast Worker */
+  std::vector<uint16_t> ra_rnti_list = get_ra_rnti_list(sib1, config);
+  for (uint32_t ra_rnti_idx = 0; ra_rnti_idx < ra_rnti_list.size(); ra_rnti_idx++) {
+    std::shared_ptr<BroadCastWorker> bc_worker = nullptr;
+    if (ra_rnti_idx > 0) {
+      bc_worker = std::make_shared<BroadCastWorker>(config);
+      bc_worker->apply_config_from_mib(mib, ncellid);
+      bc_worker->apply_config_from_sib1(sib1);
+      bc_worker->on_ue_found = std::bind(&Scheduler::handle_new_ue_found,
+                                         this,
+                                         std::placeholders::_1,
+                                         std::placeholders::_2,
+                                         std::placeholders::_3,
+                                         std::placeholders::_4);
+      broadcast_workers.push_back(bc_worker);
+    } else {
+      bc_worker = broadcast_worker;
+    }
+    uint16_t ra_rnti = ra_rnti_list[ra_rnti_idx];
+    bc_worker->set_rnti(ra_rnti, srsran_rnti_type_ra);
+    logger.info("Activating Broadcast Worker for RA-RNTI[%u]: %u", ra_rnti_idx, ra_rnti);
+  }
 }
 
 void Scheduler::run_thread()
@@ -151,6 +174,8 @@ void Scheduler::run_thread()
       ue->work_on_task(task);
     }
     /* Run the task on the broadcast worker */
-    thread_pool->enqueue([this, task]() { broadcast_worker->work(task); });
+    for (const std::shared_ptr<BroadCastWorker>& bc_worker : broadcast_workers) {
+      thread_pool->enqueue([bc_worker, task]() { bc_worker->work(task); });
+    }
   }
 }

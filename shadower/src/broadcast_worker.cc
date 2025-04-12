@@ -111,8 +111,6 @@ bool BroadCastWorker::pdsch_decode(uint32_t slot_idx, uint32_t task_idx)
     if (decode_sib1(data)) {
       logger.info("SIB1 received successfully slot idx: %u task idx: %u", slot_idx, task_idx);
       on_sib1_found(sib1);
-      rnti      = ra_rnti;
-      rnti_type = srsran_rnti_type_ra;
     }
     return true;
   }
