@@ -27,6 +27,12 @@ public:
   /* Apply the configuration from SIB1 */
   bool apply_config_from_sib1(asn1::rrc_nr::sib1_s& sib1_);
 
+  void set_rnti(uint16_t rnti_, srsran_rnti_type_t rnti_type_)
+  {
+    rnti      = rnti_;
+    rnti_type = rnti_type_;
+  }
+
   /* handler function to create new UE tracker when new RACH msg2 is found */
   std::function<void(uint16_t, std::array<uint8_t, 27UL>&, uint32_t, uint32_t)> on_ue_found =
       [](uint16_t, std::array<uint8_t, 27UL>&, uint32_t, uint32_t) {};

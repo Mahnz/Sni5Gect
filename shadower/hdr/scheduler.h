@@ -19,17 +19,23 @@ public:
   ~Scheduler() override = default;
 
 private:
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("Scheduler", false);
-  ShadowerConfig&       config;
-  Source*               source           = nullptr;
-  Syncer*               syncer           = nullptr;
-  WDWorker*             wd_worker        = nullptr;
-  ThreadPool*           thread_pool      = nullptr;
-  BroadCastWorker*      broadcast_worker = nullptr;
-  create_exploit_t      create_exploit;
-  SafeQueue<Task>       task_queue;
-  srsran::phy_cfg_nr_t  phy_cfg = {};
-  std::atomic<bool>     running{true};
+  srslog::basic_logger&            logger = srslog::fetch_basic_logger("Scheduler", false);
+  ShadowerConfig&                  config;
+  Source*                          source           = nullptr;
+  Syncer*                          syncer           = nullptr;
+  WDWorker*                        wd_worker        = nullptr;
+  ThreadPool*                      thread_pool      = nullptr;
+  std::shared_ptr<BroadCastWorker> broadcast_worker = nullptr;
+  create_exploit_t                 create_exploit;
+  SafeQueue<Task>                  task_queue;
+  srsran::phy_cfg_nr_t             phy_cfg = {};
+  std::atomic<bool>                running{true};
+
+  srsran_mib_nr_t      mib     = {};
+  asn1::rrc_nr::sib1_s sib1    = {};
+  uint32_t             ncellid = 0;
+
+  std::vector<std::shared_ptr<BroadCastWorker> > broadcast_workers = {};
 
   void run_thread() override;
 
@@ -47,10 +53,10 @@ private:
   handle_new_ue_found(uint16_t rnti, std::array<uint8_t, 27UL>& grant, uint32_t current_slot, uint32_t time_advance);
 
   /* handler to apply MIB configuration to multiple workers */
-  void handle_mib(srsran_mib_nr_t& mib, uint32_t ncellid);
+  void handle_mib(srsran_mib_nr_t& mib_, uint32_t ncellid_);
 
   /* handler to apply sib1 configuration to multiple workers */
-  void handle_sib1(asn1::rrc_nr::sib1_s& sib1);
+  void handle_sib1(asn1::rrc_nr::sib1_s& sib1_);
 
   void on_ue_deactivate();
 
