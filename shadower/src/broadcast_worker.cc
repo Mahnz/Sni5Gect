@@ -1,6 +1,6 @@
 #include "shadower/hdr/broadcast_worker.h"
 BroadCastWorker::BroadCastWorker(ShadowerConfig& config_) :
-  logger(srslog::fetch_basic_logger("BCWorker")), ra_rnti(config.ra_rnti), config(config_)
+  logger(srslog::fetch_basic_logger("BCWorker")), config(config_)
 {
   slot_per_sf = 1 << config.scs_common;
   sf_len      = SRSRAN_SF_LEN_PRB(config.nof_prb);

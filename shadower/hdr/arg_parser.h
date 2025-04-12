@@ -16,7 +16,6 @@ struct ShadowerConfig {
   uint32_t                    nof_prb;    // Number of Physical Resource Blocks
   srsran_subcarrier_spacing_t scs_common; // Subcarrier Spacing for common (kHz)
   srsran_subcarrier_spacing_t scs_ssb;    // Subcarrier Spacing for SSB (kHz)
-  uint16_t                    ra_rnti;    // RA-RNTI
 
   // RF info
   uint32_t freq_offset; // Frequency offset (Hz)
@@ -97,7 +96,6 @@ inline int parse_args(ShadowerConfig& config, int argc, char* argv[])
       ("cell.nof_prb", bpo::value<uint32_t>(&config.nof_prb)->default_value(51), "Number of PRBs")
       ("cell.scs_common", bpo::value<std::string>()->default_value("30"), "Common subcarrier spacing")
       ("cell.scs_ssb", bpo::value<std::string>()->default_value("30"), "SSB subcarrier spacing")
-      ("cell.ra_rnti", bpo::value<uint16_t>(&config.ra_rnti)->default_value(0), "SSB subcarrier spacing")
       // RF config section
       ("rf.freq_offset", bpo::value<uint32_t>(&config.freq_offset)->default_value(0), "Frequency offset")
       ("rf.tx_gain", bpo::value<uint32_t>(&config.tx_gain)->default_value(0), "TX gain")

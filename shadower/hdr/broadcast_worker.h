@@ -59,7 +59,6 @@ private:
   uint32_t             slot_per_sf = 1;
   cf_t*                rx_buffer   = nullptr;             // Input buffer for PDSCH decoding
   uint16_t             rnti        = 0xffff;              // RNTI for broadcasting
-  uint16_t             ra_rnti     = SRSRAN_INVALID_RNTI; // Here use fixed RA-RNTI
   srsran_rnti_type_t   rnti_type   = srsran_rnti_type_si;
 
 #if ENABLE_CUDA
