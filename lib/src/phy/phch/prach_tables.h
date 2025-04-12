@@ -444,40 +444,533 @@ srsran_prach_tdd_loc_table_t prach_tdd_loc_table[64][7] = {
      {0, {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}}},
      {4, {{0, 0, 0, 0}, {1, 0, 0, 0}, {2, 0, 0, 0}, {3, 0, 0, 0}}}}};
 
-#define PRACH_NR_CFG_FR1_UNPAIRED_NOF_CFG 28
+#define PRACH_NR_CFG_FR1_UNPAIRED_NOF_CFG 263
 
 // Table 6.3.3.2-3: Random access configurations for FR1 and unpaired spectrum.
 static const prach_nr_config_t prach_nr_cfg_fr1_unpaired[PRACH_NR_CFG_FR1_UNPAIRED_NOF_CFG] = {
-    {0, 16, 1, {9}, 1, 0},         {0, 8, 1, {9}, 1, 0},
-    {0, 4, 1, {9}, 1, 0},          {0, 2, 0, {9}, 1, 0},
-    {0, 2, 1, {9}, 1, 0},          {0, 2, 0, {4}, 1, 0},
-    {0, 2, 1, {4}, 1, 0},          {0, 1, 0, {9}, 1, 0},
-    {0, 1, 0, {8}, 1, 0},          {0, 1, 0, {7}, 1, 0},
-    {0, 1, 0, {6}, 1, 0},          {0, 1, 0, {5}, 1, 0},
-    {0, 1, 0, {4}, 1, 0},          {0, 1, 0, {3}, 1, 0},
-    {0, 1, 0, {2}, 1, 0},          {0, 1, 0, {1, 6}, 2, 0},
-    {0, 1, 0, {1, 6}, 2, 7},       {0, 1, 0, {4, 9}, 2, 0},
-    {0, 1, 0, {3, 8}, 2, 0},       {0, 1, 0, {2, 7}, 2, 0},
-    {0, 1, 0, {8, 9}, 2, 0},       {0, 1, 0, {4, 8, 9}, 3, 0},
-    {0, 1, 0, {3, 4, 9}, 3, 0},    {0, 1, 0, {7, 8, 9}, 3, 0},
-    {0, 1, 0, {3, 4, 8, 9}, 4, 0}, {0, 1, 0, {6, 7, 8, 9}, 4, 0},
-    {0, 1, 0, {1, 4, 6, 9}, 4, 0}, {0, 1, 0, {1, 3, 5, 7, 9}, 5, 0}};
+    {TYPE0, 16, 1, {9}, 1, 0},                            // PRACH Configuration Index: 0
+    {TYPE0, 8, 1, {9}, 1, 0},                             // PRACH Configuration Index: 1
+    {TYPE0, 4, 1, {9}, 1, 0},                             // PRACH Configuration Index: 2
+    {TYPE0, 2, 0, {9}, 1, 0},                             // PRACH Configuration Index: 3
+    {TYPE0, 2, 1, {9}, 1, 0},                             // PRACH Configuration Index: 4
+    {TYPE0, 2, 0, {4}, 1, 0},                             // PRACH Configuration Index: 5
+    {TYPE0, 2, 1, {4}, 1, 0},                             // PRACH Configuration Index: 6
+    {TYPE0, 1, 0, {9}, 1, 0},                             // PRACH Configuration Index: 7
+    {TYPE0, 1, 0, {8}, 1, 0},                             // PRACH Configuration Index: 8
+    {TYPE0, 1, 0, {7}, 1, 0},                             // PRACH Configuration Index: 9
+    {TYPE0, 1, 0, {6}, 1, 0},                             // PRACH Configuration Index: 10
+    {TYPE0, 1, 0, {5}, 1, 0},                             // PRACH Configuration Index: 11
+    {TYPE0, 1, 0, {4}, 1, 0},                             // PRACH Configuration Index: 12
+    {TYPE0, 1, 0, {3}, 1, 0},                             // PRACH Configuration Index: 13
+    {TYPE0, 1, 0, {2}, 1, 0},                             // PRACH Configuration Index: 14
+    {TYPE0, 1, 0, {1, 6}, 2, 0},                          // PRACH Configuration Index: 15
+    {TYPE0, 1, 0, {1, 6}, 2, 7},                          // PRACH Configuration Index: 16
+    {TYPE0, 1, 0, {4, 9}, 2, 0},                          // PRACH Configuration Index: 17
+    {TYPE0, 1, 0, {3, 8}, 2, 0},                          // PRACH Configuration Index: 18
+    {TYPE0, 1, 0, {2, 7}, 2, 0},                          // PRACH Configuration Index: 19
+    {TYPE0, 1, 0, {8, 9}, 2, 0},                          // PRACH Configuration Index: 20
+    {TYPE0, 1, 0, {4, 8, 9}, 3, 0},                       // PRACH Configuration Index: 21
+    {TYPE0, 1, 0, {3, 4, 9}, 3, 0},                       // PRACH Configuration Index: 22
+    {TYPE0, 1, 0, {7, 8, 9}, 3, 0},                       // PRACH Configuration Index: 23
+    {TYPE0, 1, 0, {3, 4, 8, 9}, 4, 0},                    // PRACH Configuration Index: 24
+    {TYPE0, 1, 0, {6, 7, 8, 9}, 4, 0},                    // PRACH Configuration Index: 25
+    {TYPE0, 1, 0, {1, 4, 6, 9}, 4, 0},                    // PRACH Configuration Index: 26
+    {TYPE0, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                 // PRACH Configuration Index: 27
+    {TYPE1, 16, 1, {7}, 1, 0},                            // PRACH Configuration Index: 28
+    {TYPE1, 8, 1, {7}, 1, 0},                             // PRACH Configuration Index: 29
+    {TYPE1, 4, 1, {7}, 1, 0},                             // PRACH Configuration Index: 30
+    {TYPE1, 2, 0, {7}, 1, 0},                             // PRACH Configuration Index: 31
+    {TYPE1, 2, 1, {7}, 1, 0},                             // PRACH Configuration Index: 32
+    {TYPE1, 1, 0, {7}, 1, 0},                             // PRACH Configuration Index: 33
+    {TYPE2, 16, 1, {6}, 1, 0},                            // PRACH Configuration Index: 34
+    {TYPE2, 8, 1, {6}, 1, 0},                             // PRACH Configuration Index: 35
+    {TYPE2, 4, 1, {6}, 1, 0},                             // PRACH Configuration Index: 36
+    {TYPE2, 2, 0, {6}, 1, 7},                             // PRACH Configuration Index: 37
+    {TYPE2, 2, 1, {6}, 1, 7},                             // PRACH Configuration Index: 38
+    {TYPE2, 1, 0, {6}, 1, 7},                             // PRACH Configuration Index: 39
+    {TYPE3, 16, 1, {9}, 1, 0},                            // PRACH Configuration Index: 40
+    {TYPE3, 8, 1, {9}, 1, 0},                             // PRACH Configuration Index: 41
+    {TYPE3, 4, 1, {9}, 1, 0},                             // PRACH Configuration Index: 42
+    {TYPE3, 2, 0, {9}, 1, 0},                             // PRACH Configuration Index: 43
+    {TYPE3, 2, 1, {9}, 1, 0},                             // PRACH Configuration Index: 44
+    {TYPE3, 2, 0, {4}, 1, 0},                             // PRACH Configuration Index: 45
+    {TYPE3, 2, 1, {4}, 1, 0},                             // PRACH Configuration Index: 46
+    {TYPE3, 1, 0, {9}, 1, 0},                             // PRACH Configuration Index: 47
+    {TYPE3, 1, 0, {8}, 1, 0},                             // PRACH Configuration Index: 48
+    {TYPE3, 1, 0, {7}, 1, 0},                             // PRACH Configuration Index: 49
+    {TYPE3, 1, 0, {6}, 1, 0},                             // PRACH Configuration Index: 50
+    {TYPE3, 1, 0, {5}, 1, 0},                             // PRACH Configuration Index: 51
+    {TYPE3, 1, 0, {4}, 1, 0},                             // PRACH Configuration Index: 52
+    {TYPE3, 1, 0, {3}, 1, 0},                             // PRACH Configuration Index: 53
+    {TYPE3, 1, 0, {2}, 1, 0},                             // PRACH Configuration Index: 54
+    {TYPE3, 1, 0, {1, 6}, 2, 0},                          // PRACH Configuration Index: 55
+    {TYPE3, 1, 0, {1, 6}, 2, 7},                          // PRACH Configuration Index: 56
+    {TYPE3, 1, 0, {4, 9}, 2, 0},                          // PRACH Configuration Index: 57
+    {TYPE3, 1, 0, {3, 8}, 2, 0},                          // PRACH Configuration Index: 58
+    {TYPE3, 1, 0, {2, 7}, 2, 0},                          // PRACH Configuration Index: 59
+    {TYPE3, 1, 0, {8, 9}, 2, 0},                          // PRACH Configuration Index: 60
+    {TYPE3, 1, 0, {4, 8, 9}, 3, 0},                       // PRACH Configuration Index: 61
+    {TYPE3, 1, 0, {3, 4, 9}, 3, 0},                       // PRACH Configuration Index: 62
+    {TYPE3, 1, 0, {7, 8, 9}, 3, 0},                       // PRACH Configuration Index: 63
+    {TYPE3, 1, 0, {3, 4, 8, 9}, 4, 0},                    // PRACH Configuration Index: 64
+    {TYPE3, 1, 0, {1, 4, 6, 9}, 4, 0},                    // PRACH Configuration Index: 65
+    {TYPE3, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                 // PRACH Configuration Index: 66
+    {A1, 16, 1, {9}, 1, 0},                               // PRACH Configuration Index: 67
+    {A1, 8, 1, {9}, 1, 0},                                // PRACH Configuration Index: 68
+    {A1, 4, 1, {9}, 1, 0},                                // PRACH Configuration Index: 69
+    {A1, 2, 1, {9}, 1, 0},                                // PRACH Configuration Index: 70
+    {A1, 2, 1, {4, 9}, 2, 7},                             // PRACH Configuration Index: 71
+    {A1, 2, 1, {7, 9}, 2, 7},                             // PRACH Configuration Index: 72
+    {A1, 2, 1, {7, 9}, 2, 0},                             // PRACH Configuration Index: 73
+    {A1, 2, 1, {8, 9}, 2, 0},                             // PRACH Configuration Index: 74
+    {A1, 2, 1, {4, 9}, 2, 0},                             // PRACH Configuration Index: 75
+    {A1, 2, 1, {2, 3, 4, 7, 8, 9}, 6, 0},                 // PRACH Configuration Index: 76
+    {A1, 1, 0, {9}, 1, 0},                                // PRACH Configuration Index: 77
+    {A1, 1, 0, {9}, 1, 7},                                // PRACH Configuration Index: 78
+    {A1, 1, 0, {9}, 1, 0},                                // PRACH Configuration Index: 79
+    {A1, 1, 0, {8, 9}, 2, 0},                             // PRACH Configuration Index: 80
+    {A1, 1, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 81
+    {A1, 1, 0, {7, 9}, 2, 7},                             // PRACH Configuration Index: 82
+    {A1, 1, 0, {3, 4, 8, 9}, 4, 0},                       // PRACH Configuration Index: 83
+    {A1, 1, 0, {3, 4, 8, 9}, 4, 0},                       // PRACH Configuration Index: 84
+    {A1, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                    // PRACH Configuration Index: 85
+    {A1, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 7},    // PRACH Configuration Index: 86
+    {A2, 16, 1, {9}, 1, 0},                               // PRACH Configuration Index: 87
+    {A2, 8, 1, {9}, 1, 0},                                // PRACH Configuration Index: 88
+    {A2, 4, 1, {9}, 1, 0},                                // PRACH Configuration Index: 89
+    {A2, 2, 1, {7, 9}, 2, 0},                             // PRACH Configuration Index: 90
+    {A2, 2, 1, {8, 9}, 2, 0},                             // PRACH Configuration Index: 91
+    {A2, 2, 1, {7, 9}, 2, 9},                             // PRACH Configuration Index: 92
+    {A2, 2, 1, {4, 9}, 2, 9},                             // PRACH Configuration Index: 93
+    {A2, 2, 1, {4, 9}, 2, 0},                             // PRACH Configuration Index: 94
+    {A2, 2, 1, {2, 3, 4, 7, 8, 9}, 6, 0},                 // PRACH Configuration Index: 95
+    {A2, 1, 0, {2}, 1, 0},                                // PRACH Configuration Index: 96
+    {A2, 1, 0, {7}, 1, 0},                                // PRACH Configuration Index: 97
+    {A2, 2, 1, {9}, 1, 0},                                // PRACH Configuration Index: 98
+    {A2, 1, 0, {9}, 1, 0},                                // PRACH Configuration Index: 99
+    {A2, 1, 0, {9}, 1, 9},                                // PRACH Configuration Index: 100
+    {A2, 1, 0, {9}, 1, 0},                                // PRACH Configuration Index: 101
+    {A2, 1, 0, {2, 7}, 2, 0},                             // PRACH Configuration Index: 102
+    {A2, 1, 0, {8, 9}, 2, 0},                             // PRACH Configuration Index: 103
+    {A2, 1, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 104
+    {A2, 1, 0, {7, 9}, 2, 9},                             // PRACH Configuration Index: 105
+    {A2, 1, 0, {3, 4, 8, 9}, 4, 0},                       // PRACH Configuration Index: 106
+    {A2, 1, 0, {3, 4, 8, 9}, 4, 0},                       // PRACH Configuration Index: 107
+    {A2, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                    // PRACH Configuration Index: 108
+    {A2, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 9},    // PRACH Configuration Index: 109
+    {A3, 16, 1, {9}, 1, 0},                               // PRACH Configuration Index: 110
+    {A3, 8, 1, {9}, 1, 0},                                // PRACH Configuration Index: 111
+    {A3, 4, 1, {9}, 1, 0},                                // PRACH Configuration Index: 112
+    {A3, 2, 1, {4, 9}, 2, 7},                             // PRACH Configuration Index: 113
+    {A3, 2, 1, {7, 9}, 2, 7},                             // PRACH Configuration Index: 114
+    {A3, 2, 1, {7, 9}, 2, 0},                             // PRACH Configuration Index: 115
+    {A3, 2, 1, {4, 9}, 2, 0},                             // PRACH Configuration Index: 116
+    {A3, 2, 1, {8, 9}, 2, 0},                             // PRACH Configuration Index: 117
+    {A3, 2, 1, {2, 3, 4, 7, 8, 9}, 6, 0},                 // PRACH Configuration Index: 118
+    {A3, 1, 0, {2}, 1, 0},                                // PRACH Configuration Index: 119
+    {A3, 1, 0, {7}, 1, 0},                                // PRACH Configuration Index: 120
+    {A3, 2, 1, {9}, 1, 0},                                // PRACH Configuration Index: 121
+    {A3, 1, 0, {9}, 1, 0},                                // PRACH Configuration Index: 122
+    {A3, 1, 0, {9}, 1, 7},                                // PRACH Configuration Index: 123
+    {A3, 1, 0, {9}, 1, 0},                                // PRACH Configuration Index: 124
+    {A3, 1, 0, {2, 7}, 2, 0},                             // PRACH Configuration Index: 125
+    {A3, 1, 0, {8, 9}, 2, 0},                             // PRACH Configuration Index: 126
+    {A3, 1, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 127
+    {A3, 1, 0, {7, 9}, 2, 7},                             // PRACH Configuration Index: 128
+    {A3, 1, 0, {3, 4, 8, 9}, 4, 0},                       // PRACH Configuration Index: 129
+    {A3, 1, 0, {3, 4, 8, 9}, 4, 0},                       // PRACH Configuration Index: 130
+    {A3, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                    // PRACH Configuration Index: 131
+    {A3, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 7},    // PRACH Configuration Index: 132
+    {B1, 4, 1, {9}, 1, 2},                                // PRACH Configuration Index: 133
+    {B1, 2, 1, {9}, 1, 2},                                // PRACH Configuration Index: 134
+    {B1, 2, 1, {7, 9}, 2, 2},                             // PRACH Configuration Index: 135
+    {B1, 2, 1, {4, 9}, 2, 8},                             // PRACH Configuration Index: 136
+    {B1, 2, 1, {4, 9}, 2, 2},                             // PRACH Configuration Index: 137
+    {B1, 1, 0, {9}, 1, 2},                                // PRACH Configuration Index: 138
+    {B1, 1, 0, {9}, 1, 8},                                // PRACH Configuration Index: 139
+    {B1, 1, 0, {9}, 1, 2},                                // PRACH Configuration Index: 140
+    {B1, 1, 0, {8, 9}, 2, 2},                             // PRACH Configuration Index: 141
+    {B1, 1, 0, {4, 9}, 2, 2},                             // PRACH Configuration Index: 142
+    {B1, 1, 0, {7, 9}, 2, 8},                             // PRACH Configuration Index: 143
+    {B1, 1, 0, {1, 3, 5, 7, 9}, 5, 2},                    // PRACH Configuration Index: 144
+    {B4, 16, 1, {9}, 1, 0},                               // PRACH Configuration Index: 145
+    {B4, 8, 1, {9}, 1, 0},                                // PRACH Configuration Index: 146
+    {B4, 4, 1, {9}, 1, 2},                                // PRACH Configuration Index: 147
+    {B4, 2, 1, {9}, 1, 0},                                // PRACH Configuration Index: 148
+    {B4, 2, 1, {9}, 1, 2},                                // PRACH Configuration Index: 149
+    {B4, 2, 1, {7, 9}, 2, 2},                             // PRACH Configuration Index: 150
+    {B4, 2, 1, {4, 9}, 2, 2},                             // PRACH Configuration Index: 151
+    {B4, 2, 1, {4, 9}, 2, 0},                             // PRACH Configuration Index: 152
+    {B4, 2, 1, {8, 9}, 2, 0},                             // PRACH Configuration Index: 153
+    {B4, 2, 1, {2, 3, 4, 7, 8, 9}, 6, 0},                 // PRACH Configuration Index: 154
+    {B4, 1, 0, {1}, 1, 0},                                // PRACH Configuration Index: 155
+    {B4, 1, 0, {2}, 1, 0},                                // PRACH Configuration Index: 156
+    {B4, 1, 0, {4}, 1, 0},                                // PRACH Configuration Index: 157
+    {B4, 1, 0, {7}, 1, 0},                                // PRACH Configuration Index: 158
+    {B4, 1, 0, {9}, 1, 0},                                // PRACH Configuration Index: 159
+    {B4, 1, 0, {9}, 1, 2},                                // PRACH Configuration Index: 160
+    {B4, 1, 0, {9}, 1, 0},                                // PRACH Configuration Index: 161
+    {B4, 1, 0, {4, 9}, 2, 2},                             // PRACH Configuration Index: 162
+    {B4, 1, 0, {7, 9}, 2, 2},                             // PRACH Configuration Index: 163
+    {B4, 1, 0, {8, 9}, 2, 0},                             // PRACH Configuration Index: 164
+    {B4, 1, 0, {3, 4, 8, 9}, 4, 2},                       // PRACH Configuration Index: 165
+    {B4, 1, 0, {1, 3, 5, 7, 9}, 5, 2},                    // PRACH Configuration Index: 166
+    {B4, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 0},    // PRACH Configuration Index: 167
+    {B4, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 2},    // PRACH Configuration Index: 168
+    {C0, 16, 1, {9}, 1, 2},                               // PRACH Configuration Index: 169
+    {C0, 8, 1, {9}, 1, 2},                                // PRACH Configuration Index: 170
+    {C0, 4, 1, {9}, 1, 2},                                // PRACH Configuration Index: 171
+    {C0, 2, 1, {9}, 1, 2},                                // PRACH Configuration Index: 172
+    {C0, 2, 1, {8, 9}, 2, 2},                             // PRACH Configuration Index: 173
+    {C0, 2, 1, {7, 9}, 2, 2},                             // PRACH Configuration Index: 174
+    {C0, 2, 1, {7, 9}, 2, 8},                             // PRACH Configuration Index: 175
+    {C0, 2, 1, {4, 9}, 2, 8},                             // PRACH Configuration Index: 176
+    {C0, 2, 1, {4, 9}, 2, 2},                             // PRACH Configuration Index: 177
+    {C0, 2, 1, {2, 3, 4, 7, 8, 9}, 6, 2},                 // PRACH Configuration Index: 178
+    {C0, 1, 0, {9}, 1, 2},                                // PRACH Configuration Index: 179
+    {C0, 1, 0, {9}, 1, 8},                                // PRACH Configuration Index: 180
+    {C0, 1, 0, {9}, 1, 2},                                // PRACH Configuration Index: 181
+    {C0, 1, 0, {8, 9}, 2, 2},                             // PRACH Configuration Index: 182
+    {C0, 1, 0, {4, 9}, 2, 2},                             // PRACH Configuration Index: 183
+    {C0, 1, 0, {7, 9}, 2, 8},                             // PRACH Configuration Index: 184
+    {C0, 1, 0, {3, 4, 8, 9}, 4, 2},                       // PRACH Configuration Index: 185
+    {C0, 1, 0, {3, 4, 8, 9}, 4, 2},                       // PRACH Configuration Index: 186
+    {C0, 1, 0, {1, 3, 5, 7, 9}, 5, 2},                    // PRACH Configuration Index: 187
+    {C0, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 8},    // PRACH Configuration Index: 188
+    {C2, 16, 1, {9}, 1, 2},                               // PRACH Configuration Index: 189
+    {C2, 8, 1, {9}, 1, 2},                                // PRACH Configuration Index: 190
+    {C2, 4, 1, {9}, 1, 2},                                // PRACH Configuration Index: 191
+    {C2, 2, 1, {9}, 1, 2},                                // PRACH Configuration Index: 192
+    {C2, 2, 1, {8, 9}, 2, 2},                             // PRACH Configuration Index: 193
+    {C2, 2, 1, {7, 9}, 2, 2},                             // PRACH Configuration Index: 194
+    {C2, 2, 1, {7, 9}, 2, 8},                             // PRACH Configuration Index: 195
+    {C2, 2, 1, {4, 9}, 2, 8},                             // PRACH Configuration Index: 196
+    {C2, 2, 1, {4, 9}, 2, 2},                             // PRACH Configuration Index: 197
+    {C2, 2, 1, {2, 3, 4, 7, 8, 9}, 6, 2},                 // PRACH Configuration Index: 198
+    {C2, 8, 1, {9}, 1, 8},                                // PRACH Configuration Index: 199
+    {C2, 4, 1, {9}, 1, 8},                                // PRACH Configuration Index: 200
+    {C2, 1, 0, {9}, 1, 2},                                // PRACH Configuration Index: 201
+    {C2, 1, 0, {9}, 1, 8},                                // PRACH Configuration Index: 202
+    {C2, 1, 0, {9}, 1, 2},                                // PRACH Configuration Index: 203
+    {C2, 1, 0, {8, 9}, 2, 2},                             // PRACH Configuration Index: 204
+    {C2, 1, 0, {4, 9}, 2, 2},                             // PRACH Configuration Index: 205
+    {C2, 1, 0, {7, 9}, 2, 8},                             // PRACH Configuration Index: 206
+    {C2, 1, 0, {3, 4, 8, 9}, 4, 2},                       // PRACH Configuration Index: 207
+    {C2, 1, 0, {3, 4, 8, 9}, 4, 2},                       // PRACH Configuration Index: 208
+    {C2, 1, 0, {1, 3, 5, 7, 9}, 5, 2},                    // PRACH Configuration Index: 209
+    {C2, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 8},    // PRACH Configuration Index: 210
+    {A1_B1, 2, 1, {9}, 1, 2},                             // PRACH Configuration Index: 211
+    {A1_B1, 2, 1, {4, 9}, 2, 8},                          // PRACH Configuration Index: 212
+    {A1_B1, 2, 1, {7, 9}, 2, 8},                          // PRACH Configuration Index: 213
+    {A1_B1, 2, 1, {7, 9}, 2, 2},                          // PRACH Configuration Index: 214
+    {A1_B1, 2, 1, {4, 9}, 2, 2},                          // PRACH Configuration Index: 215
+    {A1_B1, 2, 1, {8, 9}, 2, 2},                          // PRACH Configuration Index: 216
+    {A1_B1, 1, 0, {9}, 1, 2},                             // PRACH Configuration Index: 217
+    {A1_B1, 1, 0, {9}, 1, 8},                             // PRACH Configuration Index: 218
+    {A1_B1, 1, 0, {9}, 1, 2},                             // PRACH Configuration Index: 219
+    {A1_B1, 1, 0, {8, 9}, 2, 2},                          // PRACH Configuration Index: 220
+    {A1_B1, 1, 0, {4, 9}, 2, 2},                          // PRACH Configuration Index: 221
+    {A1_B1, 1, 0, {7, 9}, 2, 8},                          // PRACH Configuration Index: 222
+    {A1_B1, 1, 0, {3, 4, 8, 9}, 4, 2},                    // PRACH Configuration Index: 223
+    {A1_B1, 1, 0, {1, 3, 5, 7, 9}, 5, 2},                 // PRACH Configuration Index: 224
+    {A1_B1, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 8}, // PRACH Configuration Index: 225
+    {A2_B2, 2, 1, {9}, 1, 0},                             // PRACH Configuration Index: 226
+    {A2_B2, 2, 1, {4, 9}, 2, 6},                          // PRACH Configuration Index: 227
+    {A2_B2, 2, 1, {7, 9}, 2, 6},                          // PRACH Configuration Index: 228
+    {A2_B2, 2, 1, {4, 9}, 2, 0},                          // PRACH Configuration Index: 229
+    {A2_B2, 2, 1, {8, 9}, 2, 0},                          // PRACH Configuration Index: 230
+    {A2_B2, 1, 0, {9}, 1, 0},                             // PRACH Configuration Index: 231
+    {A2_B2, 1, 0, {9}, 1, 6},                             // PRACH Configuration Index: 232
+    {A2_B2, 1, 0, {9}, 1, 0},                             // PRACH Configuration Index: 233
+    {A2_B2, 1, 0, {8, 9}, 2, 0},                          // PRACH Configuration Index: 234
+    {A2_B2, 1, 0, {4, 9}, 2, 0},                          // PRACH Configuration Index: 235
+    {A2_B2, 1, 0, {7, 9}, 2, 6},                          // PRACH Configuration Index: 236
+    {A2_B2, 1, 0, {3, 4, 8, 9}, 4, 0},                    // PRACH Configuration Index: 237
+    {A2_B2, 1, 0, {3, 4, 8, 9}, 4, 0},                    // PRACH Configuration Index: 238
+    {A2_B2, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                 // PRACH Configuration Index: 239
+    {A2_B2, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 6}, // PRACH Configuration Index: 240
+    {A3_B3, 2, 1, {9}, 1, 0},                             // PRACH Configuration Index: 241
+    {A3_B3, 2, 1, {4, 9}, 2, 2},                          // PRACH Configuration Index: 242
+    {A3_B3, 2, 1, {7, 9}, 2, 0},                          // PRACH Configuration Index: 243
+    {A3_B3, 2, 1, {7, 9}, 2, 2},                          // PRACH Configuration Index: 244
+    {A3_B3, 2, 1, {4, 9}, 2, 0},                          // PRACH Configuration Index: 245
+    {A3_B3, 2, 1, {8, 9}, 2, 0},                          // PRACH Configuration Index: 246
+    {A3_B3, 1, 0, {9}, 1, 0},                             // PRACH Configuration Index: 247
+    {A3_B3, 1, 0, {9}, 1, 2},                             // PRACH Configuration Index: 248
+    {A3_B3, 1, 0, {9}, 1, 0},                             // PRACH Configuration Index: 249
+    {A3_B3, 1, 0, {8, 9}, 2, 0},                          // PRACH Configuration Index: 250
+    {A3_B3, 1, 0, {4, 9}, 2, 0},                          // PRACH Configuration Index: 251
+    {A3_B3, 1, 0, {7, 9}, 2, 2},                          // PRACH Configuration Index: 252
+    {A3_B3, 1, 0, {3, 4, 8, 9}, 4, 0},                    // PRACH Configuration Index: 253
+    {A3_B3, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                 // PRACH Configuration Index: 254
+    {A3_B3, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 2}, // PRACH Configuration Index: 255
+    {TYPE0, 16, 1, {7}, 1, 0},                            // PRACH Configuration Index: 256
+    {TYPE0, 8, 1, {7}, 1, 0},                             // PRACH Configuration Index: 257
+    {TYPE0, 4, 1, {7}, 1, 0},                             // PRACH Configuration Index: 258
+    {TYPE0, 2, 0, {7}, 1, 0},                             // PRACH Configuration Index: 259
+    {TYPE0, 2, 1, {7}, 1, 0},                             // PRACH Configuration Index: 260
+    {TYPE0, 2, 0, {2}, 1, 0},                             // PRACH Configuration Index: 261
+    {TYPE0, 2, 1, {2}, 1, 0},                             // PRACH Configuration Index: 262
+};
 
-#define PRACH_NR_CFG_FR1_PAIRED_NOF_CFG 28
+#define PRACH_NR_CFG_FR1_PAIRED_NOF_CFG 256
 
 // Table 6.3.3.2-2: Random access configurations for FR1 and paired spectrum.
 static const prach_nr_config_t prach_nr_cfg_fr1_paired[PRACH_NR_CFG_FR1_PAIRED_NOF_CFG] = {
-    {0, 16, 1, {1}, 1, 0},            {0, 16, 1, {4}, 1, 0},
-    {0, 16, 1, {7}, 1, 0},            {0, 16, 1, {9}, 1, 0},
-    {0, 8, 1, {1}, 1, 0},             {0, 8, 1, {4}, 1, 0},
-    {0, 8, 1, {7}, 1, 0},             {0, 8, 1, {9}, 1, 0},
-    {0, 4, 1, {1}, 1, 0},             {0, 4, 1, {4}, 1, 0},
-    {0, 4, 1, {7}, 1, 0},             {0, 4, 1, {9}, 1, 0},
-    {0, 2, 1, {1}, 1, 0},             {0, 2, 1, {4}, 1, 0},
-    {0, 2, 1, {7}, 1, 0},             {0, 2, 1, {9}, 1, 0},
-    {0, 1, 0, {1}, 1, 0},             {0, 1, 0, {4}, 1, 0},
-    {0, 1, 0, {7}, 1, 0},             {0, 1, 0, {1, 6}, 2, 0},
-    {0, 1, 0, {2, 7}, 2, 0},          {0, 1, 0, {3, 8}, 2, 0},
-    {0, 1, 0, {1, 4, 7}, 3, 0},       {0, 1, 0, {2, 5, 8}, 3, 0},
-    {0, 1, 0, {3, 6, 9}, 3, 0},       {0, 1, 0, {0, 2, 4, 6, 8}, 5, 0},
-    {0, 1, 0, {1, 3, 5, 7, 9}, 5, 0}, {0, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 0}};
+    {TYPE0, 16, 1, {1}, 1, 0},                            // PRACH Configuration Index: 0
+    {TYPE0, 16, 1, {4}, 1, 0},                            // PRACH Configuration Index: 1
+    {TYPE0, 16, 1, {7}, 1, 0},                            // PRACH Configuration Index: 2
+    {TYPE0, 16, 1, {9}, 1, 0},                            // PRACH Configuration Index: 3
+    {TYPE0, 8, 1, {1}, 1, 0},                             // PRACH Configuration Index: 4
+    {TYPE0, 8, 1, {4}, 1, 0},                             // PRACH Configuration Index: 5
+    {TYPE0, 8, 1, {7}, 1, 0},                             // PRACH Configuration Index: 6
+    {TYPE0, 8, 1, {9}, 1, 0},                             // PRACH Configuration Index: 7
+    {TYPE0, 4, 1, {1}, 1, 0},                             // PRACH Configuration Index: 8
+    {TYPE0, 4, 1, {4}, 1, 0},                             // PRACH Configuration Index: 9
+    {TYPE0, 4, 1, {7}, 1, 0},                             // PRACH Configuration Index: 10
+    {TYPE0, 4, 1, {9}, 1, 0},                             // PRACH Configuration Index: 11
+    {TYPE0, 2, 1, {1}, 1, 0},                             // PRACH Configuration Index: 12
+    {TYPE0, 2, 1, {4}, 1, 0},                             // PRACH Configuration Index: 13
+    {TYPE0, 2, 1, {7}, 1, 0},                             // PRACH Configuration Index: 14
+    {TYPE0, 2, 1, {9}, 1, 0},                             // PRACH Configuration Index: 15
+    {TYPE0, 1, 0, {1}, 1, 0},                             // PRACH Configuration Index: 16
+    {TYPE0, 1, 0, {4}, 1, 0},                             // PRACH Configuration Index: 17
+    {TYPE0, 1, 0, {7}, 1, 0},                             // PRACH Configuration Index: 18
+    {TYPE0, 1, 0, {1, 6}, 2, 0},                          // PRACH Configuration Index: 19
+    {TYPE0, 1, 0, {2, 7}, 2, 0},                          // PRACH Configuration Index: 20
+    {TYPE0, 1, 0, {3, 8}, 2, 0},                          // PRACH Configuration Index: 21
+    {TYPE0, 1, 0, {1, 4, 7}, 3, 0},                       // PRACH Configuration Index: 22
+    {TYPE0, 1, 0, {2, 5, 8}, 3, 0},                       // PRACH Configuration Index: 23
+    {TYPE0, 1, 0, {3, 6, 9}, 3, 0},                       // PRACH Configuration Index: 24
+    {TYPE0, 1, 0, {0, 2, 4, 6, 8}, 5, 0},                 // PRACH Configuration Index: 25
+    {TYPE0, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                 // PRACH Configuration Index: 26
+    {TYPE0, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 0}, // PRACH Configuration Index: 27
+    {TYPE1, 16, 1, {1}, 1, 0},                            // PRACH Configuration Index: 28
+    {TYPE1, 16, 1, {4}, 1, 0},                            // PRACH Configuration Index: 29
+    {TYPE1, 16, 1, {7}, 1, 0},                            // PRACH Configuration Index: 30
+    {TYPE1, 16, 1, {9}, 1, 0},                            // PRACH Configuration Index: 31
+    {TYPE1, 8, 1, {1}, 1, 0},                             // PRACH Configuration Index: 32
+    {TYPE1, 8, 1, {4}, 1, 0},                             // PRACH Configuration Index: 33
+    {TYPE1, 8, 1, {7}, 1, 0},                             // PRACH Configuration Index: 34
+    {TYPE1, 8, 1, {9}, 1, 0},                             // PRACH Configuration Index: 35
+    {TYPE1, 4, 1, {1}, 1, 0},                             // PRACH Configuration Index: 36
+    {TYPE1, 4, 1, {4}, 1, 0},                             // PRACH Configuration Index: 37
+    {TYPE1, 4, 1, {7}, 1, 0},                             // PRACH Configuration Index: 38
+    {TYPE1, 4, 1, {9}, 1, 0},                             // PRACH Configuration Index: 39
+    {TYPE1, 2, 1, {1}, 1, 0},                             // PRACH Configuration Index: 40
+    {TYPE1, 2, 1, {4}, 1, 0},                             // PRACH Configuration Index: 41
+    {TYPE1, 2, 1, {7}, 1, 0},                             // PRACH Configuration Index: 42
+    {TYPE1, 2, 1, {9}, 1, 0},                             // PRACH Configuration Index: 43
+    {TYPE1, 1, 0, {1}, 1, 0},                             // PRACH Configuration Index: 44
+    {TYPE1, 1, 0, {4}, 1, 0},                             // PRACH Configuration Index: 45
+    {TYPE1, 1, 0, {7}, 1, 0},                             // PRACH Configuration Index: 46
+    {TYPE1, 1, 0, {1, 6}, 2, 0},                          // PRACH Configuration Index: 47
+    {TYPE1, 1, 0, {2, 7}, 2, 0},                          // PRACH Configuration Index: 48
+    {TYPE1, 1, 0, {3, 8}, 2, 0},                          // PRACH Configuration Index: 49
+    {TYPE1, 1, 0, {1, 4, 7}, 3, 0},                       // PRACH Configuration Index: 50
+    {TYPE1, 1, 0, {2, 5, 8}, 3, 0},                       // PRACH Configuration Index: 51
+    {TYPE1, 1, 0, {3, 6, 9}, 3, 0},                       // PRACH Configuration Index: 52
+    {TYPE2, 16, 1, {1}, 1, 0},                            // PRACH Configuration Index: 53
+    {TYPE2, 8, 1, {1}, 1, 0},                             // PRACH Configuration Index: 54
+    {TYPE2, 4, 0, {1}, 1, 0},                             // PRACH Configuration Index: 55
+    {TYPE2, 2, 0, {1}, 1, 0},                             // PRACH Configuration Index: 56
+    {TYPE2, 2, 0, {5}, 1, 0},                             // PRACH Configuration Index: 57
+    {TYPE2, 1, 0, {1}, 1, 0},                             // PRACH Configuration Index: 58
+    {TYPE2, 1, 0, {5}, 1, 0},                             // PRACH Configuration Index: 59
+    {TYPE3, 16, 1, {1}, 1, 0},                            // PRACH Configuration Index: 60
+    {TYPE3, 16, 1, {4}, 1, 0},                            // PRACH Configuration Index: 61
+    {TYPE3, 16, 1, {7}, 1, 0},                            // PRACH Configuration Index: 62
+    {TYPE3, 16, 1, {9}, 1, 0},                            // PRACH Configuration Index: 63
+    {TYPE3, 8, 1, {1}, 1, 0},                             // PRACH Configuration Index: 64
+    {TYPE3, 8, 1, {4}, 1, 0},                             // PRACH Configuration Index: 65
+    {TYPE3, 8, 1, {7}, 1, 0},                             // PRACH Configuration Index: 66
+    {TYPE3, 4, 1, {1}, 1, 0},                             // PRACH Configuration Index: 67
+    {TYPE3, 4, 1, {4}, 1, 0},                             // PRACH Configuration Index: 68
+    {TYPE3, 4, 1, {7}, 1, 0},                             // PRACH Configuration Index: 69
+    {TYPE3, 4, 1, {9}, 1, 0},                             // PRACH Configuration Index: 70
+    {TYPE3, 2, 1, {1}, 1, 0},                             // PRACH Configuration Index: 71
+    {TYPE3, 2, 1, {4}, 1, 0},                             // PRACH Configuration Index: 72
+    {TYPE3, 2, 1, {7}, 1, 0},                             // PRACH Configuration Index: 73
+    {TYPE3, 2, 1, {9}, 1, 0},                             // PRACH Configuration Index: 74
+    {TYPE3, 1, 0, {1}, 1, 0},                             // PRACH Configuration Index: 75
+    {TYPE3, 1, 0, {4}, 1, 0},                             // PRACH Configuration Index: 76
+    {TYPE3, 1, 0, {7}, 1, 0},                             // PRACH Configuration Index: 77
+    {TYPE3, 1, 0, {1, 6}, 2, 0},                          // PRACH Configuration Index: 78
+    {TYPE3, 1, 0, {2, 7}, 2, 0},                          // PRACH Configuration Index: 79
+    {TYPE3, 1, 0, {3, 8}, 2, 0},                          // PRACH Configuration Index: 80
+    {TYPE3, 1, 0, {1, 4, 7}, 3, 0},                       // PRACH Configuration Index: 81
+    {TYPE3, 1, 0, {2, 5, 8}, 3, 0},                       // PRACH Configuration Index: 82
+    {TYPE3, 1, 0, {3, 6, 9}, 3, 0},                       // PRACH Configuration Index: 83
+    {TYPE3, 1, 0, {0, 2, 4, 6, 8}, 5, 0},                 // PRACH Configuration Index: 84
+    {TYPE3, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                 // PRACH Configuration Index: 85
+    {TYPE3, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 0}, // PRACH Configuration Index: 86
+    {A1, 16, 0, {4, 9}, 2, 0},                            // PRACH Configuration Index: 87
+    {A1, 16, 1, {4}, 1, 0},                               // PRACH Configuration Index: 88
+    {A1, 8, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 89
+    {A1, 8, 1, {4}, 1, 0},                                // PRACH Configuration Index: 90
+    {A1, 4, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 91
+    {A1, 4, 1, {4, 9}, 2, 0},                             // PRACH Configuration Index: 92
+    {A1, 4, 0, {4}, 1, 0},                                // PRACH Configuration Index: 93
+    {A1, 2, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 94
+    {A1, 2, 0, {1}, 1, 0},                                // PRACH Configuration Index: 95
+    {A1, 2, 0, {4}, 1, 0},                                // PRACH Configuration Index: 96
+    {A1, 2, 0, {7}, 1, 0},                                // PRACH Configuration Index: 97
+    {A1, 1, 0, {4}, 1, 0},                                // PRACH Configuration Index: 98
+    {A1, 1, 0, {1, 6}, 2, 0},                             // PRACH Configuration Index: 99
+    {A1, 1, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 100
+    {A1, 1, 0, {1}, 1, 0},                                // PRACH Configuration Index: 101
+    {A1, 1, 0, {7}, 1, 0},                                // PRACH Configuration Index: 102
+    {A1, 1, 0, {2, 7}, 2, 0},                             // PRACH Configuration Index: 103
+    {A1, 1, 0, {1, 4, 7}, 3, 0},                          // PRACH Configuration Index: 104
+    {A1, 1, 0, {0, 2, 4, 6, 8}, 5, 0},                    // PRACH Configuration Index: 105
+    {A1, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 0},    // PRACH Configuration Index: 106
+    {A1, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                    // PRACH Configuration Index: 107
+    {A1_B1, 2, 0, {4, 9}, 2, 0},                          // PRACH Configuration Index: 108
+    {A1_B1, 2, 0, {4}, 1, 0},                             // PRACH Configuration Index: 109
+    {A1_B1, 1, 0, {4}, 1, 0},                             // PRACH Configuration Index: 110
+    {A1_B1, 1, 0, {1, 6}, 2, 0},                          // PRACH Configuration Index: 111
+    {A1_B1, 1, 0, {4, 9}, 2, 0},                          // PRACH Configuration Index: 112
+    {A1_B1, 1, 0, {1}, 1, 0},                             // PRACH Configuration Index: 113
+    {A1_B1, 1, 0, {7}, 1, 0},                             // PRACH Configuration Index: 114
+    {A1_B1, 1, 0, {1, 4, 7}, 3, 0},                       // PRACH Configuration Index: 115
+    {A1_B1, 1, 0, {0, 2, 4, 6, 8}, 5, 0},                 // PRACH Configuration Index: 116
+    {A2, 16, 1, {2, 6, 9}, 3, 0},                         // PRACH Configuration Index: 117
+    {A2, 16, 1, {4}, 1, 0},                               // PRACH Configuration Index: 118
+    {A2, 8, 1, {2, 6, 9}, 3, 0},                          // PRACH Configuration Index: 119
+    {A2, 8, 1, {4}, 1, 0},                                // PRACH Configuration Index: 120
+    {A2, 4, 0, {2, 6, 9}, 3, 0},                          // PRACH Configuration Index: 121
+    {A2, 4, 0, {4}, 1, 0},                                // PRACH Configuration Index: 122
+    {A2, 2, 1, {2, 6, 9}, 3, 0},                          // PRACH Configuration Index: 123
+    {A2, 2, 0, {1}, 1, 0},                                // PRACH Configuration Index: 124
+    {A2, 2, 0, {4}, 1, 0},                                // PRACH Configuration Index: 125
+    {A2, 2, 0, {7}, 1, 0},                                // PRACH Configuration Index: 126
+    {A2, 1, 0, {4}, 1, 0},                                // PRACH Configuration Index: 127
+    {A2, 1, 0, {1, 6}, 2, 0},                             // PRACH Configuration Index: 128
+    {A2, 1, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 129
+    {A2, 1, 0, {1}, 1, 0},                                // PRACH Configuration Index: 130
+    {A2, 1, 0, {7}, 1, 0},                                // PRACH Configuration Index: 131
+    {A2, 1, 0, {2, 7}, 2, 0},                             // PRACH Configuration Index: 132
+    {A2, 1, 0, {1, 4, 7}, 3, 0},                          // PRACH Configuration Index: 133
+    {A2, 1, 0, {0, 2, 4, 6, 8}, 5, 0},                    // PRACH Configuration Index: 134
+    {A2, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 0},    // PRACH Configuration Index: 135
+    {A2, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                    // PRACH Configuration Index: 136
+    {A2_B2, 2, 1, {2, 6, 9}, 3, 0},                       // PRACH Configuration Index: 137
+    {A2_B2, 2, 0, {4}, 1, 0},                             // PRACH Configuration Index: 138
+    {A2_B2, 1, 0, {4}, 1, 0},                             // PRACH Configuration Index: 139
+    {A2_B2, 1, 0, {1, 6}, 2, 0},                          // PRACH Configuration Index: 140
+    {A2_B2, 1, 0, {4, 9}, 2, 0},                          // PRACH Configuration Index: 141
+    {A2_B2, 1, 0, {1}, 1, 0},                             // PRACH Configuration Index: 142
+    {A2_B2, 1, 0, {7}, 1, 0},                             // PRACH Configuration Index: 143
+    {A2_B2, 1, 0, {1, 4, 7}, 3, 0},                       // PRACH Configuration Index: 144
+    {A2_B2, 1, 0, {0, 2, 4, 6, 8}, 5, 0},                 // PRACH Configuration Index: 145
+    {A2_B2, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 0}, // PRACH Configuration Index: 146
+    {A3, 16, 1, {4, 9}, 2, 0},                            // PRACH Configuration Index: 147
+    {A3, 16, 1, {4}, 1, 0},                               // PRACH Configuration Index: 148
+    {A3, 8, 1, {4, 9}, 2, 0},                             // PRACH Configuration Index: 149
+    {A3, 8, 1, {4}, 1, 0},                                // PRACH Configuration Index: 150
+    {A3, 4, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 151
+    {A3, 4, 0, {4}, 1, 0},                                // PRACH Configuration Index: 152
+    {A3, 2, 1, {2, 6, 9}, 3, 0},                          // PRACH Configuration Index: 153
+    {A3, 2, 0, {1}, 1, 0},                                // PRACH Configuration Index: 154
+    {A3, 2, 0, {4}, 1, 0},                                // PRACH Configuration Index: 155
+    {A3, 2, 0, {7}, 1, 0},                                // PRACH Configuration Index: 156
+    {A3, 1, 0, {4}, 1, 0},                                // PRACH Configuration Index: 157
+    {A3, 1, 0, {1, 6}, 2, 0},                             // PRACH Configuration Index: 158
+    {A3, 1, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 159
+    {A3, 1, 0, {1}, 1, 0},                                // PRACH Configuration Index: 160
+    {A3, 1, 0, {7}, 1, 0},                                // PRACH Configuration Index: 161
+    {A3, 1, 0, {2, 7}, 2, 0},                             // PRACH Configuration Index: 162
+    {A3, 1, 0, {1, 4, 7}, 3, 0},                          // PRACH Configuration Index: 163
+    {A3, 1, 0, {0, 2, 4, 6, 8}, 5, 0},                    // PRACH Configuration Index: 164
+    {A3, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 0},    // PRACH Configuration Index: 165
+    {A3, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                    // PRACH Configuration Index: 166
+    {A3_B3, 2, 1, {2, 6, 9}, 3, 0},                       // PRACH Configuration Index: 167
+    {A3_B3, 2, 0, {4}, 1, 0},                             // PRACH Configuration Index: 168
+    {A3_B3, 1, 0, {4}, 1, 0},                             // PRACH Configuration Index: 169
+    {A3_B3, 1, 0, {1, 6}, 2, 0},                          // PRACH Configuration Index: 170
+    {A3_B3, 1, 0, {4, 9}, 2, 0},                          // PRACH Configuration Index: 171
+    {A3_B3, 1, 0, {1}, 1, 0},                             // PRACH Configuration Index: 172
+    {A3_B3, 1, 0, {7}, 1, 0},                             // PRACH Configuration Index: 173
+    {A3_B3, 1, 0, {1, 4, 7}, 3, 0},                       // PRACH Configuration Index: 174
+    {A3_B3, 1, 0, {0, 2, 4, 6, 8}, 5, 0},                 // PRACH Configuration Index: 175
+    {A3_B3, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 0}, // PRACH Configuration Index: 176
+    {B1, 16, 0, {4, 9}, 2, 0},                            // PRACH Configuration Index: 177
+    {B1, 16, 1, {4}, 1, 0},                               // PRACH Configuration Index: 178
+    {B1, 8, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 179
+    {B1, 8, 1, {4}, 1, 0},                                // PRACH Configuration Index: 180
+    {B1, 4, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 181
+    {B1, 4, 1, {4, 9}, 2, 0},                             // PRACH Configuration Index: 182
+    {B1, 4, 0, {4}, 1, 0},                                // PRACH Configuration Index: 183
+    {B1, 2, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 184
+    {B1, 2, 0, {1}, 1, 0},                                // PRACH Configuration Index: 185
+    {B1, 2, 0, {4}, 1, 0},                                // PRACH Configuration Index: 186
+    {B1, 2, 0, {7}, 1, 0},                                // PRACH Configuration Index: 187
+    {B1, 1, 0, {4}, 1, 0},                                // PRACH Configuration Index: 188
+    {B1, 1, 0, {1, 6}, 2, 0},                             // PRACH Configuration Index: 189
+    {B1, 1, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 190
+    {B1, 1, 0, {1}, 1, 0},                                // PRACH Configuration Index: 191
+    {B1, 1, 0, {7}, 1, 0},                                // PRACH Configuration Index: 192
+    {B1, 1, 0, {2, 7}, 2, 0},                             // PRACH Configuration Index: 193
+    {B1, 1, 0, {1, 4, 7}, 3, 0},                          // PRACH Configuration Index: 194
+    {B1, 1, 0, {0, 2, 4, 6, 8}, 5, 0},                    // PRACH Configuration Index: 195
+    {B1, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 0},    // PRACH Configuration Index: 196
+    {B1, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                    // PRACH Configuration Index: 197
+    {B4, 16, 0, {4, 9}, 2, 0},                            // PRACH Configuration Index: 198
+    {B4, 16, 1, {4}, 1, 0},                               // PRACH Configuration Index: 199
+    {B4, 8, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 200
+    {B4, 8, 1, {4}, 1, 0},                                // PRACH Configuration Index: 201
+    {B4, 4, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 202
+    {B4, 4, 0, {4}, 1, 0},                                // PRACH Configuration Index: 203
+    {B4, 4, 1, {4, 9}, 2, 0},                             // PRACH Configuration Index: 204
+    {B4, 2, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 205
+    {B4, 2, 0, {1}, 1, 0},                                // PRACH Configuration Index: 206
+    {B4, 2, 0, {4}, 1, 0},                                // PRACH Configuration Index: 207
+    {B4, 2, 0, {7}, 1, 0},                                // PRACH Configuration Index: 208
+    {B4, 1, 0, {1}, 1, 0},                                // PRACH Configuration Index: 209
+    {B4, 1, 0, {4}, 1, 0},                                // PRACH Configuration Index: 210
+    {B4, 1, 0, {7}, 1, 0},                                // PRACH Configuration Index: 211
+    {B4, 1, 0, {1, 6}, 2, 0},                             // PRACH Configuration Index: 212
+    {B4, 1, 0, {2, 7}, 2, 0},                             // PRACH Configuration Index: 213
+    {B4, 1, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 214
+    {B4, 1, 0, {1, 4, 7}, 3, 0},                          // PRACH Configuration Index: 215
+    {B4, 1, 0, {0, 2, 4, 6, 8}, 5, 0},                    // PRACH Configuration Index: 216
+    {B4, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 0},    // PRACH Configuration Index: 217
+    {B4, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                    // PRACH Configuration Index: 218
+    {C0, 8, 1, {4}, 1, 0},                                // PRACH Configuration Index: 219
+    {C0, 4, 1, {4, 9}, 2, 0},                             // PRACH Configuration Index: 220
+    {C0, 4, 0, {4}, 1, 0},                                // PRACH Configuration Index: 221
+    {C0, 2, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 222
+    {C0, 2, 0, {1}, 1, 0},                                // PRACH Configuration Index: 223
+    {C0, 2, 0, {4}, 1, 0},                                // PRACH Configuration Index: 224
+    {C0, 2, 0, {7}, 1, 0},                                // PRACH Configuration Index: 225
+    {C0, 1, 0, {4}, 1, 0},                                // PRACH Configuration Index: 226
+    {C0, 1, 0, {1, 6}, 2, 0},                             // PRACH Configuration Index: 227
+    {C0, 1, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 228
+    {C0, 1, 0, {1}, 1, 0},                                // PRACH Configuration Index: 229
+    {C0, 1, 0, {7}, 1, 0},                                // PRACH Configuration Index: 230
+    {C0, 1, 0, {2, 7}, 2, 0},                             // PRACH Configuration Index: 231
+    {C0, 1, 0, {1, 4, 7}, 3, 0},                          // PRACH Configuration Index: 232
+    {C0, 1, 0, {0, 2, 4, 6, 8}, 5, 0},                    // PRACH Configuration Index: 233
+    {C0, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 0},    // PRACH Configuration Index: 234
+    {C0, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                    // PRACH Configuration Index: 235
+    {C2, 16, 1, {4, 9}, 2, 0},                            // PRACH Configuration Index: 236
+    {C2, 16, 1, {4}, 1, 0},                               // PRACH Configuration Index: 237
+    {C2, 8, 1, {4, 9}, 2, 0},                             // PRACH Configuration Index: 238
+    {C2, 8, 1, {4}, 1, 0},                                // PRACH Configuration Index: 239
+    {C2, 4, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 240
+    {C2, 4, 0, {4}, 1, 0},                                // PRACH Configuration Index: 241
+    {C2, 2, 1, {2, 6, 9}, 3, 0},                          // PRACH Configuration Index: 242
+    {C2, 2, 0, {1}, 1, 0},                                // PRACH Configuration Index: 243
+    {C2, 2, 0, {4}, 1, 0},                                // PRACH Configuration Index: 244
+    {C2, 2, 0, {7}, 1, 0},                                // PRACH Configuration Index: 245
+    {C2, 1, 0, {4}, 1, 0},                                // PRACH Configuration Index: 246
+    {C2, 1, 0, {1, 6}, 2, 0},                             // PRACH Configuration Index: 247
+    {C2, 1, 0, {4, 9}, 2, 0},                             // PRACH Configuration Index: 248
+    {C2, 1, 0, {1}, 1, 0},                                // PRACH Configuration Index: 249
+    {C2, 1, 0, {7}, 1, 0},                                // PRACH Configuration Index: 250
+    {C2, 1, 0, {2, 7}, 2, 0},                             // PRACH Configuration Index: 251
+    {C2, 1, 0, {1, 4, 7}, 3, 0},                          // PRACH Configuration Index: 252
+    {C2, 1, 0, {0, 2, 4, 6, 8}, 5, 0},                    // PRACH Configuration Index: 253
+    {C2, 1, 0, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, 10, 0},    // PRACH Configuration Index: 254
+    {C2, 1, 0, {1, 3, 5, 7, 9}, 5, 0},                    // PRACH Configuration Index: 255
+};

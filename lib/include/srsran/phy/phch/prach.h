@@ -132,6 +132,8 @@ typedef struct SRSRAN_API {
 /**
  * @brief PRACH configuration for NR as described in TS 38.211 Tables 6.3.3.2-2, 6.3.3.2-3 and 6.3.3.2-4
  */
+enum PREAMPLE_TYPE { TYPE0, TYPE1, TYPE2, TYPE3, A1, A2, A3, B1, B2, B3, B4, C0, C1, C2, A1_B1, A2_B2, A3_B3, INVALID };
+
 typedef struct {
   uint32_t preamble_format;
   uint32_t x;
