@@ -122,7 +122,6 @@ ShadowerConfig config = {
     .nof_prb              = nof_prb,
     .scs_common           = scs,
     .scs_ssb              = scs,
-    .ra_rnti              = ra_rnti,
     .sample_rate          = srate,
     .tx_gain              = 80,
     .rx_gain              = 60,
