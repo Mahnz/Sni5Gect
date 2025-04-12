@@ -76,6 +76,9 @@ bool init_ssb(srsran_ssb_t&               ssb,
 /* Initialize phy cfg from shadower configuration */
 void init_phy_cfg(srsran::phy_cfg_nr_t& phy_cfg, ShadowerConfig& config);
 
+/* Calculate the RA-rnti from SIB1 configuration */
+std::vector<uint16_t> get_ra_rnti_list(asn1::rrc_nr::sib1_s sib1, ShadowerConfig& config);
+
 /* Print and compare two different buffers */
 void compare_two_buffers(uint8_t* buffer1, uint32_t len1, uint8_t* buffer2, uint32_t len2);
 

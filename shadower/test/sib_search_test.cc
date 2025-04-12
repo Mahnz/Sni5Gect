@@ -134,5 +134,10 @@ int main()
   std::ofstream received_sib1{sib1_config_raw, std::ios::binary};
   received_sib1.write(reinterpret_cast<char*>(data->msg), data->N_bytes);
   logger.info("SIB1 number of bytes: %u", data->N_bytes);
+
+  std::vector<uint16_t> ra_rnti_list = get_ra_rnti_list(sib1, config);
+  for (uint32_t i = 0; i < ra_rnti_list.size(); i++) {
+    logger.info("RA-RNTI[%u]: %u", i, ra_rnti_list[i]);
+  }
   return 0;
 }
