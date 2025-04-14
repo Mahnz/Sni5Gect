@@ -67,7 +67,7 @@ bool search_ssb(std::shared_ptr<srsran_ssb_t> ssb, std::shared_ptr<Task> task)
 
 void task_processor()
 {
-  for (uint32_t i = 0; i < 110; i++) {
+  for (uint32_t i = 0; i < 1000; i++) {
     std::shared_ptr<Task> task = task_queue.retrieve();
     if (task && task->slot_idx % 10 == 0) {
       std::vector<std::future<bool> > futures;

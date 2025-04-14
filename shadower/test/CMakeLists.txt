@@ -113,3 +113,6 @@ target_link_libraries(ldpc_test PRIVATE ${SRSUE_SOURCES} ${SRSRAN_SOURCES} srsra
 
 add_executable(pcap_writer pcap_writer.cc)
 target_link_libraries(pcap_writer ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
+
+add_executable(resampler resampler_test.cc)
+target_link_libraries(resampler ${SRSUE_SOURCES} ${SRSRAN_SOURCES} liquid)
