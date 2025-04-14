@@ -109,7 +109,7 @@ add_library(file_source SHARED src/file_source.cc src/utils.cc)
 # UHD source
 if (ENABLE_UHD)
   add_library(uhd_source SHARED src/uhd_source.cc src/utils.cc)
-  target_link_libraries(uhd_source ${UHD_LIBRARIES} ${Boost_LIBRARIES})
+  target_link_libraries(uhd_source ${UHD_LIBRARIES} ${Boost_LIBRARIES} liquid)
 endif(ENABLE_UHD)
 
 # Lime SDR source
