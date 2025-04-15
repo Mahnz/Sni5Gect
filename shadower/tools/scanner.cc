@@ -5,6 +5,8 @@
 uint16_t                    band             = 78;
 double                      srate            = 23.04e6;
 double                      center_frequency = 3427.5e6;
+double                      start_frequency  = 3417.5e6;
+double                      stop_frequency   = 3437.5e6;
 uint32_t                    sf_len           = srate / 1000;
 srsran_ssb_pattern_t        pattern          = SRSRAN_SSB_PATTERN_C;
 srsran_duplex_mode_t        duplex_mode      = SRSRAN_DUPLEX_MODE_TDD;
@@ -73,11 +75,66 @@ void scan_ssb(double ssb_freq, srslog::basic_logger& logger)
     logger.info("CFO: %f Hz", measure.cfo_hz);
     logger.info("ssb idx: %u", res.pbch_msg.hrf);
 
+    double scs_hz          = 15e3 * (1 << scs);
+    double frequncy_pointA = ssb_freq - mib.ssb_offset * 12 * scs_hz - 120 * scs_hz;
+    logger.info("Frequency point A: %f MHz", frequncy_pointA / 1e6);
+
     goto cleanup;
     return;
   }
 cleanup:
   srsran_ssb_free(&ssb);
+}
+
+void scan_center(double center_freq, srslog::basic_logger& logger, double bw)
+{
+  /* Initialize source */
+  ShadowerConfig config = {};
+  config.sample_rate    = srate;
+  config.dl_freq        = center_frequency;
+  config.ul_freq        = center_frequency;
+  config.rx_gain        = 40;
+  config.tx_gain        = 80;
+
+  config.source_params               = "type=b200";
+  create_source_t uhd_source_creator = load_source(uhd_source_module_path);
+  source                             = uhd_source_creator(config);
+
+  srsran::srsran_band_helper                band_helper;
+  srsran::srsran_band_helper::sync_raster_t sync_raster = band_helper.get_sync_raster(band, scs);
+  if (!sync_raster.valid()) {
+    logger.error("Invalid band %d or SCS %d kHz\n", band, scs);
+    return;
+  }
+
+  /* Initialize the buffer */
+  buffer = srsran_vec_cf_malloc(sf_len * 2);
+  if (!buffer) {
+    logger.error("Failed to allocate buffer");
+    return;
+  }
+
+  double ssb_lower = center_freq - bw;
+  double ssb_upper = center_freq + bw;
+
+  /* Enumerate all possible SSB frequencies */
+  while (!sync_raster.end()) {
+    double ssb_freq = sync_raster.get_frequency();
+    if (ssb_freq < ssb_lower) {
+      sync_raster.next();
+      continue;
+    }
+    if (ssb_freq > ssb_upper) {
+      break;
+    }
+    logger.info("Scanning SSB at %.2f MHz", ssb_freq / 1e6);
+    scan_ssb(ssb_freq, logger);
+    sync_raster.next();
+  }
+
+  source->close();
+  free(buffer);
+  logger.info("Finished scanning the cells around the center frequency %f MHz", center_freq / 1e6);
 }
 
 int main(int argc, char* argv[])
@@ -101,76 +158,19 @@ int main(int argc, char* argv[])
     center_frequency     = centerFreqMHz * 1e6;
   }
 
+  /* If start and stop frequency config is provided */
   if (argc > 4) {
-    double srateMHz = atof(argv[4]);
-    srate           = srateMHz * 1e6;
+    double startFreqMHz = atof(argv[3]);
+    start_frequency     = startFreqMHz * 1e6;
+
+    double stopFreqMHz = atof(argv[4]);
+    stop_frequency     = stopFreqMHz * 1e6;
   }
 
-  /* Initialize source */
-  ShadowerConfig config = {};
-  config.sample_rate    = srate;
-  config.dl_freq        = center_frequency;
-  config.ul_freq        = center_frequency;
-  config.rx_gain        = 40;
-  config.tx_gain        = 80;
-
-  config.source_params               = "type=b200";
-  create_source_t uhd_source_creator = load_source(uhd_source_module_path);
-  source                             = uhd_source_creator(config);
-
-  // create_source_t limesdr_source = load_source(limesdr_source_module_path);
-  // config.source_params =
-  //     "logLevel:3,port0:\"dev0\",dev0:\"XTRX\",dev0_chipIndex:0,"
-  //     "dev0_linkFormat:\"I12\",dev0_rx_path:\"LNAH\",dev0_tx_path:\"Band1\","
-  //     "dev0_max_channels_to_use:1,dev0_calibration:\"none\",dev0_rx_gfir_enable:0,dev0_tx_gfir_enable:0";
-  // config.rx_gain = 50;
-  // source         = limesdr_source(config);
-
-  /* If sample rate config is provided */
-  if (argc > 4) {
-    double srateMHz = atof(argv[4]);
-    srate           = srateMHz * 1e6;
-    sf_len          = srate / 1000;
+  double bw_step   = 9e6;
+  center_frequency = start_frequency + bw_step;
+  while (center_frequency < stop_frequency) {
+    scan_center(center_frequency, logger, bw_step);
+    center_frequency += (bw_step * 2);
   }
-
-  /* Retrieve the sync raster config */
-  srsran::srsran_band_helper                band_helper;
-  srsran::srsran_band_helper::sync_raster_t sync_raster = band_helper.get_sync_raster(band, scs);
-  if (!sync_raster.valid()) {
-    printf("Invalid band %d or SCS %d kHz\n", band, scs_kHz);
-    return 1;
-  }
-
-  /* Initialize the buffer */
-  buffer = srsran_vec_cf_malloc(sf_len * 2);
-  if (!buffer) {
-    logger.error("Failed to allocate buffer");
-  }
-
-  int symbol_sz    = srsran_symbol_sz_from_srate(srate, scs);
-  prbs             = srsran_nof_prb(symbol_sz);
-  double bandwidth = prbs * 12 * (15000 << scs);
-  logger.info("Bandwidth: %f MHz", bandwidth / 1000);
-
-  /* Configure the SSB search frequency lower limit and upper limit */
-  double ssb_lower = center_frequency - bandwidth / 2;
-  double ssb_upper = center_frequency + bandwidth / 2;
-
-  /* Enumerate all possible SSB frequencies */
-  while (!sync_raster.end()) {
-    double ssb_freq = sync_raster.get_frequency();
-    if (ssb_freq < ssb_lower) {
-      sync_raster.next();
-      continue;
-    }
-    if (ssb_freq > ssb_upper) {
-      break;
-    }
-    logger.info("Scanning SSB at %.2f MHz", ssb_freq / 1e6);
-    scan_ssb(ssb_freq, logger);
-    sync_raster.next();
-  }
-
-  free(buffer);
-  source->close();
 }
