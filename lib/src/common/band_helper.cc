@@ -123,6 +123,10 @@ double srsran_band_helper::get_center_freq_from_abs_freq_point_a(uint32_t nof_pr
   // for FR1 unit of resources blocks for freq calc is always 180kHz regardless for actual SCS of carrier
   // TODO: add offset_to_carrier
   double abs_freq_point_a_freq = nr_arfcn_to_freq(freq_point_a_arfcn);
+  if (custom_scs) {
+    double total_bandwidth_hz = nof_prb * SRSRAN_SUBC_SPACING_NR(scs) * SRSRAN_NRE;
+    return abs_freq_point_a_freq + total_bandwidth_hz / 2;
+  }
   return abs_freq_point_a_freq +
          (1.0 * nof_prb / 2 * SRSRAN_SUBC_SPACING_NR(srsran_subcarrier_spacing_t::srsran_subcarrier_spacing_15kHz) *
           SRSRAN_NRE);
@@ -137,6 +141,10 @@ double srsran_band_helper::get_abs_freq_point_a_from_center_freq(uint32_t nof_pr
 {
   // for FR1 unit of resources blocks for freq calc is always 180kHz regardless for actual SCS of carrier
   // TODO: add offset_to_carrier
+  if (custom_scs) {
+    double total_bandwidth_hz = nof_prb * SRSRAN_SUBC_SPACING_NR(scs) * SRSRAN_NRE;
+    return center_freq - total_bandwidth_hz / 2;
+  }
   return center_freq -
          (nof_prb / 2 * SRSRAN_SUBC_SPACING_NR(srsran_subcarrier_spacing_t::srsran_subcarrier_spacing_15kHz) *
           SRSRAN_NRE);

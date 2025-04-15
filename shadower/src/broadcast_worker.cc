@@ -3,7 +3,7 @@ BroadCastWorker::BroadCastWorker(ShadowerConfig& config_) :
   logger(srslog::fetch_basic_logger("BCWorker")), config(config_)
 {
   slot_per_sf = 1 << config.scs_common;
-  sf_len      = SRSRAN_SF_LEN_PRB(config.nof_prb);
+  sf_len      = config.sample_rate * SF_DURATION;
   slot_len    = sf_len / slot_per_sf;
   logger.set_level(config.bc_worker_log_level);
   /* Initialize phy cfg */

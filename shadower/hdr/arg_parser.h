@@ -164,10 +164,13 @@ inline int parse_args(ShadowerConfig& config, int argc, char* argv[])
   config.scs_common = srsran_subcarrier_spacing_from_str(vm["cell.scs_common"].as<std::string>().c_str());
   config.scs_ssb    = srsran_subcarrier_spacing_from_str(vm["cell.scs_ssb"].as<std::string>().c_str());
 
-  config.ul_arfcn = bands.get_ul_arfcn_from_dl_arfcn(config.dl_arfcn);
-  config.dl_freq  = bands.nr_arfcn_to_freq(config.dl_arfcn);
-  config.ul_freq  = bands.nr_arfcn_to_freq(config.ul_arfcn);
-  config.ssb_freq = bands.nr_arfcn_to_freq(config.ssb_arfcn);
+  bands.set_scs(config.scs_common);
+  config.ul_arfcn         = bands.get_ul_arfcn_from_dl_arfcn(config.dl_arfcn);
+  config.dl_freq          = bands.nr_arfcn_to_freq(config.dl_arfcn);
+  config.ul_freq          = bands.nr_arfcn_to_freq(config.ul_arfcn);
+  config.ssb_freq         = bands.nr_arfcn_to_freq(config.ssb_arfcn);
+  double frequency_pointA = bands.get_abs_freq_point_a_from_center_freq(config.nof_prb, config.dl_freq);
+  printf("Frequency point A: %f MHz\n", frequency_pointA / 1e6);
 
   config.ssb_pattern = srsran::srsran_band_helper::get_ssb_pattern(config.band, config.scs_ssb);
   config.duplex_mode = bands.get_duplex_mode(config.band);

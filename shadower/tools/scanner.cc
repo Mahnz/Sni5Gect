@@ -101,6 +101,11 @@ int main(int argc, char* argv[])
     center_frequency     = centerFreqMHz * 1e6;
   }
 
+  if (argc > 4) {
+    double srateMHz = atof(argv[4]);
+    srate           = srateMHz * 1e6;
+  }
+
   /* Initialize source */
   ShadowerConfig config = {};
   config.sample_rate    = srate;
