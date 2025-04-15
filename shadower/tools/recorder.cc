@@ -1,9 +1,12 @@
+#include "shadower/hdr/constants.h"
+#include "srsran/phy/utils/vector.h"
 #include <atomic>
 #include <complex>
 #include <condition_variable>
 #include <csignal>
 #include <fstream>
 #include <iostream>
+#include <liquid/liquid.h>
 #include <mutex>
 #include <pthread.h>
 #include <queue>
@@ -20,12 +23,17 @@ typedef struct {
   queue<shared_ptr<vector<complex<float> > > >* buffer_queue;
   mutex*                                        mtx;
   condition_variable*                           cv;
+  msresamp_crcf                                 resampler;
   string                                        outputFileName;
 } sdr_params_t;
 
 const double gain         = 40;   // dB
 const double subframeTime = 1e-3; // 1 ms
-const string device_args  = "type=b200";
+string       device_args  = "type=b200";
+// const string device_args =
+//     "type=x300,addr=192.168.40.2,sampling_rate=200e6,send_frame_size=8000,recv_frame_size=8000,clock=internal";
+bool   enable_resampler = false;
+double sdr_srate        = 23.04e6;
 
 void* read_from_sdr(void* args)
 {
@@ -40,7 +48,7 @@ void* read_from_sdr(void* args)
 
   // create a USRP device
   uhd::usrp::multi_usrp::sptr usrp = uhd::usrp::multi_usrp::make(device_args);
-  usrp->set_rx_rate(srate);
+  usrp->set_rx_rate(sdr_srate);
   usrp->set_rx_freq(freq);
   usrp->set_rx_gain(gain);
   usrp->set_clock_source("internal");
@@ -91,7 +99,8 @@ void write_to_file(void* args)
     stop_flag.store(true);
     return;
   }
-  long numSubframes = 0;
+  long                              numSubframes = 0;
+  std::vector<std::complex<float> > output_buffer(sdr_params->srate * subframeTime);
   while (!stop_flag.load()) {
     shared_ptr<vector<complex<float> > > buffer;
     {
@@ -100,7 +109,23 @@ void write_to_file(void* args)
       buffer = queue->front();
       queue->pop();
     }
-    outfile.write(reinterpret_cast<char*>(buffer->data()), buffer->size() * sizeof(complex<float>));
+
+    if (buffer == nullptr) {
+      break;
+    }
+
+    if (enable_resampler) {
+      uint32_t num_output_samples;
+      msresamp_crcf_execute(sdr_params->resampler,
+                            (liquid_float_complex*)buffer->data(),
+                            buffer->size(),
+                            (liquid_float_complex*)output_buffer.data(),
+                            &num_output_samples);
+      outfile.write(reinterpret_cast<char*>(output_buffer.data()), num_output_samples * sizeof(complex<float>));
+    } else {
+      outfile.write(reinterpret_cast<char*>(buffer->data()), buffer->size() * sizeof(complex<float>));
+    }
+
     if (numSubframes++ % 50 == 0) {
       printf(".");
       fflush(stdout);
@@ -134,19 +159,44 @@ int main(int argc, char* argv[])
     sampleRate           = sampleRateMHz * 1e6;
   }
 
+  if (argc > 5) {
+    double sdr_srateMHz = atof(argv[5]);
+    sdr_srate           = sdr_srateMHz * 1e6;
+    if (sdr_srate < sampleRate) {
+      cerr << "SDR sample rate must be greater than or equal to the sample rate" << endl;
+      return -1;
+    }
+    if (sdr_srate != sampleRate) {
+      enable_resampler = true;
+    }
+  } else {
+    sdr_srate = sampleRate;
+  }
+
+  if (argc > 6) {
+    device_args = argv[6];
+  }
+
   queue<shared_ptr<vector<complex<float> > > > buffer_queue;
   mutex                                        mtx;
   condition_variable                           cv;
 
+  float         resample_rate = sampleRate / sdr_srate;
+  msresamp_crcf resampler     = msresamp_crcf_create(resample_rate, TARGET_STOPBAND_SUPPRESSION);
+  printf("Using sample rate: %f\n", sdr_srate);
+  if (enable_resampler) {
+    printf("Using resampling rate: %f\n", resample_rate);
+  }
+
   pthread_t    receiver_thread, writer_thread;
-  sdr_params_t params = {centerFrequency, sampleRate, num_frames * 10, &buffer_queue, &mtx, &cv, outputFile};
+  sdr_params_t params = {centerFrequency, sampleRate, num_frames * 10, &buffer_queue, &mtx, &cv, resampler, outputFile};
   // create receiver thread
   if (pthread_create(&receiver_thread, nullptr, read_from_sdr, (void*)&params)) {
     cerr << "Error creating receiver thread" << endl;
     return -1;
   }
   // set the receiver thread to the highest priority
-  struct sched_param sp {};
+  struct sched_param sp{};
   sp.sched_priority = sched_get_priority_max(SCHED_RR);
   if (pthread_setschedparam(receiver_thread, SCHED_RR, &sp) != 0) {
     cerr << "Failed to set thread priority" << endl;
@@ -172,7 +222,7 @@ int main(int argc, char* argv[])
     return -1;
   }
   // set the writer thread to the lowest priority
-  struct sched_param sp2 {};
+  struct sched_param sp2{};
   sp2.sched_priority = sched_get_priority_min(SCHED_IDLE);
   if (pthread_setschedparam(writer_thread, SCHED_IDLE, &sp2) != 0) {
     cerr << "Failed to set thread priority" << endl;
@@ -180,5 +230,6 @@ int main(int argc, char* argv[])
 
   pthread_join(receiver_thread, nullptr);
   pthread_join(writer_thread, nullptr);
+  msresamp_crcf_destroy(resampler);
   return 0;
 }

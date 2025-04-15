@@ -30,11 +30,16 @@ public:
       throw std::runtime_error("Failed to open radio");
     }
 
-    srsran_rf_set_rx_srate(&rf, srate);
+    if (enable_resampler) {
+      srsran_rf_set_rx_srate(&rf, config.source_srate);
+      srsran_rf_set_tx_srate(&rf, config.source_srate);
+    } else {
+      srsran_rf_set_rx_srate(&rf, srate);
+      srsran_rf_set_tx_srate(&rf, srate);
+    }
     srsran_rf_set_rx_freq(&rf, 0, rx_freq);
     srsran_rf_set_rx_gain(&rf, rx_gain);
 
-    srsran_rf_set_tx_srate(&rf, srate);
     srsran_rf_set_tx_freq(&rf, 0, tx_freq);
     srsran_rf_set_tx_gain(&rf, tx_gain);
   }

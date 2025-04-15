@@ -105,6 +105,7 @@ endif()
 
 # File source 
 add_library(file_source SHARED src/file_source.cc src/utils.cc)
+target_link_libraries(file_source liquid)
 
 # UHD source
 if (ENABLE_UHD)
@@ -122,7 +123,7 @@ if (ENABLE_LIMESUITENG)
 endif(ENABLE_LIMESUITENG)
 
 add_executable(recorder tools/recorder.cc)
-target_link_libraries(recorder ${UHD_LIBRARIES} ${Boost_LIBRARIES} pthread)
+target_link_libraries(recorder ${UHD_LIBRARIES} ${Boost_LIBRARIES} pthread liquid)
 
 add_executable(scanner tools/scanner.cc src/utils.cc)
 target_link_libraries(scanner uhd_source ${SRSUE_SOURCES} ${SRSRAN_SOURCES})

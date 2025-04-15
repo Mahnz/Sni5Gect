@@ -37,6 +37,16 @@ public:
   srsran_band_helper()  = default;
   ~srsran_band_helper() = default;
 
+  srsran_subcarrier_spacing_t scs = srsran_subcarrier_spacing_30kHz;
+
+  bool custom_scs = false; // true if the user has set a custom SCS
+
+  void set_scs(srsran_subcarrier_spacing_t scs_)
+  {
+    scs        = scs_;
+    custom_scs = true;
+  }
+
   // Return frequency of given NR-ARFCN in Hz
   double nr_arfcn_to_freq(uint32_t nr_arfcn);
 

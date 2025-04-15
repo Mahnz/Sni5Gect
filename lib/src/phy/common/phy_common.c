@@ -404,6 +404,10 @@ int srsran_nof_prb(uint32_t symbol_sz)
         return 75;
       case 1536:
         return 100;
+      case 2048:
+        return 163;
+      case 4096:
+        return 275;
     }
   } else {
     switch (symbol_sz) {
@@ -419,6 +423,8 @@ int srsran_nof_prb(uint32_t symbol_sz)
         return 75;
       case 2048:
         return 100;
+      case 4096:
+        return 275;
     }
   }
   return SRSRAN_ERROR;
