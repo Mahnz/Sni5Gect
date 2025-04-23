@@ -1,4 +1,6 @@
 bin
+venv/
+__pycache__/
 build/
 release/
 records/
