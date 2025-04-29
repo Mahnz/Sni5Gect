@@ -134,6 +134,9 @@ target_link_libraries(scanner uhd_source ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
 add_executable(scan_single tools/scan_single.cc src/utils.cc)
 target_link_libraries(scan_single uhd_source ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
 
+add_executable(resampler tools/resampler.cc)
+target_link_libraries(resampler ${SRSUE_SOURCES} ${SRSRAN_SOURCES} liquid)
+
 if (USE_CUDA)
   set_source_files_properties(hdr/fft_processor.cuh PROPERTIES LANGUAGE CUDA)
   set_source_files_properties(src/fft_processor.cu PROPERTIES LANGUAGE CUDA)
