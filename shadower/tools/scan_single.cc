@@ -84,7 +84,6 @@ void scan_ssb(Source*               source,
     }
     auto end      = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    logger.info("SSB search time: %ld us", duration.count());
     /* If snr too small then continue */
     if (!res.pbch_msg.crc) {
       continue;
