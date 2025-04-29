@@ -1,9 +1,9 @@
 #include "shadower/hdr/constants.h"
 #include "shadower/hdr/source.h"
 #include "shadower/hdr/utils.h"
-double   sample_rate = 23.04e6;
-double   center_freq = 3427.5e6;
-uint32_t rx_gain     = 60;
+double   sample_rate = 122.88e6;
+double   center_freq = 3600e6;
+uint32_t rx_gain     = 61;
 uint32_t tx_gain     = 51;
 
 int main()
@@ -20,11 +20,9 @@ int main()
   config.rx_gain        = rx_gain;
   config.tx_gain        = tx_gain;
   config.sample_rate    = sample_rate;
-  config.source_params =
-      "logLevel:5,port0:\"dev0\",dev0:\"XTRX\",dev0_chipIndex:0,"
-      "dev0_linkFormat:\"I12\",dev0_rx_path:\"LNAH\",dev0_tx_path:\"Band1\","
-      "dev0_max_channels_to_use:1,dev0_calibration:\"none\",dev0_rx_gfir_enable:0,dev0_tx_gfir_enable:0";
-  Source* source = limesdr_source(config);
+  config.source_params  = "logLevel:5,dev0:XTRX,chipIndex:0,channels:1,linkFormat:I12,"
+                          "rx_path:LNAH,tx_path:Band1,calibration:none,freq_corr:34000,tx_enabled:0";
+  Source* source        = limesdr_source(config);
 
   uint32_t           sf_len         = sample_rate * SF_DURATION;
   cf_t*              buffer         = srsran_vec_cf_malloc(sf_len);
