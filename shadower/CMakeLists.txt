@@ -125,8 +125,14 @@ endif(ENABLE_LIMESUITENG)
 add_executable(recorder tools/recorder.cc)
 target_link_libraries(recorder ${UHD_LIBRARIES} ${Boost_LIBRARIES} pthread liquid)
 
+add_executable(recorder_fifo tools/recorder_fifo.cc)
+target_link_libraries(recorder_fifo ${UHD_LIBRARIES} ${Boost_LIBRARIES} pthread liquid)
+
 add_executable(scanner tools/scanner.cc src/utils.cc)
 target_link_libraries(scanner uhd_source ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
+
+add_executable(scan_single tools/scan_single.cc src/utils.cc)
+target_link_libraries(scan_single uhd_source ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
 
 if (USE_CUDA)
   set_source_files_properties(hdr/fft_processor.cuh PROPERTIES LANGUAGE CUDA)
