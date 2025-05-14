@@ -108,10 +108,8 @@ add_library(file_source SHARED src/file_source.cc src/utils.cc)
 target_link_libraries(file_source liquid)
 
 # UHD source
-if (ENABLE_UHD)
-  add_library(uhd_source SHARED src/uhd_source.cc src/utils.cc)
-  target_link_libraries(uhd_source ${UHD_LIBRARIES} ${Boost_LIBRARIES} liquid)
-endif(ENABLE_UHD)
+add_library(uhd_source SHARED src/uhd_source.cc)
+target_link_libraries(uhd_source srsran_phy srsran_rf)
 
 # Lime SDR source
 if (ENABLE_LIMESUITENG)
@@ -122,11 +120,7 @@ if (ENABLE_LIMESUITENG)
   target_link_libraries(lime_recorder limesuiteng::limesuiteng srslog)
 endif(ENABLE_LIMESUITENG)
 
-add_executable(recorder tools/recorder.cc)
-target_link_libraries(recorder ${UHD_LIBRARIES} ${Boost_LIBRARIES} pthread liquid)
-
-add_executable(recorder_fifo tools/recorder_fifo.cc)
-target_link_libraries(recorder_fifo ${UHD_LIBRARIES} ${Boost_LIBRARIES} pthread liquid)
+# add_executable(recorder_fifo tools/recorder_fifo.cc)
 
 add_executable(scanner tools/scanner.cc src/utils.cc)
 target_link_libraries(scanner uhd_source ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
@@ -181,3 +175,4 @@ endif(USE_CUDA)
 set(SHADOWER_DIR ${CMAKE_HOME_DIRECTORY}/shadower/src)
 add_subdirectory(test)
 add_subdirectory(modules)
+add_subdirectory(tools)

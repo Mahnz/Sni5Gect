@@ -2,10 +2,7 @@
 #include "shadower/hdr/buffer_pool.h"
 #include "shadower/hdr/constants.h"
 #include "shadower/hdr/source.h"
-#include "srsran/phy/rf/rf.h"
 #include "srsran/phy/utils/vector.h"
-#include "srsran/radio/rf_buffer.h"
-#include "srsran/srsran.h"
 #include <atomic>
 #include <complex>
 #include <condition_variable>
@@ -135,9 +132,13 @@ void parse_args(int argc, char* argv[])
   if (num_channels == 1) {
     printf("      Output File: %s\n", output_file.c_str());
   }
-  config.dl_freq       = center_freq;
   config.sample_rate   = sample_rate;
+  config.source_srate  = sdr_sample_rate;
+  config.dl_freq       = center_freq;
+  config.ul_freq       = center_freq;
   config.rx_gain       = gain;
+  config.tx_gain       = gain;
+  config.nof_channels  = num_channels;
   config.source_params = device_args;
   sf_len               = sample_rate * SF_DURATION;
   sf_len_sdr           = sdr_sample_rate * SF_DURATION;
@@ -145,25 +146,20 @@ void parse_args(int argc, char* argv[])
 
 void receiver_worker()
 {
-  /* Initialize srsran rf */
-  srsran_rf_t rf;
-  if (srsran_rf_open_multi(&rf, (char*)device_args.c_str(), num_channels)) {
-    fprintf(stderr, "Failed to open radio\n");
+  /* Initialize Source */
+  Source* source = nullptr;
+
+  if (source_type == "uhd") {
+    create_source_t create_source = load_source(uhd_source_module_path);
+    source                        = create_source(config);
+  } else {
+    fprintf(stderr, "Unknown source type: %s\n", source_type.c_str());
     exit(EXIT_FAILURE);
   }
-  srsran_rf_set_rx_srate(&rf, sdr_sample_rate);
-  srsran_rf_set_tx_srate(&rf, sdr_sample_rate);
-  for (uint32_t i = 0; i < num_channels; i++) {
-    srsran_rf_set_rx_gain_ch(&rf, i, gain);
-    srsran_rf_set_tx_gain_ch(&rf, i, 0);
-    srsran_rf_set_rx_freq(&rf, i, center_freq);
-    srsran_rf_set_tx_freq(&rf, i, center_freq);
-  }
-  sleep(1);
-  buffer_pool           = new SharedBufferPool(sf_len_sdr, 100);
-  srsran_timestamp_t ts = {};
-  srsran_rf_start_rx_stream(&rf, false);
-  uint32_t count = 0;
+
+  buffer_pool              = new SharedBufferPool(sf_len_sdr, 100);
+  srsran_timestamp_t ts    = {};
+  uint32_t           count = 0;
   while (count++ < num_frames && !stop_flag.load()) {
     std::shared_ptr<frame_t> frame = std::make_shared<frame_t>();
     cf_t*                    rx_buffer[SRSRAN_MAX_CHANNELS];
@@ -174,9 +170,9 @@ void receiver_worker()
       frame->buffer[i]                        = buf;
       rx_buffer[i]                            = buf->data();
     }
-    int result =
-        srsran_rf_recv_with_time_multi(&rf, (void**)&rx_buffer, sf_len_sdr, true, &ts.full_secs, &ts.frac_secs);
-    if (result == SRSRAN_ERROR) {
+
+    int result = source->recv(rx_buffer, sf_len_sdr, &ts);
+    if (result == -1) {
       fprintf(stderr, "Failed to receive samples\n");
       break;
     }
@@ -188,7 +184,7 @@ void receiver_worker()
     }
   }
   stop_flag.store(true);
-  srsran_rf_close(&rf);
+  source->close();
 }
 
 void writer_worker()

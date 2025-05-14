@@ -8,8 +8,8 @@ class Source
 public:
   virtual ~Source() = default;
   virtual bool is_sdr() const { return false; }
-  virtual int  receive(cf_t* buffer, uint32_t nof_samples, srsran_timestamp_t* ts)                  = 0;
-  virtual int  send(cf_t* samples, uint32_t length, srsran_timestamp_t& tx_time, uint32_t slot = 0) = 0;
+  virtual int  recv(cf_t** buffer, uint32_t nof_samples, srsran_timestamp_t* ts)                    = 0;
+  virtual int  send(cf_t** buffer, uint32_t nof_samples, srsran_timestamp_t& ts, uint32_t slot = 0) = 0;
   virtual void close()                                                                              = 0;
   virtual void set_tx_gain(double gain)                                                             = 0;
   virtual void set_rx_gain(double gain)                                                             = 0;
@@ -19,6 +19,8 @@ public:
   virtual void set_rx_freq(double freq)                                                             = 0;
 };
 
-using create_source_t = Source* (*)(ShadowerConfig& config);
+using create_source_t = Source* (*)(ShadowerConfig & config);
+
+/* Function used to load source module */
 create_source_t load_source(const std::string filename);
 #endif // SOURCE_H

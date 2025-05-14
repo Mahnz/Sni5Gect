@@ -33,6 +33,8 @@ struct ShadowerConfig {
 
   double sample_rate; // Sample rate (Hz)
 
+  uint32_t nof_channels = 1; // Number of channels
+
   double  uplink_cfo_correction; // Uplink CFO correction for PUSCH decoding
   int32_t ul_sample_offset;      // Number of samples in last slot
 
