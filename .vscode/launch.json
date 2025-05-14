@@ -32,5 +32,35 @@
             "MIMode": "gdb",
             "preLaunchTask": "build_active"
         },
+        {
+            "name": "recorder",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/shadower/recorder",
+            "args": [
+                "-f",
+                "3427.5",
+                "-n",
+                "2000",
+                "-s",
+                "23.04",
+                "-S",
+                "23.04",
+                "-o",
+                "output",
+                "-c",
+                "2",
+                "-t",
+                "uhd",
+                "-d",
+                "type=b200,master_clock_rate=23.04e6"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "build_all"
+        },
     ]
 }
