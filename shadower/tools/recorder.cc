@@ -1,7 +1,7 @@
-#include "shadower/hdr/arg_parser.h"
-#include "shadower/hdr/buffer_pool.h"
-#include "shadower/hdr/constants.h"
-#include "shadower/hdr/source.h"
+#include "shadower/source/source.h"
+#include "shadower/utils/arg_parser.h"
+#include "shadower/utils/buffer_pool.h"
+#include "shadower/utils/constants.h"
 #include "srsran/phy/utils/vector.h"
 #include <atomic>
 #include <complex>

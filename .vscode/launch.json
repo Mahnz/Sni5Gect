@@ -61,5 +61,28 @@
             "externalConsole": false,
             "MIMode": "gdb",
         },
+        {
+            "name": "cutter",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/shadower/tools/cutter",
+            "args": [
+                "-i",
+                "/root/records/output.fc32",
+                "-o",
+                "/root/records/test.fc32",
+                "-s",
+                "23.04",
+                "-k",
+                "133",
+                "-n",
+                "5"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+        },
     ]
 }
