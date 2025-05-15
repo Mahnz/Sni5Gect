@@ -82,7 +82,13 @@ __attribute__((visibility("default"))) Source* create_source(ShadowerConfig& con
 {
   std::vector<std::string> file_names;
   file_names.reserve(config.nof_channels);
-  file_names.push_back(config.source_params);
+  std::stringstream ss(config.source_params);
+  std::string       token;
+  while (std::getline(ss, token, ',')) {
+    if (!token.empty()) {
+      file_names.push_back(token);
+    }
+  }
   return new FileSource(file_names, config.nof_channels, config.sample_rate);
 }
 }
