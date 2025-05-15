@@ -36,7 +36,7 @@
             "name": "recorder",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/shadower/recorder",
+            "program": "${workspaceFolder}/build/shadower/tools/recorder",
             "args": [
                 "-f",
                 "3427.5",

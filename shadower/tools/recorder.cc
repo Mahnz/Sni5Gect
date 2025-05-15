@@ -160,7 +160,7 @@ void receiver_worker()
   buffer_pool              = new SharedBufferPool(sf_len_sdr, 100);
   srsran_timestamp_t ts    = {};
   uint32_t           count = 0;
-  while (count++ < num_frames && !stop_flag.load()) {
+  while (count++ < num_frames) {
     std::shared_ptr<frame_t> frame = std::make_shared<frame_t>();
     cf_t*                    rx_buffer[SRSRAN_MAX_CHANNELS];
     frame->frames_idx = count;
