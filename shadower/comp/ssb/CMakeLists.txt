@@ -1,0 +1,6 @@
+if (USE_CUDA)
+    set_source_files_properties(ssb_cuda.cuh PROPERTIES LANGUAGE CUDA)
+    set_source_files_properties(ssb_cuda.cu PROPERTIES LANGUAGE CUDA)
+    add_library(ssb_cuda ssb_cuda.cu ssb_cuda.cuh)
+    target_link_libraries(ssb_cuda CUDA::cufft CUDA::cudart)
+endif(USE_CUDA)

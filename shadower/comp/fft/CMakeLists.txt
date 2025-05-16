@@ -1,0 +1,6 @@
+if (USE_CUDA)
+    set_source_files_properties(fft_processor.cuh PROPERTIES LANGUAGE CUDA)
+    set_source_files_properties(fft_processor.cu PROPERTIES LANGUAGE CUDA)
+    add_library(fft_processor fft_processor.cu fft_processor.cuh)
+    target_link_libraries(fft_processor CUDA::cufft CUDA::cudart)
+endif(USE_CUDA)
