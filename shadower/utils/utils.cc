@@ -22,6 +22,18 @@ void write_record_to_file(cf_t* buffer, uint32_t length, char* name, const std::
   }
 }
 
+/* Load the IQ samples from a file */
+bool load_samples(const std::string& filename, cf_t* buffer, size_t nsamples)
+{
+  std::ifstream infile(filename, std::ios::binary);
+  if (!infile.is_open()) {
+    return false;
+  }
+  infile.read(reinterpret_cast<char*>(buffer), nsamples * sizeof(cf_t));
+  infile.close();
+  return true;
+}
+
 /* Initialize logger */
 srslog::basic_logger& srslog_init(ShadowerConfig* config)
 {
