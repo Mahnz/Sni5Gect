@@ -1,26 +1,38 @@
 #ifndef SYNCER_H
 #define SYNCER_H
-#include "shadower/hdr/constants.h"
-#include "shadower/hdr/safe_queue.h"
-#include "shadower/hdr/source.h"
-#include "shadower/hdr/task.h"
-#include "shadower/hdr/trace_samples.h"
+#include "shadower/comp/trace_samples/trace_samples.h"
+#include "shadower/source/source.h"
+#include "shadower/utils/buffer_pool.h"
+#include "shadower/utils/constants.h"
+#include "shadower/utils/safe_queue.h"
+#include "shadower/utils/task.h"
 #include "srsran/common/threads.h"
+#include "srsran/phy/phch/pbch_msg_nr.h"
+#include "srsran/phy/sync/ssb.h"
 #include "srsran/srslog/srslog.h"
 #include <atomic>
 #include <queue>
 #include <thread>
 #if ENABLE_CUDA
-#include "shadower/hdr/ssb_cuda.cuh"
+#include "shadower/comp/ssb/ssb_cuda.cuh"
 #endif // ENABLE_CUDA
 
 struct syncer_args_t {
   double                      srate;
+  double                      source_srate;
   srsran_subcarrier_spacing_t scs;
   double                      dl_freq;
   double                      ssb_freq;
   srsran_ssb_pattern_t        pattern;
   srsran_duplex_mode_t        duplex_mode;
+};
+
+struct samples_t {
+  uint32_t                            task_idx;
+  uint32_t                            slot_idx;
+  srsran_timestamp_t                  ts;
+  std::shared_ptr<std::vector<cf_t> > dl_buffer[SRSRAN_MAX_CHANNELS];
+  std::shared_ptr<std::vector<cf_t> > ul_buffer[SRSRAN_MAX_CHANNELS];
 };
 
 class Syncer : public srsran::thread
@@ -50,9 +62,12 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("syncer", true);
 
   double       srate;
+  double       source_srate;
   uint32_t     sf_len;
+  uint32_t     slot_len;
   uint32_t     slot_per_sf;
-  Source*      source = nullptr;
+  uint32_t     num_channels = 1;
+  Source*      source       = nullptr;
   TraceSamples tracer_sib1;
 #if ENABLE_CUDA
   SSBCuda* ssb_cuda = nullptr;
@@ -73,13 +88,13 @@ private:
   ShadowerConfig&               config;
 
   /* history queue, if the last subframe contains part of current subframe, then read from history queue */
-  std::queue<std::shared_ptr<std::vector<cf_t> > > history_queue;
+  std::queue<std::shared_ptr<samples_t> > history_samples_queue;
 
   /* handler for increasing tti when receiving samples from source */
   void run_tti();
 
   /* listen to new subframes and keep getting sync */
-  bool listen(std::shared_ptr<std::vector<cf_t> >& samples);
+  bool listen(std::shared_ptr<samples_t>& samples);
 
   /* run cell search to find the cell */
   bool run_cell_search();
@@ -99,11 +114,9 @@ private:
   /* implement the thread class function to run the thread */
   void run_thread() override;
 
-  std::thread                   recorder;
-  SafeQueue<std::vector<cf_t> > recorder_queue;
-  void                          record_to_file();
-  std::mutex                    time_mtx;
+  std::unique_ptr<SharedBufferPool> buffer_pool = nullptr;
 
+  std::mutex        time_mtx;
   std::atomic<bool> running{false};
   std::atomic<bool> cell_found{false};
   std::atomic<bool> in_sync{false};

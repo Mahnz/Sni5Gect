@@ -22,3 +22,15 @@ void write_record_to_file(cf_t* buffer, uint32_t length, char* name, const std::
   }
 }
 
+/* Initialize logger */
+srslog::basic_logger& srslog_init(ShadowerConfig* config)
+{
+  srslog::init();
+  srslog::sink* sink        = nullptr;
+  sink                      = srslog::create_stdout_sink();
+  srslog::log_channel* chan = srslog::create_log_channel("main", *sink);
+  srslog::set_default_sink(*sink);
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("main", false);
+  logger.set_level(config->log_level);
+  return logger;
+}

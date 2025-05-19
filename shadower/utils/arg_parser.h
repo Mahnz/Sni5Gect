@@ -55,8 +55,7 @@ struct ShadowerConfig {
   uint32_t num_ues    = 10;    // Number of UETrackers to pre-initialize
 
   // Recorder configurations
-  bool        enable_recorder = false; // Enable recording the IQ samples to file
-  std::string recorder_file;           // Recorder file path
+  bool enable_recorder = false; // Enable recording the IQ samples to subframes
 
   // Source configurations
   std::string source_type;   // Source type: file, uhd, limeSDR
@@ -122,8 +121,7 @@ inline int parse_args(ShadowerConfig& config, int argc, char* argv[])
       // Pcap settings
       ("pcap.pcap_folder", bpo::value<std::string>(&config.pcap_folder)->default_value("/tmp/"), "Log level")
       // Recorder settings
-      ("recorder.enable", bpo::value<bool>(&config.enable_recorder)->default_value(false),              "Enable recorder")
-      ("recorder.file",   bpo::value<std::string>(&config.recorder_file)->default_value("output.fc32"), "output FC32 file path")
+      ("recorder.enable", bpo::value<bool>(&config.enable_recorder)->default_value(false), "Enable recorder")
       // log config section
       ("log.log_level", bpo::value<std::string>()->default_value("INFO"), "Log level")
       ("log.bc_worker", bpo::value<std::string>()->default_value("INFO"), "Broadcast Worker Log level")

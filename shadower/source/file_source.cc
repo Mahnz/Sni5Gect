@@ -1,11 +1,13 @@
 #include "shadower/source/source.h"
 #include "shadower/utils/utils.h"
+#include "srsran/phy/common/timestamp.h"
 #include <thread>
 
 class FileSource final : public Source
 {
 public:
-  FileSource(std::vector<std::string> filenames, uint32_t num_channels, double sample_rate) : srate(sample_rate)
+  FileSource(std::vector<std::string> filenames, uint32_t num_channels, double sample_rate) :
+    srate(sample_rate), nof_channels(num_channels)
   {
     for (uint32_t i = 0; i < num_channels; i++) {
       std::string filename = filenames[i];

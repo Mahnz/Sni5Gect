@@ -1,5 +1,6 @@
-#include "shadower/hdr/syncer.h"
-#include "shadower/hdr/utils.h"
+#include "shadower/comp/sync/syncer.h"
+#include "shadower/utils/utils.h"
+#include "srsran/phy/utils/vector.h"
 
 Syncer::Syncer(syncer_args_t args_, Source* source_, ShadowerConfig& config_) :
   source(source_),
@@ -7,10 +8,13 @@ Syncer::Syncer(syncer_args_t args_, Source* source_, ShadowerConfig& config_) :
   config(config_),
   sf_len(srate * SF_DURATION),
   srsran::thread("Syncer"),
-  slot_per_sf(1 << (uint32_t)args_.scs)
+  slot_per_sf(1 << (uint32_t)args_.scs),
+  buffer_pool(std::make_unique<SharedBufferPool>(sf_len, config_.pool_size))
 {
   args = args_;
   logger.set_level(config.syncer_log_level);
+  slot_len     = srate * SF_DURATION / slot_per_sf;
+  num_channels = config.nof_channels;
 }
 
 bool Syncer::init()
@@ -46,14 +50,11 @@ bool Syncer::init()
   tracer_status.init("ipc:///tmp/sni5gect");
   tracer_status.set_throttle_ms(200);
 #if ENABLE_CUDA
-  if (config.enable_gpu_acceleration) {
+  if (config.enable_gpu) {
     ssb_cuda = new SSBCuda(srate, args.dl_freq, args.ssb_freq, args.scs, args.pattern, args.duplex_mode);
   }
 #endif // ENABLE_CUDA
   running.store(true);
-  if (config.enable_recorder) {
-    recorder = std::thread(&Syncer::record_to_file, this);
-  }
   return true;
 }
 
@@ -62,9 +63,6 @@ void Syncer::stop()
   running.store(false);
   logger.info("Waiting syncer to exit");
   thread_cancel();
-  if (recorder.joinable()) {
-    recorder.join();
-  }
 #if ENABLE_CUDA
   ssb_cuda->cleanup();
 #endif // ENABLE_CUDA
@@ -93,67 +91,75 @@ void Syncer::get_tti(uint32_t* idx, srsran_timestamp_t* ts)
 /* Correct:  |--s-----------|--------------|
 Received:  |----s---------|--   Delay  2 symbols Copy --s--------- then receive |-- process the slot again
 Received:    --|s-------------| Delay -2 symbols Copy --| and then receive ------------| process the new slot*/
-bool Syncer::listen(std::shared_ptr<std::vector<cf_t> >& samples)
+bool Syncer::listen(std::shared_ptr<samples_t>& samples)
 {
+  cf_t* buffer[SRSRAN_MAX_CHANNELS];
+  for (int i = 0; i < num_channels; i++) {
+    buffer[i] = samples->dl_buffer[i]->data();
+  }
+
   /* receive data */
   uint32_t offset     = 0;
   uint32_t to_receive = sf_len;
   int32_t  limit      = 500;
   if (samples_delayed > limit) {
+    /* If there's still a lot of samples belong to last subframe not processed,
+      we receive the remaining samples and make it complete */
     /* if current frame to receive still contain last frame, and the offset is larger than 500
     Then copy the last sf from the correct start to current buffer, we re-do some decoding on the
     same sf we already processed before */
-    std::shared_ptr<std::vector<cf_t> > last_samples = history_queue.back();
+    std::shared_ptr<samples_t> history = history_samples_queue.back();
     /* Remaining correctly aligned samples in the last slot */
     uint32_t remaining = sf_len - samples_delayed;
     /* read from history queue and fill current subframe with last subframe data */
-    srsran_vec_cf_copy(samples->data(), last_samples->data() + samples_delayed, remaining);
+    for (uint32_t i = 0; i < num_channels; i++) {
+      srsran_vec_cf_copy(buffer[i], history->dl_buffer[i]->data() + samples_delayed, remaining);
+    }
     offset     = remaining;
     to_receive = samples_delayed;
   } else if (samples_delayed > 0) {
     /* If the offset is too small, just ignore */
     srsran_timestamp_t ts;
-    source->receive(samples->data(), samples_delayed, &ts);
-    /* copy to recorder buffer */
-    if (source->is_sdr() && config.enable_recorder) {
-      std::shared_ptr<std::vector<cf_t> > recorder_buffer = std::make_shared<std::vector<cf_t> >(samples_delayed);
-      srsran_vec_cf_copy(recorder_buffer->data(), samples->data(), samples_delayed);
-      recorder_queue.push(recorder_buffer);
-    }
+    source->recv(buffer, samples_delayed, &ts);
   } else {
     /* if part of new frame is already occupied in last frame */
     offset     = (uint32_t)(-samples_delayed);
     to_receive = (sf_len + samples_delayed);
     if (offset > limit) {
-      std::shared_ptr<std::vector<cf_t> > last_samples = history_queue.back();
-      srsran_vec_cf_copy(samples->data(), last_samples->data() + to_receive, offset);
+      std::shared_ptr<samples_t> history = history_samples_queue.back();
+      for (uint32_t i = 0; i < num_channels; i++) {
+        srsran_vec_cf_copy(buffer[i], history->dl_buffer[i]->data() + to_receive, offset);
+      }
     } else {
-      srsran_vec_cf_zero(samples->data(), offset);
+      for (uint32_t i = 0; i < num_channels; i++) {
+        srsran_vec_cf_zero(buffer[i], offset);
+      }
     }
   }
   /* reset next sample offset */
   samples_delayed = 0;
   srsran_timestamp_t ts;
+  cf_t*              tmp[SRSRAN_MAX_CHANNELS];
+  for (int i = 0; i < num_channels; i++) {
+    tmp[i] = buffer[i] + offset;
+  }
   /* receive the remaining samples of the subframe */
-  if (source->receive(samples->data() + offset, to_receive, &ts) == -1) {
+  if (source->recv(tmp, to_receive, &ts) == -1) {
     logger.debug("Error source->receive");
     return false;
   }
-  /* copy to recorder buffer */
-  if (source->is_sdr() && config.enable_recorder) {
-    std::shared_ptr<std::vector<cf_t> > recorder_buffer = std::make_shared<std::vector<cf_t> >(to_receive);
-    srsran_vec_cf_copy(recorder_buffer->data(), samples->data() + offset, to_receive);
-    recorder_queue.push(recorder_buffer);
-  }
 
   /* maintain the history queue size to 11 */
-  if (history_queue.size() < 11) {
-    history_queue.push(samples);
+  if (history_samples_queue.size() < 11) {
+    history_samples_queue.push(samples);
   } else {
-    history_queue.pop();
-    history_queue.push(samples);
+    history_samples_queue.pop();
+    history_samples_queue.push(samples);
   }
-  srsran_vec_apply_cfo(samples->data() + offset, -cfo_hz / srate, samples->data(), to_receive);
+
+  for (uint32_t i = 0; i < num_channels; i++) {
+    srsran_vec_apply_cfo(buffer[i] + offset, -cfo_hz / srate, samples->dl_buffer[i]->data() + offset, to_receive);
+  }
 
   std::lock_guard<std::mutex> lock(time_mtx);
   /* update the new received sample timer */
@@ -167,14 +173,20 @@ bool Syncer::run_cell_search()
 {
   srsran_ssb_search_res_t cs_result = {};
   while (!cell_found.load()) {
-    std::shared_ptr<std::vector<cf_t> > samples = std::make_shared<std::vector<cf_t> >(sf_len);
+    /* Initialize the buffer */
+    std::shared_ptr<samples_t> samples = std::make_shared<samples_t>();
+    for (int i = 0; i < config.nof_channels; i++) {
+      samples->dl_buffer[i] = buffer_pool->get_buffer();
+    }
+    /* receive the samples */
     if (!listen(samples)) {
       logger.debug("Error receive samples for cell search");
       error_handler();
       return false;
     }
+
     /* run ssb search on new subframe received */
-    if (srsran_ssb_search(&ssb, samples->data(), sf_len, &cs_result) < SRSRAN_SUCCESS) {
+    if (srsran_ssb_search(&ssb, samples->dl_buffer[0]->data(), sf_len, &cs_result) < SRSRAN_SUCCESS) {
       logger.debug("Error srsran_ssb_search");
       continue;
     }
@@ -197,7 +209,7 @@ bool Syncer::run_cell_search()
     logger.info(YELLOW "Found cell: %s" RESET, mib_info_str.data());
     ncellid = cs_result.N_id;
 
-    tracer_sib1.send(samples->data(), sf_len, true);
+    tracer_sib1.send(samples->dl_buffer[0]->data(), sf_len, true);
     cell_found.store(true);
     return true;
   }
@@ -243,7 +255,7 @@ bool Syncer::run_sync_find(cf_t* buffer)
   srsran_csi_trs_measurements_t measurements_tmp = {};
   srsran_pbch_msg_nr_t          pbch_msg_tmp     = {};
 #if ENABLE_CUDA
-  if (config.enable_gpu_acceleration) {
+  if (config.enable_gpu) {
     if (ssb_cuda->ssb_run_sync_find(buffer, ncellid, &measurements_tmp, &pbch_msg_tmp) < 0) {
       logger.debug("Error ssb_run_sync_find");
       return false;
@@ -301,33 +313,6 @@ bool Syncer::run_sync_track(cf_t* buffer)
   return true;
 }
 
-void Syncer::record_to_file()
-{
-  if (!source->is_sdr()) {
-    logger.info("Source is not SDR, exit recorder thread");
-    return;
-  }
-  if (!config.enable_recorder) {
-    logger.info("Recorder is not enabled, exit recorder thread");
-    return;
-  }
-
-  std::ofstream outfile(config.recorder_file, std::ios::binary);
-  if (!outfile.is_open()) {
-    logger.error("Failed to open recorder file");
-    return;
-  }
-
-  while (running.load()) {
-    std::shared_ptr<std::vector<cf_t> > buffer = recorder_queue.retrieve();
-    if (!buffer || !buffer->data()) {
-      continue;
-    }
-    outfile.write(reinterpret_cast<char*>(buffer->data()), buffer->size() * sizeof(cf_t));
-  }
-  outfile.close();
-}
-
 void Syncer::run_thread()
 {
   /* Run cell search first to find the cell */
@@ -342,51 +327,58 @@ void Syncer::run_thread()
     return;
   }
   on_cell_found(mib, ncellid);
-  std::shared_ptr<std::vector<cf_t> > last_sample = history_queue.back();
+  std::shared_ptr<samples_t> last_sample = history_samples_queue.back();
 #if ENABLE_CUDA
-  if (config.enable_gpu_acceleration) {
+  if (config.enable_gpu) {
     ssb_cuda->init(SRSRAN_NID_2_NR(ncellid));
   }
 #endif /// ENABLE_CUDA
-  run_sync_find(last_sample->data());
+  run_sync_find(last_sample->dl_buffer[0]->data());
   while (running.load()) {
-    std::shared_ptr<std::vector<cf_t> > last_slot = history_queue.back();
-    std::shared_ptr<std::vector<cf_t> > samples   = std::make_shared<std::vector<cf_t> >(sf_len);
+    std::shared_ptr<samples_t> last_samples = history_samples_queue.back();
+    std::shared_ptr<samples_t> samples      = std::make_shared<samples_t>();
+    for (int i = 0; i < config.nof_channels; i++) {
+      samples->dl_buffer[i] = buffer_pool->get_buffer();
+    }
     if (!listen(samples)) {
       logger.error("Error receiving samples from source %u", task_idx);
       error_handler();
       return;
     }
     if (in_sync) {
-      if (!run_sync_track(samples->data())) {
+      if (!run_sync_track(samples->dl_buffer[0]->data())) {
         in_sync.store(false);
         logger.debug("run_sync_track lost sync at %u", (uint32_t)tti);
         /* if lost sync try to run sync find to get back to sync */
-        if (!run_sync_find(samples->data())) {
+        if (!run_sync_find(samples->dl_buffer[0]->data())) {
           logger.debug("Still out of sync run_sync_find: %u", (uint32_t)tti);
         } else {
           logger.debug("Get back to sync for slot: %u", (uint32_t)tti);
         }
       }
     } else {
-      if (!run_sync_find(samples->data())) {
+      if (!run_sync_find(samples->dl_buffer[0]->data())) {
         logger.debug("Not in sync tti: %u", (uint32_t)tti);
       } else {
         logger.debug("Get to sync at slot: %u", (uint32_t)tti);
       }
     }
-    srsran_vec_apply_cfo(samples->data(), -cfo_hz / srate, samples->data(), sf_len);
+    for (uint32_t i = 0; i < num_channels; i++) {
+      srsran_vec_apply_cfo(samples->dl_buffer[i]->data(), -cfo_hz / srate, samples->dl_buffer[i]->data(), sf_len);
+    }
     std::shared_ptr<Task> task = std::make_shared<Task>();
-    task->buffer               = samples;
-    task->last_slot            = last_slot;
-    task->slot_idx             = tti;
-    task->ts                   = timestamp_new;
-    task->task_idx             = task_idx++;
+    for (uint32_t i = 0; i < num_channels; i++) {
+      task->dl_buffer[i]      = samples->dl_buffer[i];
+      task->last_dl_buffer[i] = last_samples->dl_buffer[i];
+    }
+    task->slot_idx = tti;
+    task->task_idx = task_idx++;
+    task->ts       = timestamp_new;
     publish_subframe(task);
-    if (!source->is_sdr() && config.enable_recorder) {
+    if (config.enable_recorder) {
       char filename[64];
       sprintf(filename, "sf_%u_%u", task->task_idx, task->slot_idx);
-      write_record_to_file(samples->data(), sf_len, filename);
+      write_record_to_file(samples->dl_buffer[0]->data(), sf_len, filename);
     }
   }
 }
