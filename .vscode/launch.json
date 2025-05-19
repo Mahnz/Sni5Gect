@@ -135,5 +135,28 @@
             "externalConsole": false,
             "MIMode": "gdb",
         },
+        {
+            "name": "ssb_test",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/shadower/comp/ssb/ssb_test",
+            "args": [
+                "-s",
+                "46.08",
+                "-f",
+                "3427.5",
+                "-b",
+                "3413.28",
+                "-F",
+                "${workspaceFolder}/shadower/test/data/srsran-n78-40MHz/sib.fc32",
+                "-I",
+                "1"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+        },
     ]
 }
