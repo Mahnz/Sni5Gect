@@ -64,7 +64,6 @@ private:
   double       srate;
   double       source_srate;
   uint32_t     sf_len;
-  uint32_t     slot_len;
   uint32_t     slot_per_sf;
   uint32_t     num_channels = 1;
   Source*      source       = nullptr;

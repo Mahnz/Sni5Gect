@@ -1,4 +1,4 @@
-#include "shadower/utils/utils.h"
+#include "shadower/utils/ssb_utils.h"
 
 /* Helper function to initialize ssb */
 bool init_ssb(srsran_ssb_t&               ssb,

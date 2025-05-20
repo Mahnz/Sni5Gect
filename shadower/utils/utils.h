@@ -1,7 +1,6 @@
 #pragma once
 #include "shadower/utils/arg_parser.h"
 #include "srsran/config.h"
-#include "srsran/phy/sync/ssb.h"
 #include "srsran/srslog/srslog.h"
 #include <inttypes.h>
 #include <string>
@@ -14,12 +13,3 @@ bool load_samples(const std::string& filename, cf_t* buffer, size_t nsamples);
 
 /* Initialize logger */
 srslog::basic_logger& srslog_init(ShadowerConfig* config);
-
-/* Helper function to initialize ssb */
-bool init_ssb(srsran_ssb_t&               ssb,
-              double                      srate,
-              double                      dl_freq,
-              double                      ssb_freq,
-              srsran_subcarrier_spacing_t scs,
-              srsran_ssb_pattern_t        pattern,
-              srsran_duplex_mode_t        duplex_mode);

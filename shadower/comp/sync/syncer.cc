@@ -13,7 +13,6 @@ Syncer::Syncer(syncer_args_t args_, Source* source_, ShadowerConfig& config_) :
 {
   args = args_;
   logger.set_level(config.syncer_log_level);
-  slot_len     = srate * SF_DURATION / slot_per_sf;
   num_channels = config.nof_channels;
 }
 

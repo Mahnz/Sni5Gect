@@ -158,5 +158,32 @@
             "externalConsole": false,
             "MIMode": "gdb",
         },
+        {
+            "name": "fft_test",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/shadower/comp/fft/fft_test",
+            "args": [
+                "-s",
+                "46.08",
+                "-f",
+                "3427.5",
+                "-b",
+                "3413.28",
+                "-p",
+                "106",
+                "-h",
+                "1",
+                "-F",
+                "${workspaceFolder}/shadower/test/data/srsran-n78-40MHz/sib.fc32",
+                "-I",
+                "1"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+        },
     ]
 }

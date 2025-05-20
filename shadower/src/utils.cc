@@ -49,25 +49,6 @@ srslog::basic_logger& srslog_init(ShadowerConfig* config)
   return srslog::fetch_basic_logger("main", false);
 }
 
-/* Write the IQ samples to a file so that we can use tools like matlab or spectrogram-py to debug */
-void write_record_to_file(cf_t* buffer, uint32_t length, char* name, const std::string& folder)
-{
-  char filename[256];
-  if (name) {
-    sprintf(filename, "%s/%s.fc32", folder.c_str(), name);
-  } else {
-    auto now                     = std::chrono::high_resolution_clock::now();
-    auto nanoseconds_since_epoch = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
-    sprintf(filename, "%s/record_%ld.fc32", folder.c_str(), nanoseconds_since_epoch);
-  }
-  std::ofstream f(filename, std::ios::binary);
-  if (f) {
-    f.write(reinterpret_cast<char*>(buffer), length * sizeof(cf_t));
-    f.close();
-  } else {
-    printf("Error opening file: %s\n", filename);
-  }
-}
 
 /* Load the IQ samples from a file */
 bool load_samples(const std::string& filename, cf_t* buffer, size_t nsamples)
@@ -716,46 +697,10 @@ void update_phy_cfg_from_sib1(srsran::phy_cfg_nr_t& phy_cfg, asn1::rrc_nr::sib1_
   }
 }
 
-/* ue_dl related configuration and update, ue_dl decode messages send from base station to UE*/
-bool init_ue_dl(srsran_ue_dl_nr_t& ue_dl, cf_t* buffer, srsran::phy_cfg_nr_t& phy_cfg)
-{
-  srsran_ue_dl_nr_args_t ue_dl_args             = {};
-  ue_dl_args.nof_max_prb                        = phy_cfg.carrier.nof_prb;
-  ue_dl_args.nof_rx_antennas                    = 1;
-  ue_dl_args.pdcch.measure_evm                  = false;
-  ue_dl_args.pdcch.measure_time                 = false;
-  ue_dl_args.pdcch.disable_simd                 = false;
-  ue_dl_args.pdsch.sch.disable_simd             = false;
-  ue_dl_args.pdsch.sch.decoder_use_flooded      = false;
-  ue_dl_args.pdsch.sch.decoder_scaling_factor   = 0;
-  ue_dl_args.pdsch.sch.max_nof_iter             = 10;
-  std::array<cf_t*, SRSRAN_MAX_PORTS> rx_buffer = {};
-  rx_buffer[0]                                  = buffer;
-  if (srsran_ue_dl_nr_init(&ue_dl, rx_buffer.data(), &ue_dl_args) != 0) {
-    return false;
-  }
-  if (!update_ue_dl(ue_dl, phy_cfg)) {
-    return false;
-  }
-  return true;
-}
-
-bool update_ue_dl(srsran_ue_dl_nr_t& ue_dl, srsran::phy_cfg_nr_t& phy_cfg)
-{
-  if (srsran_ue_dl_nr_set_carrier(&ue_dl, &phy_cfg.carrier) != SRSRAN_SUCCESS) {
-    return false;
-  }
-  srsran_dci_cfg_nr_t dci_cfg = phy_cfg.get_dci_cfg();
-  if (srsran_ue_dl_nr_set_pdcch_config(&ue_dl, &phy_cfg.pdcch, &dci_cfg) != SRSRAN_SUCCESS) {
-    return false;
-  }
-  return true;
-}
-
 void ue_dl_dci_search(srsran_ue_dl_nr_t&    ue_dl,
                       srsran::phy_cfg_nr_t& phy_cfg,
                       srsran_slot_cfg_t&    slot_cfg,
-                      uint16_t              rnti,
+                    uint16_t              rnti,
                       srsran_rnti_type_t    rnti_type,
                       srsue::nr::state&     phy_state,
                       srslog::basic_logger& logger,

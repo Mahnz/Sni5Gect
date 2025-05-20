@@ -5,6 +5,7 @@
 #include "shadower/utils/arg_parser.h"
 #include "shadower/utils/constants.h"
 #include "shadower/utils/utils.h"
+#include "shadower/utils/ssb_utils.h"
 #include "srsran/phy/phch/pbch_msg_nr.h"
 #include "srsran/phy/sync/ssb.h"
 #include "srsran/srslog/srslog.h"

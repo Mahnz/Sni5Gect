@@ -6,7 +6,7 @@ if(USE_CUDA)
 endif(USE_CUDA)
 
 add_executable(ssb_test tests/ssb_test.cc)
-target_link_libraries(ssb_test utils)
+target_link_libraries(ssb_test utils ssb_utils)
 if(USE_CUDA)
     target_link_libraries(ssb_test ssb_cuda)
 endif(USE_CUDA)
