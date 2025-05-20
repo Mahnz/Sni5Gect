@@ -11,7 +11,7 @@ if(USE_CUDA)
     target_link_libraries(ssb_test ssb_cuda)
 endif(USE_CUDA)
 
-add_test(run_ssb_test_20
+add_test(shd_ssb_test_20
     ssb_test
     -s 23.04
     -f 3427.5
@@ -20,7 +20,7 @@ add_test(run_ssb_test_20
     -I 1
 )
 
-add_test(run_ssb_test_40
+add_test(shd_ssb_test_40
     ssb_test
     -s 46.08
     -f 3427.5
