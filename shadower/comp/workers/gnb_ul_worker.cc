@@ -1,7 +1,7 @@
 #include <utility>
 
-#include "shadower/hdr/gnb_ul_worker.h"
-#include "shadower/hdr/utils.h"
+#include "shadower/comp/workers/gnb_ul_worker.h"
+#include "shadower/utils/utils.h"
 
 // Tracer singleton
 TraceSamples GNBULWorker::tracer_ul_pusch;
@@ -64,7 +64,7 @@ bool GNBULWorker::init(srsran::phy_cfg_nr_t& phy_cfg_)
   GNBULWorker::tracer_ul_pusch.set_throttle_ms(250);
 
 #if ENABLE_CUDA
-  if (config.enable_gpu_acceleration) {
+  if (config.enable_gpu) {
     fft_processor =
         new FFTProcessor(config.sample_rate, gnb_ul.carrier.ul_center_frequency_hz, gnb_ul.carrier.scs, &gnb_ul.fft);
   }
@@ -81,7 +81,7 @@ bool GNBULWorker::update_cfg(srsran::phy_cfg_nr_t& phy_cfg_)
     return false;
   }
 #if ENABLE_CUDA
-  if (config.enable_gpu_acceleration) {
+  if (config.enable_gpu) {
     fft_processor->set_phase_compensation(phy_cfg.carrier.ul_center_frequency_hz);
   }
 #endif // ENABLE_CUDA
@@ -104,10 +104,16 @@ void GNBULWorker::set_task(std::shared_ptr<Task> task_)
   task = std::move(task_);
 }
 
-/* Worker implementation, decode message send from UE to base station */
 void GNBULWorker::work_imp()
 {
+  process_task(task);
+}
+
+/* Worker implementation, decode message send from UE to base station */
+void GNBULWorker::process_task(std::shared_ptr<Task> task_)
+{
   std::lock_guard<std::mutex> lock(mutex);
+  task = std::move(task_);
   if (rnti == SRSRAN_INVALID_RNTI) {
     logger.error("RNTI not set");
     return;
@@ -124,15 +130,15 @@ void GNBULWorker::work_imp()
     /* Copy the samples to the process buffer */
     if (slot_in_sf == 0 && ta_samples > 0) {
       /* If it is the first slot, then part of the samples is in the last slot */
-      srsran_vec_cf_copy(buffer, task->last_slot->data() + sf_len - ta_samples, ta_samples);
-      srsran_vec_cf_copy(buffer + ta_samples, task->buffer->data(), slot_len - ta_samples);
+      srsran_vec_cf_copy(buffer, task->last_ul_buffer[0]->data() + sf_len - ta_samples, ta_samples);
+      srsran_vec_cf_copy(buffer + ta_samples, task->ul_buffer[0]->data(), slot_len - ta_samples);
     } else {
       /* only copy half of the subframe to the buffer */
-      srsran_vec_cf_copy(buffer, task->buffer->data() + slot_in_sf * slot_len - ta_samples, slot_len);
+      srsran_vec_cf_copy(buffer, task->ul_buffer[0]->data() + slot_in_sf * slot_len - ta_samples, slot_len);
     }
 /* estimate FFT will run on first slot */
 #if ENABLE_CUDA
-    if (config.enable_gpu_acceleration) {
+    if (config.enable_gpu) {
       fft_processor->to_ofdm(buffer, gnb_ul.sf_symbols[0], slot_cfg.idx);
     } else {
       srsran_gnb_ul_fft(&gnb_ul);
@@ -145,7 +151,7 @@ void GNBULWorker::work_imp()
     handle_pusch(slot_cfg);
 
     /* Trace slot */
-    GNBULWorker::tracer_ul_pusch.send(task->buffer->data(), sf_len);
+    GNBULWorker::tracer_ul_pusch.send(task->ul_buffer[0]->data(), sf_len);
   }
 }
 
@@ -153,7 +159,7 @@ void GNBULWorker::work_imp()
 void GNBULWorker::handle_pusch(srsran_slot_cfg_t& slot_cfg)
 {
   /* Apply the CFO to correct the OFDM symbols */
-  srsran_vec_apply_cfo(gnb_ul.sf_symbols[0], config.uplink_cfo_correction, gnb_ul.sf_symbols[0], nof_re);
+  srsran_vec_apply_cfo(gnb_ul.sf_symbols[0], config.uplink_cfo, gnb_ul.sf_symbols[0], nof_re);
   /* Initialize the buffer for output */
   srsran::unique_byte_buffer_t data = srsran::make_byte_buffer();
   if (data == nullptr) {

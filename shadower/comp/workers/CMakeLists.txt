@@ -62,3 +62,23 @@ add_test(shd_ue_dl_worker_test_20MHz
 )
 set_tests_properties(shd_ue_dl_worker_test_20MHz PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
+add_library(gnb_ul_worker gnb_ul_worker.cc)
+target_link_libraries(gnb_ul_worker utils srsran_mac wd_worker)
+target_include_directories(gnb_ul_worker PUBLIC ${WDISSECTOR_PATH}/src ${WDISSECTOR_INCLUDES})
+if(USE_CUDA)
+    target_link_libraries(gnb_ul_worker fft_processor)
+endif(USE_CUDA)
+
+add_executable(gnb_ul_worker_test tests/gnb_ul_worker_test.cc)
+target_link_libraries(gnb_ul_worker_test gnb_ul_worker ue_dl_worker utils)
+
+add_test(shd_gnb_ul_worker_test_20MHz
+    ${CMAKE_BINARY_DIR}/shadower/comp/workers/gnb_ul_worker_test -s 23.04 -f 3427.5 -b 3421.92 -c 1 -I 1 -p 51 -R 17921
+    -m ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/mib.raw
+    -z ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/sib1.raw -Z 101
+    -y ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/rrc_setup.raw -Y 316
+    -d ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/dci_ul_3622.fc32 -D 2
+    -F ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/pusch_3626.fc32 -i 6
+    -o 468 -u 0.00054
+)
+set_tests_properties(shd_gnb_ul_worker_test_20MHz PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})

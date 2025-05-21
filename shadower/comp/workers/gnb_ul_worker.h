@@ -1,18 +1,18 @@
 #ifndef GNB_UL_WORKER
 #define GNB_UL_WORKER
-#include "shadower/hdr/arg_parser.h"
-#include "shadower/hdr/exploit.h"
-#include "shadower/hdr/source.h"
-#include "shadower/hdr/task.h"
-#include "shadower/hdr/trace_samples.h"
-#include "shadower/hdr/wd_worker.h"
+#include "shadower/comp/trace_samples/trace_samples.h"
+#include "shadower/comp/workers/wd_worker.h"
+#include "shadower/modules/exploit.h"
+#include "shadower/utils/arg_parser.h"
+#include "shadower/utils/task.h"
+#include "shadower/utils/utils.h"
 #include "srsran/common/mac_pcap.h"
 #include "srsran/common/phy_cfg_nr.h"
 #include "srsran/common/thread_pool.h"
 #include "srsran/phy/gnb/gnb_ul.h"
 #include "srsue/hdr/phy/nr/state.h"
 #if ENABLE_CUDA
-#include "shadower/hdr/fft_processor.cuh"
+#include "shadower/comp/fft/fft_processor.cuh"
 #endif // ENABLE_CUDA
 class GNBULWorker : public srsran::thread_pool::worker
 {
@@ -46,6 +46,15 @@ public:
     ta_samples = ta_time * srate;
     logger.info("Setting Timing Advance samples for %u to %d", rnti, ta_samples);
   }
+
+  void set_ta_samples(uint32_t ta_samples_)
+  {
+    ta_samples = ta_samples_;
+    logger.info("Setting Timing Advance samples for %u to %d", rnti, ta_samples);
+  }
+
+  /* Process the tasks */
+  void process_task(std::shared_ptr<Task> task);
 
 private:
   srslog::basic_logger&             logger;
@@ -86,5 +95,4 @@ private:
   /* Handle PUSCH decoding */
   void handle_pusch(srsran_slot_cfg_t& slot_cfg);
 };
-
 #endif // GNB_UL_WORKER

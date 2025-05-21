@@ -6,6 +6,10 @@ extern "C" {
 #include "srsran/phy/phch/prach.h"
 }
 #include "shadower/utils/constants.h"
+#include "shadower/utils/gnb_ul_utils.h"
+#include "shadower/utils/phy_cfg_utils.h"
+#include "shadower/utils/ssb_utils.h"
+#include "shadower/utils/ue_dl_utils.h"
 #include "srsran/srslog/srslog.h"
 #include <inttypes.h>
 #include <string>
