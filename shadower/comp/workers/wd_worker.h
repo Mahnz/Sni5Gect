@@ -1,7 +1,7 @@
 #ifndef WD_WORKER_H
 #define WD_WORKER_H
-#include "shadower/hdr/constants.h"
-#include "shadower/hdr/exploit.h"
+#include "shadower/modules/exploit.h"
+#include "shadower/utils/constants.h"
 #include "srsran/phy/common/phy_common_nr.h"
 #include "srsran/srslog/srslog.h"
 #include "wdissector.h"

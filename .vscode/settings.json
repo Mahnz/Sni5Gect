@@ -80,22 +80,34 @@
         "random.h": "c"
     },
     "cSpell.words": [
+        "ccch",
         "crnti",
         "CUDA",
+        "dcch",
+        "dlsch",
+        "dmrs",
+        "gect",
         "harq",
         "LDPC",
         "ncellid",
+        "nsamples",
+        "NSYMB",
         "ofdm",
         "pbch",
         "PDCCH",
+        "PDCP",
         "pdsch",
         "pusch",
         "RACH",
+        "recfg",
         "RNTI",
         "srate",
+        "SRSASN",
         "srslog",
         "srsran",
         "srsue",
-        "TEST_VARIABLES_H"
+        "TEST_VARIABLES_H",
+        "UEDL",
+        "wdissector"
     ]
 }

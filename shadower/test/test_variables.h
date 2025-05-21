@@ -153,38 +153,38 @@ test_args_t init_test_args(int test_number)
 {
   test_args_t test_args = {};
   if (test_number == 0) {
-    test_args.config                  = srsran_n78_20MHz_config;
-    test_args.mib_config_raw          = "shadower/test/data/srsran-n78-20MHz/mib.raw";
-    test_args.sib_config_raw          = "shadower/test/data/srsran-n78-20MHz/sib1.raw";
-    test_args.sib_size                = 101;
-    test_args.rrc_setup_raw           = "shadower/test/data/srsran-n78-20MHz/rrc_setup.raw";
-    test_args.rrc_setup_size          = 316;
+    test_args.config            = srsran_n78_20MHz_config;
+    test_args.mib_config_raw    = "shadower/test/data/srsran-n78-20MHz/mib.raw";
+    test_args.sib_config_raw    = "shadower/test/data/srsran-n78-20MHz/sib1.raw";
+    test_args.sib_size          = 101;
+    test_args.rrc_setup_raw     = "shadower/test/data/srsran-n78-20MHz/rrc_setup.raw";
+    test_args.rrc_setup_size    = 316;
     test_args.rar_ul_grant_file = "shadower/test/data/srsran-n78-20MHz/rach_msg2_ul_grant.raw";
-    test_args.c_rnti                  = 17921;
-    test_args.ra_rnti                 = 267;
-    test_args.ncellid                 = 1;
+    test_args.c_rnti            = 17921;
+    test_args.ra_rnti           = 267;
+    test_args.ncellid           = 1;
   } else if (test_number == 1) {
-    test_args.config                  = srsran_n78_40MHz_config;
-    test_args.mib_config_raw          = "shadower/test/data/srsran-n78-40MHz/mib.raw";
-    test_args.sib_config_raw          = "shadower/test/data/srsran-n78-40MHz/sib1.raw";
-    test_args.sib_size                = 101;
-    test_args.rrc_setup_raw           = "shadower/test/data/srsran-n78-40MHz/rrc_setup.raw";
-    test_args.rrc_setup_size          = 316;
+    test_args.config            = srsran_n78_40MHz_config;
+    test_args.mib_config_raw    = "shadower/test/data/srsran-n78-40MHz/mib.raw";
+    test_args.sib_config_raw    = "shadower/test/data/srsran-n78-40MHz/sib1.raw";
+    test_args.sib_size          = 101;
+    test_args.rrc_setup_raw     = "shadower/test/data/srsran-n78-40MHz/rrc_setup.raw";
+    test_args.rrc_setup_size    = 316;
     test_args.rar_ul_grant_file = "shadower/test/data/srsran-n78-40MHz/rach_msg2_ul_grant.raw";
-    test_args.c_rnti                  = 17921;
-    test_args.ra_rnti                 = 267;
-    test_args.ncellid                 = 1;
+    test_args.c_rnti            = 17921;
+    test_args.ra_rnti           = 267;
+    test_args.ncellid           = 1;
   } else if (test_number == 2) {
-    test_args.config                  = effnet_n78_20MHz;
-    test_args.mib_config_raw          = "shadower/test/data/effnet/mib.raw";
-    test_args.sib_config_raw          = "shadower/test/data/effnet/sib1.raw";
-    test_args.sib_size                = 106;
-    test_args.rrc_setup_raw           = "shadower/test/data/effnet/rrc_setup.raw";
-    test_args.rrc_setup_size          = 176;
+    test_args.config            = effnet_n78_20MHz;
+    test_args.mib_config_raw    = "shadower/test/data/effnet/mib.raw";
+    test_args.sib_config_raw    = "shadower/test/data/effnet/sib1.raw";
+    test_args.sib_size          = 106;
+    test_args.rrc_setup_raw     = "shadower/test/data/effnet/rrc_setup.raw";
+    test_args.rrc_setup_size    = 176;
     test_args.rar_ul_grant_file = "shadower/test/data/effnet/rach_msg2_ul_grant.raw";
-    test_args.c_rnti                  = 42000;
-    test_args.ra_rnti                 = 0x0113;
-    test_args.ncellid                 = 1;
+    test_args.c_rnti            = 42000;
+    test_args.ra_rnti           = 0x0113;
+    test_args.ncellid           = 1;
   } else {
     throw std::invalid_argument("Invalid test number");
   }

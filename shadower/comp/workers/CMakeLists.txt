@@ -35,3 +35,10 @@ add_test(shd_broadcast_worker_rar_test_40MHz
     -z ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-40MHz/sib1.raw -Z 101
     -m ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-40MHz/mib.raw
 )
+
+add_library(wd_worker wd_worker.cc)
+target_link_libraries(wd_worker wdissector srslog)
+target_include_directories(wd_worker PUBLIC ${WDISSECTOR_PATH}/src ${WDISSECTOR_INCLUDES})
+
+add_executable(wd_worker_test tests/wd_worker_test.cc)
+target_link_libraries(wd_worker_test wd_worker utils)
