@@ -17,7 +17,7 @@ struct test_args_t {
   uint32_t       sib_size;
   std::string    rrc_setup_raw;
   uint32_t       rrc_setup_size;
-  std::string    rach_msg2_ul_grant_file;
+  std::string    rar_ul_grant_file;
   uint16_t       c_rnti;
   uint16_t       ra_rnti;
   uint32_t       ncellid;
@@ -159,7 +159,7 @@ test_args_t init_test_args(int test_number)
     test_args.sib_size                = 101;
     test_args.rrc_setup_raw           = "shadower/test/data/srsran-n78-20MHz/rrc_setup.raw";
     test_args.rrc_setup_size          = 316;
-    test_args.rach_msg2_ul_grant_file = "shadower/test/data/srsran-n78-20MHz/rach_msg2_ul_grant.raw";
+    test_args.rar_ul_grant_file = "shadower/test/data/srsran-n78-20MHz/rach_msg2_ul_grant.raw";
     test_args.c_rnti                  = 17921;
     test_args.ra_rnti                 = 267;
     test_args.ncellid                 = 1;
@@ -170,7 +170,7 @@ test_args_t init_test_args(int test_number)
     test_args.sib_size                = 101;
     test_args.rrc_setup_raw           = "shadower/test/data/srsran-n78-40MHz/rrc_setup.raw";
     test_args.rrc_setup_size          = 316;
-    test_args.rach_msg2_ul_grant_file = "shadower/test/data/srsran-n78-40MHz/rach_msg2_ul_grant.raw";
+    test_args.rar_ul_grant_file = "shadower/test/data/srsran-n78-40MHz/rach_msg2_ul_grant.raw";
     test_args.c_rnti                  = 17921;
     test_args.ra_rnti                 = 267;
     test_args.ncellid                 = 1;
@@ -181,7 +181,7 @@ test_args_t init_test_args(int test_number)
     test_args.sib_size                = 106;
     test_args.rrc_setup_raw           = "shadower/test/data/effnet/rrc_setup.raw";
     test_args.rrc_setup_size          = 176;
-    test_args.rach_msg2_ul_grant_file = "shadower/test/data/effnet/rach_msg2_ul_grant.raw";
+    test_args.rar_ul_grant_file = "shadower/test/data/effnet/rach_msg2_ul_grant.raw";
     test_args.c_rnti                  = 42000;
     test_args.ra_rnti                 = 0x0113;
     test_args.ncellid                 = 1;

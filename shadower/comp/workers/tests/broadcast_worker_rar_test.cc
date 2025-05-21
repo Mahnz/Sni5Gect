@@ -5,14 +5,17 @@
 #include "srsran/support/srsran_test.h"
 std::string    sample_file;
 std::string    mib_config_file;
-uint32_t       sib_slot_idx = 0;
+std::string    sib_config_file;
+uint32_t       sib_config_size;
+uint32_t       rar_slot_idx = 0;
 uint32_t       ncellid      = 1;
+uint16_t       rnti         = 0xffff;
 ShadowerConfig config       = {};
 
 void parse_args(int argc, char* argv[])
 {
   int opt;
-  while ((opt = getopt(argc, argv, "sfbcFiImp")) != -1) {
+  while ((opt = getopt(argc, argv, "sfbcRFiIzZpm")) != -1) {
     switch (opt) {
       case 's': {
         double srateMHz    = atof(argv[optind]);
@@ -38,14 +41,19 @@ void parse_args(int argc, char* argv[])
         printf("Using number of channels: %u\n", config.nof_channels);
         break;
       }
+      case 'R': {
+        rnti = atoi(argv[optind]);
+        printf("Using RNTI: %u\n", rnti);
+        break;
+      }
       case 'F': {
         sample_file = argv[optind];
         printf("Using sample file: %s\n", sample_file.c_str());
         break;
       }
       case 'i': {
-        sib_slot_idx = atoi(argv[optind]);
-        printf("Using SIB slot index: %u\n", sib_slot_idx);
+        rar_slot_idx = atoi(argv[optind]);
+        printf("Using SIB slot index: %u\n", rar_slot_idx);
         break;
       }
       case 'I': {
@@ -55,7 +63,17 @@ void parse_args(int argc, char* argv[])
       }
       case 'm': {
         mib_config_file = argv[optind];
-        printf("Using MIB config file: %s\n", mib_config_file.c_str());
+        printf("Using mib config file: %s\n", mib_config_file.c_str());
+        break;
+      }
+      case 'z': {
+        sib_config_file = argv[optind];
+        printf("Using sib config file: %s\n", sib_config_file.c_str());
+        break;
+      }
+      case 'Z': {
+        sib_config_size = atoi(argv[optind]);
+        printf("Using SIB config size: %u\n", sib_config_size);
         break;
       }
       case 'p': {
@@ -94,21 +112,32 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  /* Show MIB information */
-  std::array<char, 512> mib_info_str = {};
-  srsran_pbch_msg_nr_mib_info(&mib, mib_info_str.data(), mib_info_str.size());
-logger.info("Applying MIB config: %s", mib_info_str.data());
+  /* Read sib1 from file */
+  std::vector<uint8_t> sib1_data(sib_config_size);
+  if (!read_raw_config(sib_config_file, sib1_data.data(), sib_config_size)) {
+    logger.error("Failed to read SIB1 from %s", sib_config_file.c_str());
+    return -1;
+  }
+  /* Decode SIB1 bytes to asn1 structure */
+  asn1::rrc_nr::sib1_s sib1 = {};
+  if (!parse_to_sib1(sib1_data.data(), sib_config_size, sib1)) {
+    logger.error("Failed to parse SIB1");
+    return -1;
+  }
 
-  /* Initialize broadcast worker */
-  bool            found_sib1 = false;
+  /* Update broadcast worker with sib */
+  bool            found_new_ue = false;
   BroadCastWorker broadcast_worker(config);
   broadcast_worker.apply_config_from_mib(mib, ncellid);
-  broadcast_worker.on_sib1_found = [&](asn1::rrc_nr::sib1_s& sib1) {
-    broadcast_worker.apply_config_from_sib1(sib1);
-    found_sib1 = true;
-  };
+  broadcast_worker.apply_config_from_sib1(sib1);
+  broadcast_worker.set_rnti(rnti, srsran_rnti_type_ra);
+  broadcast_worker.on_ue_found =
+      [&](uint16_t rnti, std::array<uint8_t, 27UL> rar_grant, uint32_t slot_idx, uint32_t time_advance) {
+        logger.info("Found new UE with tc-rnti: %u TA: %u", rnti, time_advance);
+        found_new_ue = true;
+      };
 
-  /* work on the SIB1 samples */
+  /* work on the RAR samples */
   std::shared_ptr<Task>               task    = std::make_shared<Task>();
   std::shared_ptr<std::vector<cf_t> > samples = std::make_shared<std::vector<cf_t> >(sf_len);
   if (!load_samples(sample_file, samples->data(), sf_len)) {
@@ -116,10 +145,10 @@ logger.info("Applying MIB config: %s", mib_info_str.data());
     return -1;
   }
   task->dl_buffer[0] = samples;
-  task->slot_idx     = sib_slot_idx;
+  task->slot_idx     = rar_slot_idx;
   task->ts           = {};
   bool success       = broadcast_worker.work(task);
   TESTASSERT(success);
-  TESTASSERT(found_sib1);
+  TESTASSERT(found_new_ue);
   return 0;
 }

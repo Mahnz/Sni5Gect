@@ -3,6 +3,7 @@
 #include "srsran/phy/phch/pbch_msg_nr.h"
 #include "srsran/phy/sync/ssb.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/srsran_test.h"
 #include "test_variables.h"
 #include <fstream>
 #if ENABLE_CUDA
@@ -88,5 +89,6 @@ int main(int argc, char* argv[])
   logger.info("Cell id: %u", res.N_id);
   logger.info("Offset: %u", res.t_offset);
   logger.info("CFO: %f", res.measurements.cfo_hz);
+  TESTASSERT(res.pbch_msg.crc);
   return 0;
 }

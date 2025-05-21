@@ -1,29 +1,36 @@
 set(TestCommonSources ${SHADOWER_DIR}/utils.cc ${SHADOWER_DIR}/trace_samples.cc)
 
-add_executable(source_test source_test.cc ${TestCommonSources})
-target_link_libraries(source_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
+macro(add_shd_test exec_name)
+  set(EXE_PATH ${CMAKE_BINARY_DIR}/shadower/test/${exec_name})
+
+  set(TEST_NAME_0 "shd_${exec_name}_srsran_n78_20MHz")
+  add_test(NAME ${TEST_NAME_0} COMMAND ${EXE_PATH} 0)
+  set_tests_properties(${TEST_NAME_0} PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+  message("Adding test ${TEST_NAME_0}")
+
+  set(TEST_NAME_1 "shd_${exec_name}_srsran_n78_40MHz")
+  add_test(NAME ${TEST_NAME_1} COMMAND ${EXE_PATH} 1)
+  set_tests_properties(${TEST_NAME_1} PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+  message("Adding test ${TEST_NAME_1}")
+endmacro()
 
 add_executable(cell_search_test cell_search_test.cc)
 target_link_libraries(cell_search_test utils)
 if(USE_CUDA)
   target_link_libraries(cell_search_test ssb_cuda)
 endif(USE_CUDA)
+add_shd_test(cell_search_test)
 
 add_executable(sib_search_test sib_search_test.cc)
 target_link_libraries(sib_search_test utils)
 if(USE_CUDA)
   target_link_libraries(sib_search_test fft_processor)
 endif(USE_CUDA)
+add_shd_test(sib_search_test)
 
-add_executable(rach_msg2_test rach_msg2_test.cc ${TestCommonSources})
-target_link_libraries(rach_msg2_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
-
-add_executable(broadcast_worker_test broadcast_worker_test.cc ${TestCommonSources}
-    ${SHADOWER_DIR}/broadcast_worker.cc
-)
-if (USE_CUDA)
-  target_link_libraries(broadcast_worker_test fft_processor)
-endif(USE_CUDA)
+add_executable(rar_search_test rar_search_test.cc)
+target_link_libraries(rar_search_test utils)
+add_shd_test(rar_search_test)
 
 add_executable(rrc_setup_test rrc_setup_test.cc ${TestCommonSources})
 target_link_libraries(rrc_setup_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
