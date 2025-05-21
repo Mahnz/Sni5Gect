@@ -123,7 +123,7 @@ if (ENABLE_LIMESUITENG)
 endif(ENABLE_LIMESUITENG)
 
 add_executable(recorder tools/recorder.cc)
-target_link_libraries(recorder ${UHD_LIBRARIES} ${Boost_LIBRARIES} pthread liquid)
+target_link_libraries(recorder ${UHD_LIBRARIES} ${Boost_LIBRARIES} pthread liquid srsran_phy srsran_rf srsran_radio)
 
 add_executable(recorder_fifo tools/recorder_fifo.cc)
 target_link_libraries(recorder_fifo ${UHD_LIBRARIES} ${Boost_LIBRARIES} pthread liquid)
