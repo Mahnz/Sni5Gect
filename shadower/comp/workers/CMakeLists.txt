@@ -42,3 +42,23 @@ target_include_directories(wd_worker PUBLIC ${WDISSECTOR_PATH}/src ${WDISSECTOR_
 
 add_executable(wd_worker_test tests/wd_worker_test.cc)
 target_link_libraries(wd_worker_test wd_worker utils)
+
+add_library(ue_dl_worker ue_dl_worker.cc)
+target_link_libraries(ue_dl_worker utils srsran_mac wd_worker)
+target_include_directories(ue_dl_worker PUBLIC ${WDISSECTOR_PATH}/src ${WDISSECTOR_INCLUDES})
+if(USE_CUDA)
+    target_link_libraries(ue_dl_worker fft_processor)
+endif(USE_CUDA)
+
+add_executable(ue_dl_worker_test tests/ue_dl_worker_test.cc)
+target_link_libraries(ue_dl_worker_test ue_dl_worker utils)
+
+add_test(shd_ue_dl_worker_test_20MHz
+    ${CMAKE_BINARY_DIR}/shadower/comp/workers/ue_dl_worker_test -s 23.04 -f 3427.5 -b 3421.92 -c 1 -I 1 -p 51 -R 17921
+    -m ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/mib.raw
+    -z ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/sib1.raw -Z 101
+    -y ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/rrc_setup.raw -Y 316
+    -F ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/pdsch_3684.fc32 -i 4
+)
+set_tests_properties(shd_ue_dl_worker_test_20MHz PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+

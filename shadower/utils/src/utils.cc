@@ -1,4 +1,7 @@
 #include "shadower/utils/utils.h"
+#include "shadower/utils/constants.h"
+#include "srsran/common/pcap.h"
+#include <arpa/inet.h>
 #include <chrono>
 #include <fstream>
 
@@ -22,6 +25,23 @@ void write_record_to_file(cf_t* buffer, uint32_t length, char* name, const std::
   }
 }
 
+/* Convert hex stream to uint8_t */
+bool hex_to_bytes(const std::string& hex, uint8_t* buffer, uint32_t* size)
+{
+  size_t hex_len = hex.length();
+  if (hex_len % 2 != 0 || hex_len / 2 > 4096) {
+    std::cerr << "Invalid hex string length.\n";
+    return false;
+  }
+
+  *size = hex_len / 2;
+  for (size_t i = 0; i < *size; ++i) {
+    std::string byte_str = hex.substr(i * 2, 2);
+    buffer[i]            = static_cast<uint8_t>(std::stoul(byte_str, nullptr, 16));
+  }
+  return true;
+}
+
 /* Load the IQ samples from a file */
 bool load_samples(const std::string& filename, cf_t* buffer, size_t nsamples)
 {
@@ -43,6 +63,48 @@ bool read_raw_config(const std::string& filename, uint8_t* buffer, size_t size)
   }
   infile.read(reinterpret_cast<char*>(buffer), size);
   return true;
+}
+
+/* Add the required UDP header for wdissector */
+int add_fake_header(uint8_t*             buffer,
+                    uint8_t*             data,
+                    uint32_t             len,
+                    uint16_t             rnti,
+                    uint16_t             frame_number,
+                    uint16_t             slot_number,
+                    direction_t          direction,
+                    srsran_duplex_mode_t duplex_mode)
+{
+  memccpy(buffer, fake_pcap_header, fake_pcap_header_len, 2048);
+  uint8_t* payload = buffer + fake_pcap_header_len;
+  memset(payload, 0, 1988);
+  int      offset = 0;
+  uint16_t tmp16;
+  payload[offset++] = (duplex_mode == SRSRAN_DUPLEX_MODE_FDD) ? 1 : 2;
+  payload[offset++] = (direction == DL) ? 1 : 0;
+  payload[offset++] = 0x3;
+  /* RNTI */
+  payload[offset++] = MAC_LTE_RNTI_TAG;
+  tmp16             = htons(rnti);
+  memcpy(payload + offset, &tmp16, 2);
+  offset += 2;
+  payload[offset++] = 0x07;
+  /* system frame number */
+  tmp16 = htons(frame_number);
+  memcpy(payload + offset, &tmp16, 2);
+  offset += 2;
+  /* slot number */
+  tmp16 = htons(slot_number);
+  memcpy(payload + offset, &tmp16, 2);
+  offset += 2;
+  payload[offset++] = MAC_LTE_PAYLOAD_TAG;
+  memcpy(payload + offset, data, len);
+
+  uint16_t udp_payload_length = htons(len + 26);
+  memcpy(buffer + 38, &udp_payload_length, 2);
+  uint16_t ip_payload_length = htons(udp_payload_length + 20);
+  memcpy(buffer + 16, &ip_payload_length, 2);
+  return payload + offset + len - buffer;
 }
 
 /* Initialize logger */
