@@ -1,11 +1,14 @@
-#include "shadower/hdr/broadcast_worker.h"
+#include "shadower/comp/workers/broadcast_worker.h"
+#include "shadower/utils/phy_cfg_utils.h"
+#include "shadower/utils/ue_dl_utils.h"
+
 BroadCastWorker::BroadCastWorker(ShadowerConfig& config_) :
   logger(srslog::fetch_basic_logger("BCWorker")), config(config_)
 {
   slot_per_sf = 1 << config.scs_common;
   sf_len      = config.sample_rate * SF_DURATION;
   slot_len    = sf_len / slot_per_sf;
-  logger.set_level(config.bc_worker_log_level);
+  logger.set_level(config.bc_worker_level);
   /* Initialize phy cfg */
   init_phy_cfg(phy_cfg, config);
 
@@ -19,12 +22,14 @@ BroadCastWorker::BroadCastWorker(ShadowerConfig& config_) :
   }
 
   /* physical state to help track downlink grants */
-  phy_state.stack                 = nullptr;
-  phy_state.args.nof_carriers     = 1;
-  phy_state.args.dl.nof_max_prb   = config.nof_prb;
-  phy_state.args.dl.pdsch.max_prb = config.nof_prb;
-  phy_state.args.ul.nof_max_prb   = config.nof_prb;
-  phy_state.args.ul.pusch.max_prb = config.nof_prb;
+  phy_state.stack                    = nullptr;
+  phy_state.args.nof_carriers        = 1;
+  phy_state.args.dl.nof_rx_antennas  = config.nof_channels;
+  phy_state.args.dl.nof_max_prb      = config.nof_prb;
+  phy_state.args.dl.pdsch.max_prb    = config.nof_prb;
+  phy_state.args.ul.nof_max_prb      = config.nof_prb;
+  phy_state.args.ul.pusch.max_prb    = config.nof_prb;
+  phy_state.args.ul.pusch.max_layers = config.nof_channels;
 
   /* Pre-initialize softbuffer rx */
   if (srsran_softbuffer_rx_init_guru(&softbuffer_rx, SRSRAN_SCH_NR_MAX_NOF_CB_LDPC, SRSRAN_LDPC_MAX_LEN_ENCODED_CB) !=
@@ -34,7 +39,7 @@ BroadCastWorker::BroadCastWorker(ShadowerConfig& config_) :
   }
 
 #if ENABLE_CUDA
-  if (config.enable_gpu_acceleration) {
+  if (config.enable_gpu) {
     fft_processor =
         new FFTProcessor(config.sample_rate, ue_dl.carrier.dl_center_frequency_hz, phy_cfg.carrier.scs, &ue_dl.fft[0]);
   }
@@ -50,10 +55,10 @@ bool BroadCastWorker::work(const std::shared_ptr<Task>& task)
   for (uint32_t slot_in_sf = 0; slot_in_sf < slot_per_sf; slot_in_sf++) {
     slot_cfg.idx = task->slot_idx + slot_in_sf;
     /* only copy half of the subframe to the buffer */
-    srsran_vec_cf_copy(rx_buffer, task->buffer->data() + slot_in_sf * slot_len, slot_len);
+    srsran_vec_cf_copy(rx_buffer, task->dl_buffer[0]->data() + slot_in_sf * slot_len, slot_len);
 /* estimate FFT will run on first slot */
 #if ENABLE_CUDA
-    if (config.enable_gpu_acceleration) {
+    if (config.enable_gpu) {
       fft_processor->to_ofdm(rx_buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
     } else {
       srsran_ue_dl_nr_estimate_fft(&ue_dl, &slot_cfg);
@@ -62,7 +67,7 @@ bool BroadCastWorker::work(const std::shared_ptr<Task>& task)
     srsran_ue_dl_nr_estimate_fft(&ue_dl, &slot_cfg);
 #endif // ENABLE_CUDA
     /* Estimate PDCCH channel and search for both dci ul and dci dl */
-    ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, rnti, rnti_type, phy_state, logger);
+    ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, rnti, rnti_type, phy_state, logger, task->task_idx);
     /* PDSCH decoding */
     pdsch_decode(slot_cfg.idx, task->task_idx);
   }
@@ -86,7 +91,7 @@ bool BroadCastWorker::pdsch_decode(uint32_t slot_idx, uint32_t task_idx)
   srsran_pdsch_res_nr_t pdsch_res = {};
   pdsch_res.tb[0].payload         = data->msg;
   /* Decode PDSCH */
-  if (!ue_dl_pdsch_decode(ue_dl, pdsch_cfg, slot_cfg, pdsch_res, softbuffer_rx, logger)) {
+  if (!ue_dl_pdsch_decode(ue_dl, pdsch_cfg, slot_cfg, pdsch_res, softbuffer_rx, logger, task_idx)) {
     return false;
   }
   /* if the message is not decoded correctly, then return */
@@ -170,7 +175,7 @@ bool BroadCastWorker::apply_config_from_mib(srsran_mib_nr_t& mib_, uint32_t ncel
   }
   update_ue_dl(ue_dl, phy_cfg);
 #if ENABLE_CUDA
-  if (config.enable_gpu_acceleration) {
+  if (config.enable_gpu) {
     fft_processor->set_phase_compensation(phy_cfg.carrier.dl_center_frequency_hz);
   }
 #endif // ENABLE_CUDA
@@ -184,7 +189,7 @@ bool BroadCastWorker::apply_config_from_sib1(asn1::rrc_nr::sib1_s& sib1_)
   update_phy_cfg_from_sib1(phy_cfg, sib1);
   update_ue_dl(ue_dl, phy_cfg);
 #if ENABLE_CUDA
-  if (config.enable_gpu_acceleration) {
+  if (config.enable_gpu) {
     fft_processor->set_phase_compensation(phy_cfg.carrier.dl_center_frequency_hz);
   }
 #endif // ENABLE_CUDA

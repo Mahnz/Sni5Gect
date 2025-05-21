@@ -1,16 +1,16 @@
 #ifndef BROADCAST_WORKER_H
 #define BROADCAST_WORKER_H
-#include "shadower/hdr/arg_parser.h"
-#include "shadower/hdr/constants.h"
-#include "shadower/hdr/task.h"
-#include "shadower/hdr/utils.h"
+#include "shadower/utils/arg_parser.h"
+#include "shadower/utils/constants.h"
+#include "shadower/utils/task.h"
+#include "shadower/utils/utils.h"
 #include "srsran/asn1/rrc_nr.h"
 #include "srsran/mac/mac_rar_pdu_nr.h"
 #include "srsran/srslog/srslog.h"
 #include "srsue/hdr/phy/nr/state.h"
 #include <atomic>
 #if ENABLE_CUDA
-#include "shadower/hdr/fft_processor.cuh"
+#include "shadower/comp/fft/fft_processor.cuh"
 #endif // ENABLE_CUDA
 class BroadCastWorker
 {
@@ -57,8 +57,8 @@ private:
   uint32_t             sf_len      = 0;
   uint32_t             slot_len    = 0;
   uint32_t             slot_per_sf = 1;
-  cf_t*                rx_buffer   = nullptr;             // Input buffer for PDSCH decoding
-  uint16_t             rnti        = 0xffff;              // RNTI for broadcasting
+  cf_t*                rx_buffer   = nullptr; // Input buffer for PDSCH decoding
+  uint16_t             rnti        = 0xffff;  // RNTI for broadcasting
   srsran_rnti_type_t   rnti_type   = srsran_rnti_type_si;
 
 #if ENABLE_CUDA

@@ -1,3 +1,4 @@
+#pragma once
 #include "srsran/phy/sync/ssb.h"
 
 /* Helper function to initialize ssb */

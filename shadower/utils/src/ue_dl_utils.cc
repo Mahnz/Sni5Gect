@@ -35,3 +35,75 @@ bool update_ue_dl(srsran_ue_dl_nr_t& ue_dl, srsran::phy_cfg_nr_t& phy_cfg)
   }
   return true;
 }
+
+/* Run PDCCH search for every CORESET and detect DCI for both dl and ul */
+void ue_dl_dci_search(srsran_ue_dl_nr_t&    ue_dl,
+                      srsran::phy_cfg_nr_t& phy_cfg,
+                      srsran_slot_cfg_t&    slot_cfg,
+                      uint16_t              rnti,
+                      srsran_rnti_type_t    rnti_type,
+                      srsue::nr::state&     phy_state,
+                      srslog::basic_logger& logger,
+                      uint32_t              task_idx)
+{
+  char dci_str[256];
+  ue_dl.num_dl_dci = 0;
+  ue_dl.num_ul_dci = 0;
+  /* Estimate PDCCH channel for every configured CORESET for each slot */
+  for (uint32_t i = 0; i < SRSRAN_UE_DL_NR_MAX_NOF_CORESET; i++) {
+    if (ue_dl.cfg.coreset_present[i]) {
+      srsran_dmrs_pdcch_estimate(&ue_dl.dmrs_pdcch[i], &slot_cfg, ue_dl.sf_symbols[0]);
+    }
+  }
+  /* Function used to detect the DCI for DL within the slot*/
+  std::array<srsran_dci_dl_nr_t, SRSRAN_SEARCH_SPACE_MAX_NOF_CANDIDATES_NR> dci_dl = {};
+  int                                                                       num_dci_dl =
+      srsran_ue_dl_nr_find_dl_dci(&ue_dl, &slot_cfg, rnti, rnti_type, dci_dl.data(), (uint32_t)dci_dl.size());
+  ue_dl.num_dl_dci = num_dci_dl;
+  for (int i = 0; i < num_dci_dl; i++) {
+    phy_state.set_dl_pending_grant(phy_cfg, slot_cfg, dci_dl[i]);
+    if (logger.debug.enabled()) {
+      srsran_dci_dl_nr_to_str(&ue_dl.dci, &dci_dl[i], dci_str, 256);
+      logger.debug("DCI DL slot %u %u: %s", task_idx, slot_cfg.idx, dci_str);
+    }
+  }
+  /* Function used to detect the DCI for UL within the slot*/
+  std::array<srsran_dci_ul_nr_t, SRSRAN_SEARCH_SPACE_MAX_NOF_CANDIDATES_NR> dci_ul = {};
+  int                                                                       num_dci_ul =
+      srsran_ue_dl_nr_find_ul_dci(&ue_dl, &slot_cfg, rnti, rnti_type, dci_ul.data(), (uint32_t)dci_ul.size());
+  ue_dl.num_ul_dci = num_dci_ul;
+  for (int i = 0; i < num_dci_ul; i++) {
+    phy_state.set_ul_pending_grant(phy_cfg, slot_cfg, dci_ul[i]);
+    if (logger.debug.enabled()) {
+      srsran_dci_ul_nr_to_str(&ue_dl.dci, &dci_ul[i], dci_str, 256);
+      logger.debug("DCI UL slot %u %u: %s", task_idx, slot_cfg.idx, dci_str);
+    }
+  }
+}
+
+/* Detect and decode PDSCH info bytes */
+bool ue_dl_pdsch_decode(srsran_ue_dl_nr_t&      ue_dl,
+                        srsran_sch_cfg_nr_t&    pdsch_cfg,
+                        srsran_slot_cfg_t&      slot_cfg,
+                        srsran_pdsch_res_nr_t&  pdsch_res,
+                        srsran_softbuffer_rx_t& softbuffer_rx,
+                        srslog::basic_logger&   logger,
+                        uint32_t                task_idx)
+{
+  /* Initialize softbuffer */
+  srsran_softbuffer_rx_reset(&softbuffer_rx);
+  pdsch_cfg.grant.tb[0].softbuffer.rx = &softbuffer_rx;
+
+  /* call srsran API to decode pdsch message */
+  if (srsran_ue_dl_nr_decode_pdsch(&ue_dl, &slot_cfg, &pdsch_cfg, &pdsch_res) != 0) {
+    logger.error("Error srsran_ue_dl_nr_decode_pdsch");
+    return false;
+  }
+
+  if (logger.debug.enabled()) {
+    char str[256];
+    srsran_ue_dl_nr_pdsch_info(&ue_dl, &pdsch_cfg, &pdsch_res, str, 256);
+    logger.debug("PDSCH %u %u: %s", task_idx, slot_cfg.idx, str);
+  }
+  return true;
+}

@@ -1,3 +1,4 @@
+#pragma once
 #include "srsran/config.h"
 #include <memory>
 #include <mutex>

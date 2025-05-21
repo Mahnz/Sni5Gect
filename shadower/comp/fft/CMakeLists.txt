@@ -6,7 +6,7 @@ if(USE_CUDA)
 endif(USE_CUDA)
 
 add_executable(fft_test tests/fft_test.cc)
-target_link_libraries(fft_test utils phy_cfg_utils ue_dl_utils)
+target_link_libraries(fft_test utils)
 if(USE_CUDA)
     target_link_libraries(fft_test fft_processor)
 endif(USE_CUDA)

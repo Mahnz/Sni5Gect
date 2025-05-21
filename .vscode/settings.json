@@ -78,5 +78,24 @@
         "variant": "cpp",
         "span": "cpp",
         "random.h": "c"
-    }
+    },
+    "cSpell.words": [
+        "crnti",
+        "CUDA",
+        "harq",
+        "LDPC",
+        "ncellid",
+        "ofdm",
+        "pbch",
+        "PDCCH",
+        "pdsch",
+        "pusch",
+        "RACH",
+        "RNTI",
+        "srate",
+        "srslog",
+        "srsran",
+        "srsue",
+        "TEST_VARIABLES_H"
+    ]
 }
