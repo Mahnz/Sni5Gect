@@ -82,3 +82,6 @@ add_test(shd_gnb_ul_worker_test_20MHz
     -o 468 -u 0.00054
 )
 set_tests_properties(shd_gnb_ul_worker_test_20MHz PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+
+add_library(gnb_dl_worker gnb_dl_worker.cc)
+target_link_libraries(gnb_dl_worker utils)

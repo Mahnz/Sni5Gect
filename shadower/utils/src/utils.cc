@@ -54,6 +54,17 @@ bool load_samples(const std::string& filename, cf_t* buffer, size_t nsamples)
   return true;
 }
 
+/* Set the thread priority */
+void set_thread_priority(std::thread& t, int priority)
+{
+  pthread_t          native_handle = t.native_handle();
+  struct sched_param param{};
+  param.sched_priority = priority;
+  if (pthread_setschedparam(native_handle, SCHED_FIFO, &param) != 0) {
+    std::cerr << "Failed to set thread priority" << std::endl;
+  }
+}
+
 /* Read binary form configuration dumped structure */
 bool read_raw_config(const std::string& filename, uint8_t* buffer, size_t size)
 {

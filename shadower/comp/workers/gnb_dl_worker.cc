@@ -1,4 +1,4 @@
-#include "shadower/hdr/gnb_dl_worker.h"
+#include "shadower/comp/workers/gnb_dl_worker.h"
 
 GNBDLWorker::GNBDLWorker(srslog::basic_logger& logger_, Source* source_, ShadowerConfig& config_) :
   logger(logger_), source(source_), config(config_)
@@ -130,8 +130,12 @@ void GNBDLWorker::work_imp()
   srsran_timestamp_add(&gnb_dl_task.rx_time,
                        0,
                        slot_duration * (gnb_dl_task.slot_idx - gnb_dl_task.rx_tti) -
-                           config.send_advance_samples / config.sample_rate);
-  source->send(output_buffer, tx_size, gnb_dl_task.rx_time, gnb_dl_task.slot_idx);
+                           config.tx_advancement / config.sample_rate);
+  cf_t* tx_buffer[SRSRAN_MAX_PORTS] = {};
+  for (uint32_t ch = 0; ch < config.nof_channels; ch++) {
+    tx_buffer[ch] = output_buffer;
+  }
+  source->send(tx_buffer, tx_size, gnb_dl_task.rx_time, gnb_dl_task.slot_idx);
   logger.info("Send message to UE: RNTI %u Slot: %u Current Slot: %u",
               gnb_dl_task.rnti,
               gnb_dl_task.slot_idx,

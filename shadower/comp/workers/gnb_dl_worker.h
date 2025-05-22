@@ -1,8 +1,8 @@
 #ifndef GNB_DL_WORKER
 #define GNB_DL_WORKER
-#include "shadower/hdr/arg_parser.h"
-#include "shadower/hdr/source.h"
-#include "shadower/hdr/utils.h"
+#include "shadower/source/source.h"
+#include "shadower/utils/arg_parser.h"
+#include "shadower/utils/utils.h"
 #include "srsran/common/phy_cfg_nr.h"
 #include "srsran/common/thread_pool.h"
 #include "srsran/common/threads.h"

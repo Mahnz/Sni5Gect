@@ -6,6 +6,7 @@ extern "C" {
 #include "srsran/phy/phch/prach.h"
 }
 #include "shadower/utils/constants.h"
+#include "shadower/utils/dci_utils.h"
 #include "shadower/utils/gnb_ul_utils.h"
 #include "shadower/utils/phy_cfg_utils.h"
 #include "shadower/utils/ssb_utils.h"
@@ -23,6 +24,9 @@ bool hex_to_bytes(const std::string& hex, uint8_t* buffer, uint32_t* size);
 
 /* Load the IQ samples from a file */
 bool load_samples(const std::string& filename, cf_t* buffer, size_t nsamples);
+
+/* Set the thread priority */
+void set_thread_priority(std::thread& t, int priority);
 
 /* Read binary form configuration dumped structure */
 bool read_raw_config(const std::string& filename, uint8_t* buffer, size_t size);
