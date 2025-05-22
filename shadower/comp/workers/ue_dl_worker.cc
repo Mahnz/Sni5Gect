@@ -120,6 +120,9 @@ void UEDLWorker::set_task(std::shared_ptr<Task> task_)
 
 void UEDLWorker::work_imp()
 {
+  if (!task) {
+    return;
+  }
   process_task(task);
 }
 

@@ -368,7 +368,9 @@ void Syncer::run_thread()
     std::shared_ptr<Task> task = std::make_shared<Task>();
     for (uint32_t i = 0; i < num_channels; i++) {
       task->dl_buffer[i]      = samples->dl_buffer[i];
+      task->ul_buffer[i]      = samples->dl_buffer[i];
       task->last_dl_buffer[i] = last_samples->dl_buffer[i];
+      task->last_ul_buffer[i] = last_samples->dl_buffer[i];
     }
     task->slot_idx = tti;
     task->task_idx = task_idx++;

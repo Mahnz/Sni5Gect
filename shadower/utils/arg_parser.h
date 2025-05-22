@@ -95,7 +95,7 @@ inline int parse_args(ShadowerConfig& config, int argc, char* argv[])
       ("rf.dl_arfcn",     bpo::value<uint32_t>(&config.dl_arfcn)->default_value(628300),    "DL ARFCN")
       ("rf.ssb_arfcn",    bpo::value<uint32_t>(&config.ssb_arfcn)->default_value(628320),   "SSB ARFCN")
       ("rf.sample_rate",  bpo::value<double>(&config.sample_rate)->default_value(23.04e6),  "Sample rate")
-      ("rf.num_channels", bpo::value<double>(&config.nof_channels)->default_value(1),       "Number of channels")
+      ("rf.num_channels", bpo::value<uint32_t>(&config.nof_channels)->default_value(1),       "Number of channels")
       ("rf.uplink_cfo",   bpo::value<double>(&config.uplink_cfo)->default_value(0),         "Uplink CFO to apply")
       // injector configuration section
       ("injector.delay_n_slots",      bpo::value<uint32_t>(&config.delay_n_slots)->default_value(2),    "Number of slots to delay before sending out")
