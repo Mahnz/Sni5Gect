@@ -5,6 +5,7 @@ add_library(utils
     src/ue_dl_utils.cc
     src/gnb_ul_utils.cc
     src/dci_utils.cc
+    msg_helper.cc
 )
 target_link_libraries(utils ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
 

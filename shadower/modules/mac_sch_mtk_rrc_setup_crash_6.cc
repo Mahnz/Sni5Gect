@@ -1,6 +1,5 @@
-#include "shadower/hdr/exploit.h"
-#include "shadower/hdr/utils.h"
-#include "shadower/modules/hdr/rrc_setup_helper.h"
+#include "shadower/modules/exploit.h"
+#include "shadower/utils/utils.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/rrc_nr.h"
 #include "srsran/mac/mac_sch_pdu_nr.h"

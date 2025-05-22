@@ -1,6 +1,6 @@
-#include "shadower/hdr/constants.h"
-#include "shadower/hdr/exploit.h"
-#include "shadower/hdr/msg_helper.h"
+#include "shadower/modules/exploit.h"
+#include "shadower/utils/constants.h"
+#include "shadower/utils/utils.h"
 
 const uint8_t registration_reject[] = {
     0x01, 0x03, 0x00, 0x02,

@@ -8,6 +8,7 @@ extern "C" {
 #include "shadower/utils/constants.h"
 #include "shadower/utils/dci_utils.h"
 #include "shadower/utils/gnb_ul_utils.h"
+#include "shadower/utils/msg_helper.h"
 #include "shadower/utils/phy_cfg_utils.h"
 #include "shadower/utils/ssb_utils.h"
 #include "shadower/utils/ue_dl_utils.h"

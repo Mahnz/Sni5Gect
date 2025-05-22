@@ -1,10 +1,85 @@
-#ifndef SHADOWER_RRC_SETUP_HELPER_H
-#define SHADOWER_RRC_SETUP_HELPER_H
-#include "srsran/asn1/asn1_utils.h"
+#include "shadower/utils/msg_helper.h"
 #include "srsran/asn1/rrc_nr.h"
 #include "srsran/mac/mac_sch_pdu_nr.h"
 #include <iomanip>
+#include <iostream>
 #include <sstream>
+
+/* Put the nas message in to dl_dcch_msg */
+asn1::rrc_nr::dl_dcch_msg_s pack_nas_to_dl_dcch(const std::string& nas_msg)
+{
+  asn1::rrc_nr::dl_dcch_msg_s       dl_dcch_msg;
+  asn1::rrc_nr::dl_info_transfer_s& dl_information_transfer = dl_dcch_msg.msg.set_c1().set_dl_info_transfer();
+  dl_information_transfer.rrc_transaction_id                = 0;
+  asn1::rrc_nr::dl_info_transfer_ies_s& dl_information_transfer_ies =
+      dl_information_transfer.crit_exts.set_dl_info_transfer();
+  dl_information_transfer_ies.ded_nas_msg.from_string(nas_msg);
+  return dl_dcch_msg;
+}
+
+/* Put the dl_dcch msg into rrc nr and encode it */
+bool pack_dl_dcch_to_rrc_nr(srsran::unique_byte_buffer_t& buffer, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg)
+{
+  asn1::bit_ref bref{buffer->msg + buffer->N_bytes, buffer->get_tailroom()};
+  if (dl_dcch_msg.pack(bref) != asn1::SRSASN_SUCCESS) {
+    printf("Error packing dl_info_transfer\n");
+    return false;
+  }
+  buffer->N_bytes += bref.distance_bytes();
+  return true;
+}
+
+void pack_rrc_nr_to_rlc_nr(uint8_t*                      rrc_nr_msg,
+                           uint32_t                      rrc_nr_len,
+                           uint16_t                      am_sn,
+                           uint16_t                      pdcp_sn,
+                           uint8_t*                      rrc_mac,
+                           srsran::unique_byte_buffer_t& output)
+{
+  /* AM header */
+  uint8_t am_header[2] = {0};
+  am_header[0]         = ((am_sn >> 8) & 0xf) | 0xc0;
+  am_header[1]         = am_sn & 0xff;
+  output->append_bytes(am_header, sizeof(am_header));
+
+  /* PDCP header */
+  uint8_t pdcp_header[2] = {0};
+  pdcp_header[0]         = (pdcp_sn >> 8) & 0xff;
+  pdcp_header[1]         = pdcp_sn & 0xff;
+  output->append_bytes(pdcp_header, sizeof(pdcp_header));
+
+  /* Put the rrc-nr message into rlc-nr */
+  output->append_bytes(rrc_nr_msg, rrc_nr_len);
+
+  /* Append the rrc-nr mac to the end */
+  output->append_bytes(rrc_mac, 4);
+}
+
+/* Put rrc nr message into rlc nr*/
+void pack_rlc_nr_to_mac_nr(uint8_t*               rlc_nr_msg,
+                           uint32_t               rlc_nr_len,
+                           uint16_t               ack_sn,
+                           srsran::byte_buffer_t& output,
+                           uint32_t               pdu_len)
+{
+  srsran::mac_sch_pdu_nr mac_pdu;
+  mac_pdu.init_tx(&output, pdu_len);
+
+  if (ack_sn > 0) {
+    /* add an ack to the message */
+    uint8_t rlc_ack_pdu[3] = {0};
+    rlc_ack_pdu[0]         = 0x0;
+    rlc_ack_pdu[1]         = (ack_sn >> 8) & 0xf;
+    rlc_ack_pdu[2]         = ack_sn & 0xff;
+    mac_pdu.add_sdu(1, rlc_ack_pdu, 3);
+  }
+
+  /* Add the rlc-nr buffer to mac-nr*/
+  mac_pdu.add_sdu(1, rlc_nr_msg, rlc_nr_len);
+  mac_pdu.pack();
+}
+
+/* Extract the contention resolution identity */
 bool extract_con_res_id(const uint8_t*                              buffer,
                         const uint32_t                              len,
                         srsran::mac_sch_subpdu_nr::ue_con_res_id_t& con_res_id,
@@ -79,7 +154,7 @@ bool replace_con_res_id(srsran::mac_sch_pdu_nr                      original_rrc
                         srsran::mac_sch_subpdu_nr::ue_con_res_id_t& con_res_id,
                         srsran::byte_buffer_t&                      tx_buffer,
                         srslog::basic_logger&                       logger,
-                        std::vector<uint8_t>*                       modified_dl_ccch_msg = nullptr)
+                        std::vector<uint8_t>*                       modified_dl_ccch_msg)
 {
   srsran::mac_sch_pdu_nr rrc_setup_mac_pdu;
   rrc_setup_mac_pdu.init_tx(&tx_buffer, origin_len);
@@ -192,4 +267,28 @@ bool modify_monitoring_symbol_within_slot(uint8_t*              dl_ccch_msg_raw,
   memcpy(modified_dl_ccch_msg.data(), dl_ccch_msg_modified.data(), dl_ccch_msg_modified.size());
   return true;
 }
-#endif // SHADOWER_RRC_SETUP_HELPER_H
+
+/* Decode dl_ccch_msg_s bytes to asn1 structure */
+bool parse_to_dl_ccch_msg(uint8_t* data, uint32_t len, asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg)
+{
+  asn1::cbit_ref    bref(data, len);
+  asn1::SRSASN_CODE err = dl_ccch_msg.unpack(bref);
+  if (err != asn1::SRSASN_SUCCESS || dl_ccch_msg.msg.type().value != asn1::rrc_nr::dl_ccch_msg_type_c::types_opts::c1) {
+    std::cerr << "Error unpacking DL-CCCH message\n";
+    return false;
+  }
+  return true;
+}
+
+/* extract cell_group struct from rrc_setup */
+bool extract_cell_group_cfg(asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg, asn1::rrc_nr::cell_group_cfg_s& cell_group)
+{
+  asn1::rrc_nr::rrc_setup_s& rrc_setup_msg = dl_ccch_msg.msg.c1().rrc_setup();
+  asn1::cbit_ref             bref_cg(rrc_setup_msg.crit_exts.rrc_setup().master_cell_group.data(),
+                         rrc_setup_msg.crit_exts.rrc_setup().master_cell_group.size());
+  if (cell_group.unpack(bref_cg) != asn1::SRSASN_SUCCESS) {
+    printf("Could not unpack master cell group config.\n");
+    return false;
+  }
+  return true;
+}
