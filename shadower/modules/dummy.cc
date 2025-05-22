@@ -1,4 +1,4 @@
-#include "shadower/hdr/exploit.h"
+#include "shadower/modules/exploit.h"
 
 class DummyExploit : public Exploit
 {

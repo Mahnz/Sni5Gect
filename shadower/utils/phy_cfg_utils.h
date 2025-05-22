@@ -15,6 +15,15 @@ void init_phy_state(srsue::nr::state& phy_state, uint32_t nof_prb);
 /* Decode SIB1 bytes to asn1 structure */
 bool parse_to_sib1(uint8_t* data, uint32_t len, asn1::rrc_nr::sib1_s& sib1);
 
+/* Set rar grant */
+bool set_rar_grant(uint16_t                                        rnti,
+                   srsran_rnti_type_t                              rnti_type,
+                   uint32_t                                        slot_idx,
+                   std::array<uint8_t, SRSRAN_RAR_UL_GRANT_NBITS>& grant,
+                   srsran::phy_cfg_nr_t&                           phy_cfg,
+                   srsue::nr::state&                               phy_state,
+                   srslog::basic_logger&                           logger);
+
 /* Load mib configuration from file and apply to phy cfg */
 bool configure_phy_cfg_from_mib(srsran::phy_cfg_nr_t& phy_cfg, std::string& filename, uint32_t ncellid);
 

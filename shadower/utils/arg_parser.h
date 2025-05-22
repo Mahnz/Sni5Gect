@@ -95,6 +95,7 @@ inline int parse_args(ShadowerConfig& config, int argc, char* argv[])
       ("rf.dl_arfcn",     bpo::value<uint32_t>(&config.dl_arfcn)->default_value(628300),    "DL ARFCN")
       ("rf.ssb_arfcn",    bpo::value<uint32_t>(&config.ssb_arfcn)->default_value(628320),   "SSB ARFCN")
       ("rf.sample_rate",  bpo::value<double>(&config.sample_rate)->default_value(23.04e6),  "Sample rate")
+      ("rf.num_channels", bpo::value<double>(&config.nof_channels)->default_value(1),       "Number of channels")
       ("rf.uplink_cfo",   bpo::value<double>(&config.uplink_cfo)->default_value(0),         "Uplink CFO to apply")
       // injector configuration section
       ("injector.delay_n_slots",      bpo::value<uint32_t>(&config.delay_n_slots)->default_value(2),    "Number of slots to delay before sending out")
@@ -121,7 +122,7 @@ inline int parse_args(ShadowerConfig& config, int argc, char* argv[])
       // Pcap settings
       ("pcap.pcap_folder", bpo::value<std::string>(&config.pcap_folder)->default_value("/tmp/"), "Log level")
       // Recorder settings
-      ("recorder.enable", bpo::value<bool>(&config.enable_recorder)->default_value(false), "Enable recorder")
+      ("recorder.enable_recorder", bpo::value<bool>(&config.enable_recorder)->default_value(false), "Enable recorder")
       // log config section
       ("log.log_level", bpo::value<std::string>()->default_value("INFO"), "Log level")
       ("log.bc_worker", bpo::value<std::string>()->default_value("INFO"), "Broadcast Worker Log level")

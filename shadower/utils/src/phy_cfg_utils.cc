@@ -46,6 +46,38 @@ bool parse_to_sib1(uint8_t* data, uint32_t len, asn1::rrc_nr::sib1_s& sib1)
   return true;
 }
 
+/* Set rar grant */
+bool set_rar_grant(uint16_t                                        rnti,
+                   srsran_rnti_type_t                              rnti_type,
+                   uint32_t                                        slot_idx,
+                   std::array<uint8_t, SRSRAN_RAR_UL_GRANT_NBITS>& grant,
+                   srsran::phy_cfg_nr_t&                           phy_cfg,
+                   srsue::nr::state&                               phy_state,
+                   srslog::basic_logger&                           logger)
+{
+  srsran_dci_msg_nr_t dci_msg = {};
+  dci_msg.ctx.format          = srsran_dci_format_nr_rar; /* MAC RAR grant shall be unpacked as DCI 0_0 format */
+  dci_msg.ctx.rnti_type       = rnti_type;
+  dci_msg.ctx.ss_type         = srsran_search_space_type_rar; /* This indicates it is a MAC RAR */
+  dci_msg.ctx.rnti            = rnti;
+  dci_msg.nof_bits            = SRSRAN_RAR_UL_GRANT_NBITS;
+  srsran_vec_u8_copy(dci_msg.payload, grant.data(), SRSRAN_RAR_UL_GRANT_NBITS);
+  srsran_dci_ul_nr_t dci_ul = {};
+  if (srsran_dci_nr_ul_unpack(NULL, &dci_msg, &dci_ul) < SRSRAN_SUCCESS) {
+    logger.error("Couldn't unpack UL grant");
+    return false;
+  }
+  if (logger.debug.enabled()) {
+    std::array<char, 512> str{};
+    srsran_dci_nr_t       dci = {};
+    srsran_dci_ul_nr_to_str(&dci, &dci_ul, str.data(), str.size());
+    logger.debug("Setting RAR Grant: %s", str.data());
+  }
+  srsran_slot_cfg_t slot_cfg = {.idx = slot_idx + 1};
+  phy_state.set_ul_pending_grant(phy_cfg, slot_cfg, dci_ul);
+  return true;
+}
+
 /* Load mib configuration from file and apply to phy cfg */
 bool configure_phy_cfg_from_mib(srsran::phy_cfg_nr_t& phy_cfg, std::string& filename, uint32_t ncellid)
 {

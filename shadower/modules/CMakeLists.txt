@@ -1,3 +1,6 @@
+add_library(exploit_loader SHARED exploit_loader.cc)
+target_include_directories(exploit_loader PRIVATE ${WDISSECTOR_INCLUDES})
+
 add_library(dummy SHARED dummy.cc)
 target_link_libraries(dummy wdissector srslog rrc_nr_asn1 rrc_asn1 srsran_mac srsran_common)
 target_include_directories(dummy PRIVATE ${WDISSECTOR_INCLUDES})
