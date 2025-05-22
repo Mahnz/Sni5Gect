@@ -85,3 +85,15 @@ set_tests_properties(shd_gnb_ul_worker_test_20MHz PROPERTIES WORKING_DIRECTORY $
 
 add_library(gnb_dl_worker gnb_dl_worker.cc)
 target_link_libraries(gnb_dl_worker utils)
+
+add_executable(gnb_dl_worker_test tests/gnb_dl_worker_test.cc)
+target_link_libraries(gnb_dl_worker_test gnb_dl_worker utils source)
+
+add_test(shd_gnb_dl_worker_test_20MHz
+    ${CMAKE_BINARY_DIR}/shadower/comp/workers/gnb_dl_worker_test -s 23.04 -f 3427.5 -b 3421.92 -c 1 -I 1 -p 51 -R 17921
+    -m ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/mib.raw
+    -z ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/sib1.raw -Z 101
+    -y ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/rrc_setup.raw -Y 316
+    -M 3 -P 24
+)
+set_tests_properties(shd_gnb_dl_worker_test_20MHz PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})

@@ -37,6 +37,12 @@ public:
   // Set the context for the gnb_dl worker
   void set_context(gnb_dl_task_t& task_);
 
+  // Encode pdsch message and send to UE
+  bool send_pdsch();
+
+  cf_t* output_buffer = nullptr;
+  cf_t* tx_buffer     = nullptr;
+
 private:
   srslog::basic_logger& logger;
   std::mutex            mutex;
@@ -51,8 +57,6 @@ private:
   uint32_t numerology    = 0;
   double   slot_duration = 1e-3;
 
-  cf_t*                  output_buffer          = nullptr;
-  cf_t*                  tx_buffer              = nullptr;
   Source*                source                 = nullptr;
   srsran_gnb_dl_t        gnb_dl                 = {};
   srsran_softbuffer_tx_t softbuffer_tx          = {};
@@ -63,9 +67,6 @@ private:
 
   // Worker implementation, send message to UE
   void work_imp() override;
-
-  // Encode pdsch message and send to UE
-  bool send_pdsch();
 
   // Encode DCI UL message and send to UE
   bool send_dci_ul(uint32_t slot_idx);

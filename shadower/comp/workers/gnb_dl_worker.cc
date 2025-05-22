@@ -131,11 +131,11 @@ void GNBDLWorker::work_imp()
                        0,
                        slot_duration * (gnb_dl_task.slot_idx - gnb_dl_task.rx_tti) -
                            config.tx_advancement / config.sample_rate);
-  cf_t* tx_buffer[SRSRAN_MAX_PORTS] = {};
+  cf_t* sdr_buffer[SRSRAN_MAX_PORTS] = {};
   for (uint32_t ch = 0; ch < config.nof_channels; ch++) {
-    tx_buffer[ch] = output_buffer;
+    sdr_buffer[ch] = output_buffer;
   }
-  source->send(tx_buffer, tx_size, gnb_dl_task.rx_time, gnb_dl_task.slot_idx);
+  source->send(sdr_buffer, tx_size, gnb_dl_task.rx_time, gnb_dl_task.slot_idx);
   logger.info("Send message to UE: RNTI %u Slot: %u Current Slot: %u",
               gnb_dl_task.rnti,
               gnb_dl_task.slot_idx,

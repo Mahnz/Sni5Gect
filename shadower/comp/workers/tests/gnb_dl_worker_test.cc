@@ -1,6 +1,4 @@
-#include "shadower/comp/workers/ue_dl_worker.h"
-#include "shadower/comp/workers/wd_worker.h"
-#include "shadower/modules/dummy_exploit.h"
+#include "shadower/comp/workers/gnb_dl_worker.h"
 #include "shadower/utils/arg_parser.h"
 #include "shadower/utils/phy_cfg_utils.h"
 #include "shadower/utils/safe_queue.h"
@@ -23,7 +21,7 @@ SafeQueue<std::vector<uint8_t> > ul_msg_queue;
 void parse_args(int argc, char* argv[])
 {
   int opt;
-  while ((opt = getopt(argc, argv, "sfbcRFiIzZyYpm")) != -1) {
+  while ((opt = getopt(argc, argv, "sfbcRiImyYzZpMP")) != -1) {
     switch (opt) {
       case 's': {
         double srateMHz    = atof(argv[optind]);
@@ -52,16 +50,6 @@ void parse_args(int argc, char* argv[])
       case 'R': {
         rnti = atoi(argv[optind]);
         printf("Using RNTI: %u\n", rnti);
-        break;
-      }
-      case 'F': {
-        sample_file = argv[optind];
-        printf("Using sample file: %s\n", sample_file.c_str());
-        break;
-      }
-      case 'i': {
-        slot_idx = atoi(argv[optind]);
-        printf("Using slot index: %u\n", slot_idx);
         break;
       }
       case 'I': {
@@ -99,19 +87,26 @@ void parse_args(int argc, char* argv[])
         printf("Using number of PRBs: %u\n", config.nof_prb);
         break;
       }
+      case 'M': {
+        config.pdsch_mcs = atoi(argv[optind]);
+        printf("Using PDSCH MCS: %u\n", config.pdsch_mcs);
+        break;
+      }
+      case 'P': {
+        config.pdsch_prbs = atoi(argv[optind]);
+        printf("Using PDSCH PRBs: %u\n", config.pdsch_prbs);
+        break;
+      }
       default:
         fprintf(stderr, "Unknown option or missing argument.\n");
         exit(EXIT_FAILURE);
     }
   }
-  config.ssb_pattern = srsran_ssb_pattern_t::SRSRAN_SSB_PATTERN_C;
-  config.duplex_mode = srsran_duplex_mode_t::SRSRAN_DUPLEX_MODE_TDD;
-  config.scs_ssb     = srsran_subcarrier_spacing_t::srsran_subcarrier_spacing_30kHz;
-  config.scs_common  = srsran_subcarrier_spacing_t::srsran_subcarrier_spacing_30kHz;
-  if (sample_file.empty()) {
-    fprintf(stderr, "Sample file is required.\n");
-    exit(EXIT_FAILURE);
-  }
+  config.duplications = 1;
+  config.ssb_pattern  = srsran_ssb_pattern_t::SRSRAN_SSB_PATTERN_C;
+  config.duplex_mode  = srsran_duplex_mode_t::SRSRAN_DUPLEX_MODE_TDD;
+  config.scs_ssb      = srsran_subcarrier_spacing_t::srsran_subcarrier_spacing_30kHz;
+  config.scs_common   = srsran_subcarrier_spacing_t::srsran_subcarrier_spacing_30kHz;
 }
 
 int main(int argc, char* argv[])
@@ -146,43 +141,30 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  /* init phy state */
-  srsue::nr::state phy_state = {};
-  init_phy_state(phy_state, config.nof_prb);
-
-  /* Initialize the wd worker */
-  srsran_duplex_mode_t duplex_mode = srsran_duplex_mode_t::SRSRAN_DUPLEX_MODE_TDD;
-  WDWorker             wd_worker(duplex_mode, config.log_level);
-
-  /* initialize exploit */
-  DummyExploit exploit(dl_msg_queue, ul_msg_queue);
-
-  /* Initialize the pcap writer */
-  std::shared_ptr<srsran::mac_pcap> pcap_writer = std::make_unique<srsran::mac_pcap>();
-  std::string                       pcap_file   = "/tmp/test.pcap";
-  if (pcap_writer->open(pcap_file)) {
-    logger.error("Failed to open pcap file");
+  config.source_type             = "file";
+  config.source_srate            = config.sample_rate;
+  config.source_params           = "/dev/random,/dev/random";
+  create_source_t source_creator = load_source(file_source_module_path);
+  if (source_creator == nullptr) {
+    logger.error("Failed to load source module");
     return -1;
   }
+  Source*      source        = source_creator(config);
+  GNBDLWorker* gnb_dl_worker = new GNBDLWorker(logger, source, config);
+  gnb_dl_worker->init();
+  gnb_dl_worker->update_cfg(phy_cfg);
 
-  /* Initialize the ue_dl worker */
-  UEDLWorker* ue_dl_worker = new UEDLWorker(logger, config, phy_state, &wd_worker, &exploit, pcap_writer);
-  ue_dl_worker->init(phy_cfg);
-  ue_dl_worker->update_cfg(phy_cfg);
-  ue_dl_worker->set_rnti(rnti, srsran_rnti_type_t::srsran_rnti_type_c);
-  ue_dl_worker->update_pending_rrc_setup(false);
-
-  /* Load the IQ samples from file */
-  std::shared_ptr<Task>               task    = std::make_shared<Task>();
-  std::shared_ptr<std::vector<cf_t> > samples = std::make_shared<std::vector<cf_t> >(sf_len);
-  if (!load_samples(sample_file, samples->data(), sf_len)) {
-    logger.error("Failed to load samples\n");
-    return -1;
-  }
-  task->dl_buffer[0] = samples;
-  task->slot_idx     = slot_idx;
-  task->ts           = {};
-  ue_dl_worker->process_task(task);
-  pcap_writer->close();
-  return 0;
+  GNBDLWorker::gnb_dl_task_t task = {};
+  task.rnti                       = rnti;
+  task.rnti_type                  = srsran_rnti_type_t::srsran_rnti_type_c;
+  task.slot_idx                   = 0;
+  task.rx_tti                     = 0;
+  task.rx_time                    = srsran_timestamp_t();
+  task.mcs                        = config.pdsch_mcs;
+  task.prbs                       = config.pdsch_prbs;
+  task.msg                        = std::make_shared<std::vector<uint8_t> >(std::vector<uint8_t>(100, 0));
+  gnb_dl_worker->set_context(task);
+  bool success    = gnb_dl_worker->send_pdsch();
+  char filename[] = "gnb_dl_worker_test";
+  write_record_to_file(gnb_dl_worker->tx_buffer, sf_len / 2, filename);
 }

@@ -81,7 +81,7 @@ void parse_args(int argc, char* argv[])
       }
       case 'i': {
         ul_slot_idx = atoi(argv[optind]);
-        printf("Using SIB slot index: %u\n", ul_slot_idx);
+        printf("Using slot index: %u\n", ul_slot_idx);
         break;
       }
       case 'o': {
