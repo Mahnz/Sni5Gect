@@ -23,6 +23,12 @@ void write_record_to_file(cf_t* buffer, uint32_t length, char* name = nullptr, c
 /* Convert hex stream to uint8_t */
 bool hex_to_bytes(const std::string& hex, uint8_t* buffer, uint32_t* size);
 
+/* Turn a buffer to hex string */
+std::string buffer_to_hex_string(uint8_t* buffer, uint32_t len);
+
+/* Print and compare two different buffers */
+bool compare_two_buffers(uint8_t* buffer1, uint32_t len1, uint8_t* buffer2, uint32_t len2);
+
 /* Load the IQ samples from a file */
 bool load_samples(const std::string& filename, cf_t* buffer, size_t nsamples);
 

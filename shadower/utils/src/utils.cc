@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <chrono>
 #include <fstream>
+#include <iomanip>
 
 /* Write the IQ samples to a file so that we can use tools like matlab or spectrogram-py to debug */
 void write_record_to_file(cf_t* buffer, uint32_t length, char* name, const std::string& folder)
@@ -40,6 +41,45 @@ bool hex_to_bytes(const std::string& hex, uint8_t* buffer, uint32_t* size)
     buffer[i]            = static_cast<uint8_t>(std::stoul(byte_str, nullptr, 16));
   }
   return true;
+}
+
+/* Print and compare two different buffers */
+bool compare_two_buffers(uint8_t* buffer1, uint32_t len1, uint8_t* buffer2, uint32_t len2)
+{
+  std::ostringstream oss1;
+  std::ostringstream oss2;
+  uint32_t           len = std::min(len1, len2);
+  for (uint32_t i = 0; i < len; i++) {
+    oss1 << "0x" << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(buffer1[i]) << ", ";
+    if (buffer1[i] != buffer2[i]) {
+      oss2 << RED "0x" << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(buffer2[i]) << RESET ", ";
+    } else {
+      oss2 << "0x" << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(buffer2[i]) << ", ";
+    }
+  }
+  for (uint32_t i = len; i < len1; i++) {
+    oss1 << GREEN "0x" << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(buffer1[i]) << RESET ", ";
+  }
+  for (uint32_t i = len; i < len2; i++) {
+    oss2 << GREEN "0x" << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(buffer2[i]) << RESET ", ";
+  }
+  printf("%s\n", oss1.str().c_str());
+  printf("%s\n", oss2.str().c_str());
+  return oss1.str() == oss2.str();
+}
+
+/* Turn a buffer to hex string */
+std::string buffer_to_hex_string(uint8_t* buffer, uint32_t len)
+{
+  std::ostringstream oss;
+  for (uint32_t i = 0; i < len; i++) {
+    if (i == len - 1) {
+      oss << "0x" << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(buffer[i]);
+    } else {
+      oss << "0x" << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(buffer[i]) << ", ";
+    }
+  }
+  return oss.str();
 }
 
 /* Load the IQ samples from a file */

@@ -41,7 +41,7 @@ public:
   {
     std::lock_guard<std::mutex> lock(mutex);
     try {
-      int samples_sent = srsran_rf_send_multi(rf.get(), (void**)buffer, nof_samples, false, true, false);
+      int samples_sent = srsran_rf_send_multi(rf.get(), (void**)buffer, nof_samples, false, true, true);
       return samples_sent;
     } catch (const std::exception& e) {
       return -1;
