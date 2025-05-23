@@ -24,7 +24,9 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/shadower/test/${fileBasenameNoExtension}",
-            "args": [],
+            "args": [
+                "0"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

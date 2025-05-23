@@ -7,7 +7,6 @@
 #include "test_variables.h"
 #include <fstream>
 
-// #endif // TEST_TYPE
 int main(int argc, char* argv[])
 {
   int test_number = 0;

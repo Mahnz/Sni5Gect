@@ -28,12 +28,12 @@ int main(int argc, char* argv[])
   switch (test_number) {
     case 0:
       sample_file = "shadower/test/data/srsran-n78-20MHz/sib.fc32";
-      slot_number = 1;
+      slot_number = 0;
       half        = 1;
       break;
     case 1:
       sample_file = "shadower/test/data/srsran-n78-40MHz/sib.fc32";
-      slot_number = 1;
+      slot_number = 0;
       half        = 1;
       break;
     case 2:
@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
   }
   srsran_vec_cf_copy(buffer, samples.data() + args.slot_len * half, args.slot_len);
   /* Initialize slot cfg */
-  srsran_slot_cfg_t slot_cfg = {.idx = slot_number};
+  srsran_slot_cfg_t slot_cfg = {.idx = slot_number + half};
   /* run ue_dl estimate fft */
   srsran_ue_dl_nr_estimate_fft(&ue_dl, &slot_cfg);
 

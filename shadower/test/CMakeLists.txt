@@ -32,11 +32,41 @@ add_executable(rar_search_test rar_search_test.cc)
 target_link_libraries(rar_search_test utils)
 add_shd_test(rar_search_test)
 
-add_executable(rrc_setup_test rrc_setup_test.cc ${TestCommonSources})
-target_link_libraries(rrc_setup_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
+add_executable(contention_resolution_test contention_resolution_test.cc)
+target_link_libraries(contention_resolution_test utils)
+add_shd_test(contention_resolution_test)
 
-add_executable(contention_resolution_test contention_resolution_test.cc ${TestCommonSources})
-target_link_libraries(contention_resolution_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
+add_executable(rach_msg3_test rach_msg3_test.cc)
+target_link_libraries(rach_msg3_test utils)
+add_shd_test(rach_msg3_test)
+
+add_executable(rrc_setup_test rrc_setup_test.cc)
+target_link_libraries(rrc_setup_test utils)
+add_shd_test(rrc_setup_test)
+
+add_executable(pdsch_decode_test pdsch_decode_test.cc)
+target_link_libraries(pdsch_decode_test utils wd_worker)
+add_shd_test(pdsch_decode_test)
+
+add_test(shd_pdsch_decode_test_0 ${CMAKE_BINARY_DIR}/shadower/test/pdsch_decode_test 0 -f ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/pdsch_3640.fc32 -s 0 -h 1)
+set_tests_properties(shd_pdsch_decode_test_0 PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+
+add_test(shd_pdsch_decode_test_1 ${CMAKE_BINARY_DIR}/shadower/test/pdsch_decode_test 0 -f ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/pdsch_3684.fc32 -s 4 -h 1)
+set_tests_properties(shd_pdsch_decode_test_1 PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+
+add_test(shd_pdsch_decode_test_2 ${CMAKE_BINARY_DIR}/shadower/test/pdsch_decode_test 1 -f ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-40MHz/pdsch_13720.fc32 -s 0 -h 0)
+set_tests_properties(shd_pdsch_decode_test_2 PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+
+add_test(shd_pdsch_decode_test_3 ${CMAKE_BINARY_DIR}/shadower/test/pdsch_decode_test 1 -f ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-40MHz/pdsch_13726.fc32 -s 6 -h 0)
+set_tests_properties(shd_pdsch_decode_test_3 PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+
+add_executable(pusch_decode_test pusch_decode_test.cc)
+target_link_libraries(pusch_decode_test utils wd_worker)
+add_shd_test(pusch_decode_test)
+
+add_test(shd_pusch_decode_test_0 ${CMAKE_BINARY_DIR}/shadower/test/pusch_decode_test 0 -d ${CMAKE_SOURCE_DIR}/shadower/test/data/srsran-n78-20MHz/dci_ul_3422.fc32 -s 0 -h 1)
+set_tests_properties(shd_pusch_decode_test_0 PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+
 
 add_executable(pdsch_decode_test pdsch_decode_test.cc ${TestCommonSources} ${SHADOWER_DIR}/wd_worker.cc)
 target_link_libraries(pdsch_decode_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} wdissector)
