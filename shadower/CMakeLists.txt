@@ -95,10 +95,6 @@ set_property(
   "${PROJECT_SOURCE_DIR}/bin/libwdissector.so")
 target_include_directories(wdissector INTERFACE ${WDISSECTOR_INCLUDES})
 
-add_executable(cutter tools/cutter.cc)
-
-add_executable(small_cutter tools/small_cutter.cc)
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_definitions(-DDBG)
 endif()
