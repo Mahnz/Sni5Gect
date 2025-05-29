@@ -1,7 +1,6 @@
 #if ENABLE_CUDA
 #include "shadower/comp/ssb/ssb_cuda.cuh"
 #endif // ENABLE_CUDA
-#include "shadower/comp/ssb/ssb_cuda.cuh"
 #include "shadower/utils/arg_parser.h"
 #include "shadower/utils/constants.h"
 #include "shadower/utils/ssb_utils.h"

@@ -113,8 +113,3 @@ target_link_libraries(shadower source syncer exploit_loader thread_pool broadcas
 if(USE_CUDA)
   target_link_libraries(shadower fft_processor ssb_cuda)
 endif(USE_CUDA)
-
-set(SHADOWER_DIR ${CMAKE_HOME_DIRECTORY}/shadower/src)
-add_subdirectory(test)
-add_subdirectory(modules)
-add_subdirectory(tools)
