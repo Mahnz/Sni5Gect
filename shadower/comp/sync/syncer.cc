@@ -284,7 +284,7 @@ bool Syncer::run_sync_find(cf_t* buffer)
 /* keep track of syncing status and detect if lost sync */
 bool Syncer::run_sync_track(cf_t* buffer)
 {
-  if (tti % (SRSRAN_NOF_SF_X_FRAME * slot_per_sf) != 0) {
+  if (tti.load() % config.ssb_period != 0) {
     return true;
   }
   srsran_csi_trs_measurements_t measurements_tmp = {};

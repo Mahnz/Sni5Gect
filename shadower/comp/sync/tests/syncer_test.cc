@@ -31,7 +31,7 @@ void parse_args(int argc, char* argv[])
 {
   int opt;
 
-  while ((opt = getopt(argc, argv, "sSfbtdcr")) != -1) {
+  while ((opt = getopt(argc, argv, "sSfbtdcrp")) != -1) {
     switch (opt) {
       case 's': {
         double srateMHz    = atof(argv[optind]);
@@ -70,6 +70,10 @@ void parse_args(int argc, char* argv[])
         config.nof_channels = atoi(argv[optind]);
         printf("Using number of channels: %u\n", config.nof_channels);
         break;
+      case 'p':
+        config.ssb_period = atoi(argv[optind]);
+        printf("Using SSB period: %u slots\n", config.ssb_period);
+        break;
       case 'r':
         config.enable_recorder = true;
         printf("Enable recorder\n");
@@ -78,6 +82,9 @@ void parse_args(int argc, char* argv[])
         fprintf(stderr, "Unknown option or missing argument.\n");
         exit(EXIT_FAILURE);
     }
+  }
+  if (config.ssb_period == 0) {
+    config.ssb_period = 20; // Default SSB period if not specified
   }
   config.rx_gain     = 40;
   config.tx_gain     = 0;

@@ -12,10 +12,12 @@ namespace bpo = boost::program_options;
 
 struct ShadowerConfig {
   // Cell info
-  uint16_t                    band;       // Band number
-  uint32_t                    nof_prb;    // Number of Physical Resource Blocks
-  srsran_subcarrier_spacing_t scs_common; // Subcarrier Spacing for common (kHz)
-  srsran_subcarrier_spacing_t scs_ssb;    // Subcarrier Spacing for SSB (kHz)
+  uint16_t                    band;          // Band number
+  uint32_t                    nof_prb;       // Number of Physical Resource Blocks
+  srsran_subcarrier_spacing_t scs_common;    // Subcarrier Spacing for common (kHz)
+  srsran_subcarrier_spacing_t scs_ssb;       // Subcarrier Spacing for SSB (kHz)
+  uint32_t                    ssb_period_ms; // SSB periodicity in milliseconds
+  uint32_t                    ssb_period;    // SSB periodicity in milliseconds
 
   // RF info
   uint32_t freq_offset;      // Frequency offset (Hz)
@@ -88,6 +90,8 @@ inline int parse_args(ShadowerConfig& config, int argc, char* argv[])
       ("cell.nof_prb",    bpo::value<uint32_t>(&config.nof_prb)->default_value(51), "Number of Physical Resource Blocks used by the cell")
       ("cell.scs_common", bpo::value<std::string>()->default_value("30"),           "Common subcarrier spacing")
       ("cell.scs_ssb",    bpo::value<std::string>()->default_value("30"),           "SSB subcarrier spacing")
+      ("cell.ssb_period_ms", bpo::value<uint32_t>(&config.ssb_period)->default_value(10), "SSB periodicity in milliseconds")
+      ("cell.ssb_period", bpo::value<uint32_t>(&config.ssb_period)->default_value(0), "SSB periodicity in milliseconds")
       // RF config section
       ("rf.freq_offset",  bpo::value<uint32_t>(&config.freq_offset)->default_value(0),      "Frequency offset")
       ("rf.tx_gain",      bpo::value<uint32_t>(&config.tx_gain)->default_value(0),          "TX gain")
@@ -151,6 +155,10 @@ inline int parse_args(ShadowerConfig& config, int argc, char* argv[])
   srsran::srsran_band_helper bands;
   config.scs_common = srsran_subcarrier_spacing_from_str(vm["cell.scs_common"].as<std::string>().c_str());
   config.scs_ssb    = srsran_subcarrier_spacing_from_str(vm["cell.scs_ssb"].as<std::string>().c_str());
+  if (config.ssb_period == 0) {
+    uint32_t slot_per_subframe = 1 << (uint32_t)config.scs_common;
+    config.ssb_period          = config.ssb_period_ms * slot_per_subframe;
+  }
 
   bands.set_scs(config.scs_common);
   config.ul_arfcn         = bands.get_ul_arfcn_from_dl_arfcn(config.dl_arfcn);
