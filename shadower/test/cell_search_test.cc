@@ -31,6 +31,9 @@ int main(int argc, char* argv[])
     case 2:
       sample_file = "shadower/test/data/effnet/sib.fc32";
       break;
+    case 3:
+      sample_file = "shadower/test/data/singtel-n78-100MHz/ssb.fc32";
+      break;
     default:
       fprintf(stderr, "Unknown test number: %d\n", test_number);
       exit(EXIT_FAILURE);
@@ -62,8 +65,12 @@ int main(int argc, char* argv[])
     logger.error("Error running srsran_ssb_search");
     return -1;
   }
-  if (res.measurements.snr_dB < -10.0f || !res.pbch_msg.crc) {
-    logger.error("Failed to decode PBCH message");
+  if (res.measurements.snr_dB < -10.0f) {
+    logger.error("SNR is too low: %f dB", res.measurements.snr_dB);
+    return -1;
+  }
+  if (!res.pbch_msg.crc) {
+    logger.error("Failed to decode PBCH message CRC error");
     return -1;
   }
 
