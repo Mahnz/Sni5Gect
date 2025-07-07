@@ -1,3 +1,4 @@
+// 7.10 V14: Null RRC Uplink Config Element (CVE-2023-32845)
 #include "shadower/modules/exploit.h"
 #include "shadower/utils/utils.h"
 #include "srsran/asn1/asn1_utils.h"
