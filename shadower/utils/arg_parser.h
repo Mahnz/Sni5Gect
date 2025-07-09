@@ -90,7 +90,7 @@ inline int parse_args(ShadowerConfig& config, int argc, char* argv[])
       ("cell.nof_prb",    bpo::value<uint32_t>(&config.nof_prb)->default_value(51), "Number of Physical Resource Blocks used by the cell")
       ("cell.scs_common", bpo::value<std::string>()->default_value("30"),           "Common subcarrier spacing")
       ("cell.scs_ssb",    bpo::value<std::string>()->default_value("30"),           "SSB subcarrier spacing")
-      ("cell.ssb_period_ms", bpo::value<uint32_t>(&config.ssb_period)->default_value(10), "SSB periodicity in milliseconds")
+      ("cell.ssb_period_ms", bpo::value<uint32_t>(&config.ssb_period_ms)->default_value(10), "SSB periodicity in milliseconds")
       ("cell.ssb_period", bpo::value<uint32_t>(&config.ssb_period)->default_value(0), "SSB periodicity in milliseconds")
       // RF config section
       ("rf.freq_offset",  bpo::value<uint32_t>(&config.freq_offset)->default_value(0),      "Frequency offset")

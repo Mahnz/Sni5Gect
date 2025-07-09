@@ -39,12 +39,14 @@
 #define SRSRAN_MAX_DCI_MSG_NR 4
 
 typedef struct SRSRAN_API {
-  srsran_pdsch_nr_args_t pdsch;
-  srsran_pdcch_nr_args_t pdcch;
-  uint32_t               nof_rx_antennas;
-  uint32_t               nof_max_prb;
-  float                  pdcch_dmrs_corr_thr;
-  float                  pdcch_dmrs_epre_thr;
+  srsran_pdsch_nr_args_t      pdsch;
+  srsran_pdcch_nr_args_t      pdcch;
+  uint32_t                    nof_rx_antennas;
+  uint32_t                    nof_max_prb;
+  float                       pdcch_dmrs_corr_thr;
+  float                       pdcch_dmrs_epre_thr;
+  srsran_subcarrier_spacing_t scs;
+  double                      sample_rate_hz;
 } srsran_ue_dl_nr_args_t;
 
 typedef struct SRSRAN_API {

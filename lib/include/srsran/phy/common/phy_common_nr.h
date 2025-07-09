@@ -384,6 +384,7 @@ typedef struct SRSRAN_API {
   double                      dl_center_frequency_hz; ///< Absolute baseband center frequency in Hz for DL grid
   double                      ul_center_frequency_hz; ///< Absolute baseband center frequency in Hz for UL grid
   double                      ssb_center_freq_hz;     ///< SS/PBCH Block center frequency in Hz. Set to 0 if not present
+  double                      sample_rate_hz;         ///< Sample rate in Hz. Set to 0 if not present
   uint32_t                    offset_to_carrier; ///< Offset between point A and the lowest subcarrier of the lowest RB
   srsran_subcarrier_spacing_t scs;
   uint32_t                    nof_prb; ///< @brief See TS 38.101-1 Table 5.3.2-1 for more details

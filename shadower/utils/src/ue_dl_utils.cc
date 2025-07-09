@@ -13,6 +13,8 @@ bool init_ue_dl(srsran_ue_dl_nr_t& ue_dl, cf_t* buffer, srsran::phy_cfg_nr_t& ph
   ue_dl_args.pdsch.sch.decoder_use_flooded      = false;
   ue_dl_args.pdsch.sch.decoder_scaling_factor   = 0;
   ue_dl_args.pdsch.sch.max_nof_iter             = 10;
+  ue_dl_args.scs                                = phy_cfg.carrier.scs;
+  ue_dl_args.sample_rate_hz                     = phy_cfg.carrier.sample_rate_hz;
   std::array<cf_t*, SRSRAN_MAX_PORTS> rx_buffer = {};
   rx_buffer[0]                                  = buffer;
   if (srsran_ue_dl_nr_init(&ue_dl, rx_buffer.data(), &ue_dl_args) != 0) {
