@@ -34,6 +34,9 @@ int main(int argc, char* argv[])
     case 3:
       sample_file = "shadower/test/data/singtel-n78-100MHz/ssb.fc32";
       break;
+    case 4:
+      sample_file = "shadower/test/data/srsran-n3-20MHz/ssb.fc32";
+      break;
     default:
       fprintf(stderr, "Unknown test number: %d\n", test_number);
       exit(EXIT_FAILURE);

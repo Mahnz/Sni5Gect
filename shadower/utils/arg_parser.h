@@ -32,6 +32,7 @@ struct ShadowerConfig {
   double   sample_rate;      // Sample rate (Hz)
   uint32_t nof_channels = 1; // Number of channels
   double   uplink_cfo;       // Uplink CFO correction for PUSCH decoding
+  bool     fdd = false;      // FDD mode, true if uplink and downlink frequencies are different
 
   // Derived Cell configurations
   srsran_ssb_pattern_t ssb_pattern;
@@ -170,6 +171,16 @@ inline int parse_args(ShadowerConfig& config, int argc, char* argv[])
 
   config.ssb_pattern = srsran::srsran_band_helper::get_ssb_pattern(config.band, config.scs_ssb);
   config.duplex_mode = bands.get_duplex_mode(config.band);
+  if (config.duplex_mode == srsran_duplex_mode_t::SRSRAN_DUPLEX_MODE_TDD) {
+    config.fdd = false;
+  } else {
+    config.fdd = true;
+    printf("FDD mode: DL freq: %f MHz UL freq: %f MHz\n", config.dl_freq / 1e6, config.ul_freq / 1e6);
+    if (config.nof_channels < 2 || config.nof_channels % 2 != 0) {
+      fprintf(stderr, "Number of channels must be even for FDD mode.\n");
+      return SRSRAN_ERROR;
+    }
+  }
 
   config.log_level        = srslog::str_to_basic_level(vm["log.log_level"].as<std::string>());
   config.syncer_log_level = srslog::str_to_basic_level(vm["log.syncer"].as<std::string>());

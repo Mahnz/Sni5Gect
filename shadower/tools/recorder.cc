@@ -72,7 +72,7 @@ void parse_args(int argc, char* argv[])
 
   };
 
-  while ((opt = getopt_long(argc, argv, "f:u:s:g:n:c:o:F:t:d:", long_options, &option_index)) != -1) {
+  while ((opt = getopt_long(argc, argv, "f:u:s:g:n:c:o:F:t:d:h", long_options, &option_index)) != -1) {
     switch (opt) {
       case 'f': {
         double dl_freq_MHz = atof(optarg);
@@ -111,6 +111,22 @@ void parse_args(int argc, char* argv[])
       case 'd':
         device_args = optarg;
         break;
+      case 'h': {
+        printf("Usage: %s [options]\n", argv[0]);
+        printf("Options:\n");
+        printf("  -f, --frequency <MHz>       Set the downlink frequency (MHz)\n");
+        printf("  -u, --ul-freq <MHz>         Set the uplink frequency (MHz)\n");
+        printf("  -s, --srate <MHz>           Set the sample rate (MHz)\n");
+        printf("  -g, --gain <dB>             Set the gain (dB)\n");
+        printf("  -n, --frames <count>        Set the number of frames to process\n");
+        printf("  -c, --channels <count>      Set the number of channels\n");
+        printf("  -o, --output <file>         Set the output file name\n");
+        printf("  -F, --folder <path>         Set the output folder path\n");
+        printf("  -t, --source-type <type>    Set the source type (e.g., uhd)\n");
+        printf("  -d, --device-args <args>    Set the device arguments for the source\n");
+        printf("  -h, --help                  Show this help message\n");
+        exit(EXIT_SUCCESS);
+      }
       default:
         fprintf(stderr, "Unknown option or missing argument.\n");
         exit(EXIT_FAILURE);

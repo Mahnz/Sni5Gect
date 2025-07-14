@@ -17,7 +17,7 @@ void parse_args(int argc, char* argv[])
 {
   int opt;
 
-  while ((opt = getopt(argc, argv, "iokns")) != -1) {
+  while ((opt = getopt(argc, argv, "ioknsh")) != -1) {
     switch (opt) {
       case 'i':
         inputFile = argv[optind];
@@ -38,6 +38,9 @@ void parse_args(int argc, char* argv[])
         subframe_size        = srate * 0.001; // 1ms
         break;
       }
+      case 'h':
+        printf("Usage: %s -i <input_file> -o <output_file> -k <skip> -n <subframes> -s <sample_rate>\n", argv[0]);
+        exit(EXIT_SUCCESS);
       default:
         fprintf(stderr, "Unknown option or missing argument.\n");
         exit(EXIT_FAILURE);

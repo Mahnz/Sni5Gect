@@ -37,6 +37,11 @@ int main(int argc, char* argv[])
       slot_number = 13;
       half        = 1;
       break;
+    case 4:
+      sample_file = "shadower/test/data/srsran-n3-20MHz/rrc_setup.fc32";
+      slot_number = 9201;
+      half        = 0;
+      break;
     default:
       fprintf(stderr, "Unknown test number: %d\n", test_number);
       exit(EXIT_FAILURE);
