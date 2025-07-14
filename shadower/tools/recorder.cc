@@ -24,21 +24,21 @@ std::queue<std::shared_ptr<frame_t> > queue;
 std::condition_variable               cv;
 std::mutex                            mtx;
 
-double         center_freq      = 3427.5e6;
-double         sample_rate      = 23.04e6;
-double         sdr_sample_rate  = 23.04e6;
-double         gain             = 40;
-uint32_t       num_frames       = 20000;
-uint32_t       num_channels     = 1;
-std::string    output_file      = "output";
-std::string    output_folder    = "/root/records/";
-std::string    source_type      = "uhd";
-std::string    device_args      = "type=b200";
-bool           enable_resampler = false;
-double         resample_rate    = 1.0;
-ShadowerConfig config           = {};
-uint32_t       sf_len           = 0;
-uint32_t       sf_len_sdr       = 0;
+bool           fdd           = false;
+bool           ul_freq_set   = false;
+double         dl_freq       = 3427.5e6;
+double         ul_freq       = 3427.5e6;
+double         sample_rate   = 23.04e6;
+double         gain          = 40;
+uint32_t       num_frames    = 20000;
+uint32_t       num_channels  = 1;
+std::string    output_file   = "output";
+std::string    output_folder = "/root/records/";
+std::string    source_type   = "uhd";
+std::string    device_args   = "type=b200";
+double         resample_rate = 1.0;
+ShadowerConfig config        = {};
+uint32_t       sf_len        = 0;
 
 void sigint_handler(int signum)
 {
@@ -59,8 +59,8 @@ void parse_args(int argc, char* argv[])
   static struct option long_options[] = {
 
       {"frequency", required_argument, 0, 'f'},
+      {"ul-freq", required_argument, 0, 'u'},
       {"srate", required_argument, 0, 's'},
-      {"sdr-srate", required_argument, 0, 'S'},
       {"gain", required_argument, 0, 'g'},
       {"frames", required_argument, 0, 'n'},
       {"channels", required_argument, 0, 'c'},
@@ -72,22 +72,22 @@ void parse_args(int argc, char* argv[])
 
   };
 
-  while ((opt = getopt_long(argc, argv, "f:s:S:g:n:c:o:F:t:d:", long_options, &option_index)) != -1) {
+  while ((opt = getopt_long(argc, argv, "f:u:s:g:n:c:o:F:t:d:", long_options, &option_index)) != -1) {
     switch (opt) {
       case 'f': {
-        double center_freq_MHz = atof(optarg);
-        center_freq            = center_freq_MHz * 1e6;
+        double dl_freq_MHz = atof(optarg);
+        dl_freq            = dl_freq_MHz * 1e6;
+        break;
+      }
+      case 'u': {
+        double ul_freq_MHz = atof(optarg);
+        ul_freq            = ul_freq_MHz * 1e6;
+        ul_freq_set        = true;
         break;
       }
       case 's': {
         double sample_rate_MHz = atof(optarg);
         sample_rate            = sample_rate_MHz * 1e6;
-        break;
-      }
-      case 'S': {
-        double sdr_sample_rate_MHz = atof(optarg);
-        sdr_sample_rate            = sdr_sample_rate_MHz * 1e6;
-        enable_resampler           = true; // Enable resampling if sdr_sample_rate is different from sample_rate
         break;
       }
       case 'g':
@@ -117,31 +117,32 @@ void parse_args(int argc, char* argv[])
     }
   }
 
-  printf("Using Center Frequency: %f MHz\n", center_freq / 1e6);
-  printf("      Sample Rate: %f MHz\n", sample_rate / 1e6);
-  enable_resampler = sdr_sample_rate != sample_rate;
-  if (enable_resampler) {
-    printf("      SDR Sample Rate: %f MHz\n", sdr_sample_rate / 1e6);
-    resample_rate = sample_rate / sdr_sample_rate;
-    printf("      Resampling Rate: %f\n", resample_rate);
+  /* if dl frequency is different from ul frequency, then fdd is set to true */
+  if (ul_freq_set && ul_freq != dl_freq) {
+    fdd = true;
+  } else {
+    ul_freq = dl_freq;
   }
+
+  printf("Using DL Center Frequency: %f MHz\n", dl_freq / 1e6);
+  printf("      UL Center Frequency: %f MHz\n", ul_freq / 1e6);
+  printf("      Sample Rate: %f MHz\n", sample_rate / 1e6);
   printf("      Gain: %f db\n", gain);
   printf("      Number of Channels: %d\n", num_channels);
   printf("      Device Args: %s\n", device_args.c_str());
+  printf("      Is FDD: %s\n", fdd ? "true" : "false");
   output_file = output_folder + output_file;
   if (num_channels == 1) {
     printf("      Output File: %s\n", output_file.c_str());
   }
   config.sample_rate   = sample_rate;
-  config.source_srate  = sdr_sample_rate;
-  config.dl_freq       = center_freq;
-  config.ul_freq       = center_freq;
+  config.dl_freq       = dl_freq;
+  config.ul_freq       = ul_freq;
   config.rx_gain       = gain;
   config.tx_gain       = gain;
   config.nof_channels  = num_channels;
   config.source_params = device_args;
   sf_len               = sample_rate * SF_DURATION;
-  sf_len_sdr           = sdr_sample_rate * SF_DURATION;
 }
 
 void receiver_worker()
@@ -157,7 +158,7 @@ void receiver_worker()
     exit(EXIT_FAILURE);
   }
 
-  buffer_pool              = new SharedBufferPool(sf_len_sdr, 100);
+  buffer_pool              = new SharedBufferPool(sf_len, 100);
   srsran_timestamp_t ts    = {};
   uint32_t           count = 0;
   while (count++ < num_frames) {
@@ -171,7 +172,7 @@ void receiver_worker()
       rx_buffer[i]                            = buf->data();
     }
 
-    int result = source->recv(rx_buffer, sf_len_sdr, &ts);
+    int result = source->recv(rx_buffer, sf_len, &ts);
     if (result == -1) {
       fprintf(stderr, "Failed to receive samples\n");
       break;
@@ -207,8 +208,6 @@ void writer_worker()
     }
   }
 
-  // Create resampler
-  msresamp_crcf resampler = msresamp_crcf_create(resample_rate, TARGET_STOPBAND_SUPPRESSION);
   while (!stop_flag.load()) {
     std::shared_ptr<frame_t> frame = nullptr;
     {
@@ -222,13 +221,6 @@ void writer_worker()
     }
     for (uint32_t i = 0; i < num_channels; i++) {
       uint32_t num_output_samples = frame->buffer_size;
-      if (enable_resampler) {
-        msresamp_crcf_execute(resampler,
-                              (liquid_float_complex*)frame->buffer[i]->data(),
-                              sf_len_sdr,
-                              (liquid_float_complex*)frame->buffer[i]->data(),
-                              &num_output_samples);
-      }
       outfiles[i].write((char*)frame->buffer[i]->data(), num_output_samples * sizeof(cf_t));
     }
     if (frame->frames_idx % 100 == 0) {

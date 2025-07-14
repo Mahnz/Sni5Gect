@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/shadower/shadower",
             "args": [
-                "configs/config-srsran-n78-20MHz.conf"
+                "configs/config-srsran-n3-20MHz.conf"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
