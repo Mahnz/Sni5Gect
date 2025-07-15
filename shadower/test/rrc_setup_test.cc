@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
       break;
     case 4:
       sample_file = "shadower/test/data/srsran-n3-20MHz/rrc_setup.fc32";
-      slot_number = 9201;
+      slot_number = 861;
       half        = 0;
       break;
     default:
@@ -94,7 +94,11 @@ int main(int argc, char* argv[])
   sprintf(filename, "ofdm_rrc_setup_fft%u", args.nof_sc);
   write_record_to_file(ue_dl.sf_symbols[0], args.nof_re, filename);
 
+  sprintf(filename, "rrc_setup_origin");
+  write_record_to_file(buffer, args.slot_len, filename);
+
   /* search for dci */
+  // ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, args.c_rnti, srsran_rnti_type_c, phy_state, logger, 0);
   ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, args.c_rnti, srsran_rnti_type_c, phy_state, logger, 0);
 
   /* get grant from dci search */
