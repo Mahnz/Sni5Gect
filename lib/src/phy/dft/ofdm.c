@@ -33,7 +33,7 @@
 #include "srsran/phy/utils/vector.h"
 
 /* Uncomment next line for avoiding Guru DFT call */
-//#define AVOID_GURU
+// #define AVOID_GURU
 
 static int ofdm_init_mbsfn_(srsran_ofdm_t* q, srsran_ofdm_cfg_t* cfg, srsran_dft_dir_t dir)
 {
@@ -70,12 +70,20 @@ static int ofdm_init_mbsfn_(srsran_ofdm_t* q, srsran_ofdm_cfg_t* cfg, srsran_dft
   srsran_sf_t sf_type   = q->cfg.sf_type;
 
   // Set OFDM object attributes
-  q->nof_symbols       = SRSRAN_CP_NSYMB(cp) * 2;
-  q->nof_symbols_mbsfn = SRSRAN_CP_NSYMB(SRSRAN_CP_EXT) * 2;
-  q->nof_re            = cfg->nof_prb * SRSRAN_NRE;
-  q->nof_guards        = (q->cfg.symbol_sz - q->nof_re) / 2U;
-  q->slot_sz           = (uint32_t)SRSRAN_SLOT_LEN(q->cfg.symbol_sz);
-  q->sf_sz             = (uint32_t)SRSRAN_SF_LEN(q->cfg.symbol_sz);
+  q->nof_re     = cfg->nof_prb * SRSRAN_NRE;
+  q->nof_guards = (q->cfg.symbol_sz - q->nof_re) / 2U;
+  q->slot_sz    = (uint32_t)SRSRAN_SLOT_LEN(q->cfg.symbol_sz);
+  q->sf_sz      = (uint32_t)SRSRAN_SF_LEN(q->cfg.symbol_sz);
+  if (SUBCARRIER_SPACING_KHZ == 15) {
+    q->nof_symbols       = SRSRAN_CP_NSYMB(cp);
+    q->ofdm_group_sz     = q->sf_sz / 2;
+    q->nof_symbols_mbsfn = SRSRAN_CP_NSYMB(SRSRAN_CP_EXT);
+
+  } else {
+    q->nof_symbols       = SRSRAN_CP_NSYMB(cp) * 2;
+    q->ofdm_group_sz     = q->slot_sz;
+    q->nof_symbols_mbsfn = SRSRAN_CP_NSYMB(SRSRAN_CP_EXT) * 2;
+  }
 
   // Set the CFR parameters related to OFDM symbol and FFT size
   q->cfg.cfr_tx_cfg.symbol_sz = symbol_sz;
@@ -141,17 +149,17 @@ static int ofdm_init_mbsfn_(srsran_ofdm_t* q, srsran_ofdm_cfg_t* cfg, srsran_dft
 #ifdef AVOID_GURU
   srsran_vec_cf_zero(q->tmp, symbol_sz);
 #else
-  uint32_t nof_prb = q->cfg.nof_prb;
-  cf_t* in_buffer = q->cfg.in_buffer;
-  cf_t* out_buffer = q->cfg.out_buffer;
-  int cp1 = SRSRAN_CP_ISNORM(cp) ? SRSRAN_CP_LEN_NORM(0, symbol_sz) : SRSRAN_CP_LEN_EXT(symbol_sz);
-  int cp2 = SRSRAN_CP_ISNORM(cp) ? SRSRAN_CP_LEN_NORM(1, symbol_sz) : SRSRAN_CP_LEN_EXT(symbol_sz);
+  uint32_t nof_prb    = q->cfg.nof_prb;
+  cf_t*    in_buffer  = q->cfg.in_buffer;
+  cf_t*    out_buffer = q->cfg.out_buffer;
+  int      cp1        = SRSRAN_CP_ISNORM(cp) ? SRSRAN_CP_LEN_NORM(0, symbol_sz) : SRSRAN_CP_LEN_EXT(symbol_sz);
+  int      cp2        = SRSRAN_CP_ISNORM(cp) ? SRSRAN_CP_LEN_NORM(1, symbol_sz) : SRSRAN_CP_LEN_EXT(symbol_sz);
 
   // Slides DFT window a fraction of cyclic prefix, it does not apply for the inverse-DFT
   if (isnormal(cfg->rx_window_offset)) {
     cfg->rx_window_offset = SRSRAN_MAX(0, cfg->rx_window_offset);   // Needs to be positive
     cfg->rx_window_offset = SRSRAN_MIN(100, cfg->rx_window_offset); // Needs to be below 100
-    q->window_offset_n = (uint32_t)roundf((float)cp2 * cfg->rx_window_offset);
+    q->window_offset_n    = (uint32_t)roundf((float)cp2 * cfg->rx_window_offset);
 
     for (uint32_t i = 0; i < symbol_sz; i++) {
       q->window_offset_buffer[i] = cexpf(I * M_PI * 2.0f * (float)q->window_offset_n * (float)i / (float)symbol_sz);
@@ -167,7 +175,11 @@ static int ofdm_init_mbsfn_(srsran_ofdm_t* q, srsran_ofdm_cfg_t* cfg, srsran_dft
     srsran_vec_cf_zero(in_buffer, q->sf_sz);
   }
 
-  for (int slot = 0; slot < SRSRAN_NOF_SLOTS_PER_SF; slot++) {
+  int num_groups_per_slot = 1;
+  if (SUBCARRIER_SPACING_KHZ == 15) {
+    num_groups_per_slot = 2; // 2 groups in a slot
+  }
+  for (int slot = 0; slot < num_groups_per_slot; slot++) {
     // If Guru DFT was allocated, free
     if (q->fft_plan_sf[slot].size) {
       srsran_dft_plan_free(&q->fft_plan_sf[slot]);
@@ -178,11 +190,11 @@ static int ofdm_init_mbsfn_(srsran_ofdm_t* q, srsran_ofdm_cfg_t* cfg, srsran_dft
       if (srsran_dft_plan_guru_c(&q->fft_plan_sf[slot],
                                  symbol_sz,
                                  dir,
-                                 in_buffer + cp1 + q->slot_sz * slot - q->window_offset_n,
+                                 in_buffer + cp1 + q->ofdm_group_sz * slot - q->window_offset_n,
                                  q->tmp,
                                  1,
                                  1,
-                                 SRSRAN_CP_NSYMB(cp) * 2,
+                                 q->nof_symbols,
                                  symbol_sz + cp2,
                                  symbol_sz)) {
         ERROR("Creating Guru DFT plan (%d)", slot);
@@ -193,10 +205,10 @@ static int ofdm_init_mbsfn_(srsran_ofdm_t* q, srsran_ofdm_cfg_t* cfg, srsran_dft
                                  symbol_sz,
                                  dir,
                                  q->tmp,
-                                 out_buffer + cp1 + q->slot_sz * slot,
+                                 out_buffer + cp1 + q->ofdm_group_sz * slot,
                                  1,
                                  1,
-                                 SRSRAN_CP_NSYMB(cp) * 2,
+                                 q->nof_symbols,
                                  symbol_sz,
                                  symbol_sz + cp2)) {
         ERROR("Creating Guru inverse-DFT plan (%d)", slot);
@@ -386,9 +398,11 @@ int srsran_ofdm_set_phase_compensation(srsran_ofdm_t* q, double center_freq_hz)
 
   // Otherwise calculate the phase
   uint32_t count = 0;
-  for (uint32_t l = 0; l < q->nof_symbols * SRSRAN_NOF_SLOTS_PER_SF; l++) {
+  for (uint32_t l = 0; l < SRSRAN_MAX_NSYMB * 2; l++) {
     uint32_t cp_len =
-        SRSRAN_CP_ISNORM(q->cfg.cp) ? SRSRAN_CP_LEN_NORM(l % q->nof_symbols, symbol_sz) : SRSRAN_CP_LEN_EXT(symbol_sz);
+        SRSRAN_CP_ISNORM(q->cfg.cp)
+            ? SRSRAN_CP_LEN_NORM(l % (SRSRAN_MAX_NSYMB * (1 << (SUBCARRIER_SPACING_KHZ / 15 - 1))), symbol_sz)
+            : SRSRAN_CP_LEN_EXT(symbol_sz);
 
     // Advance CP
     count += cp_len;
@@ -553,11 +567,13 @@ void srsran_ofdm_rx_sf(srsran_ofdm_t* q)
   if (isnormal(q->cfg.freq_shift_f)) {
     srsran_vec_prod_ccc(q->cfg.in_buffer, q->shift_buffer, q->cfg.in_buffer, q->sf_sz);
   }
-  // record_down_fc32(q->cfg.in_buffer, q->sf_sz, NULL);
   if (!q->mbsfn_subframe) {
-    // for (uint32_t n = 0; n < SRSRAN_NOF_SLOTS_PER_SF; n++) {
-    ofdm_rx_slot(q, 0);
-    // }
+    if (SUBCARRIER_SPACING_KHZ == 15) {
+      ofdm_rx_slot(q, 0);
+      ofdm_rx_slot(q, 1);
+    } else {
+      ofdm_rx_slot(q, 0);
+    }
   } else {
     ofdm_rx_slot_mbsfn(q, q->cfg.in_buffer, q->cfg.out_buffer);
     ofdm_rx_slot(q, 1);

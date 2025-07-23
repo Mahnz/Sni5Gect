@@ -77,7 +77,8 @@
         "valarray": "cpp",
         "variant": "cpp",
         "span": "cpp",
-        "random.h": "c"
+        "random.h": "c",
+        "pcap.h": "c"
     },
     "cSpell.words": [
         "ccch",

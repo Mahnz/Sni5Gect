@@ -38,8 +38,8 @@ int main(int argc, char* argv[])
       half        = 1;
       break;
     case 4:
-      sample_file = "shadower/test/data/srsran-n3-20MHz/rrc_setup.fc32";
-      slot_number = 861;
+      sample_file = "/root/subframes/sf_1761_9501.fc32";
+      slot_number = 9501;
       half        = 0;
       break;
     default:
