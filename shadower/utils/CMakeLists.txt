@@ -4,6 +4,7 @@ add_library(utils
     src/phy_cfg_utils.cc
     src/ue_dl_utils.cc
     src/gnb_ul_utils.cc
+    src/gnb_dl_utils.cc
     src/dci_utils.cc
     msg_helper.cc
 )

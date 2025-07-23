@@ -78,7 +78,6 @@ static int ofdm_init_mbsfn_(srsran_ofdm_t* q, srsran_ofdm_cfg_t* cfg, srsran_dft
     q->nof_symbols       = SRSRAN_CP_NSYMB(cp);
     q->ofdm_group_sz     = q->sf_sz / 2;
     q->nof_symbols_mbsfn = SRSRAN_CP_NSYMB(SRSRAN_CP_EXT);
-
   } else {
     q->nof_symbols       = SRSRAN_CP_NSYMB(cp) * 2;
     q->ofdm_group_sz     = q->slot_sz;
@@ -605,7 +604,7 @@ static void ofdm_tx_slot(srsran_ofdm_t* q, int slot_in_sf)
   srsran_cp_t cp        = q->cfg.cp;
 
   cf_t* input  = q->cfg.in_buffer + slot_in_sf * q->nof_re * q->nof_symbols;
-  cf_t* output = q->cfg.out_buffer + slot_in_sf * q->slot_sz;
+  cf_t* output = q->cfg.out_buffer + slot_in_sf * q->ofdm_group_sz;
 
 #ifdef AVOID_GURU
   for (int i = 0; i < q->nof_symbols; i++) {
@@ -692,10 +691,12 @@ void srsran_ofdm_set_normalize(srsran_ofdm_t* q, bool normalize_enable)
 
 void srsran_ofdm_tx_sf(srsran_ofdm_t* q)
 {
-  uint32_t n;
   if (!q->mbsfn_subframe) {
-    for (n = 0; n < SRSRAN_NOF_SLOTS_PER_SF; n++) {
-      ofdm_tx_slot(q, n);
+    if (SUBCARRIER_SPACING_KHZ == 15) {
+      ofdm_tx_slot(q, 0);
+      ofdm_tx_slot(q, 1);
+    } else {
+      ofdm_tx_slot(q, 0);
     }
   } else {
     ofdm_tx_slot_mbsfn(q, q->cfg.in_buffer, q->cfg.out_buffer);

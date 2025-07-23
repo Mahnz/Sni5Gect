@@ -98,7 +98,6 @@ int main(int argc, char* argv[])
   write_record_to_file(buffer, args.slot_len, filename);
 
   /* search for dci */
-  // ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, args.c_rnti, srsran_rnti_type_c, phy_state, logger, 0);
   ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, args.c_rnti, srsran_rnti_type_c, phy_state, logger, 0);
 
   /* get grant from dci search */

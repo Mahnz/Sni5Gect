@@ -85,3 +85,6 @@ add_executable(msg_helper_test msg_helper_test.cc)
 target_link_libraries(msg_helper_test wd_worker utils)
 add_test(shd_msg_helper_test ${CMAKE_BINARY_DIR}/shadower/test/msg_helper_test)
 set_tests_properties(shd_msg_helper_test PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+
+add_executable(pdsch_encode_test pdsch_encode_test.cc)
+target_link_libraries(pdsch_encode_test wd_worker utils)
