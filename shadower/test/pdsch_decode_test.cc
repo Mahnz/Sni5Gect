@@ -9,7 +9,7 @@
 
 std::string sample_file;
 uint32_t    slot_number;
-uint32_t    half;
+uint32_t    half = 0;
 
 void parse_args(int argc, char* argv[])
 {
@@ -42,7 +42,6 @@ int main(int argc, char* argv[])
   ShadowerConfig& config = args.config;
   /* initialize logger */
   srslog::basic_logger& logger = srslog_init(&config);
-  uint16_t              rnti   = args.ra_rnti;
   switch (test_number) {
     case 0:
       sample_file = "shadower/test/data/srsran-n78-20MHz/pdsch_3440.fc32";
@@ -58,6 +57,11 @@ int main(int argc, char* argv[])
       sample_file = "/root/overshadow/effnet/sf_152_11864.fc32";
       slot_number = 4;
       half        = 1;
+      break;
+    case 4:
+      sample_file = "shadower/test/data/srsran-n3-20MHz/pdsch_2855.fc32";
+      slot_number = 2855;
+      half        = 0;
       break;
     default:
       fprintf(stderr, "Unknown test number: %d\n", test_number);
@@ -174,7 +178,7 @@ int main(int argc, char* argv[])
   SafeQueue<std::vector<uint8_t> > dl_msg_queue;
   SafeQueue<std::vector<uint8_t> > ul_msg_queue;
   DummyExploit*                    exploit = new DummyExploit(dl_msg_queue, ul_msg_queue);
-  wd_worker->process(data->msg, data->N_bytes, rnti, 0, 0, slot_cfg.idx, DL, exploit);
+  wd_worker->process(data->msg, data->N_bytes, args.c_rnti, 0, 0, slot_cfg.idx, DL, exploit);
 
   /* Decode as MAC PDU*/
   srsran::mac_sch_pdu_nr pdu;
