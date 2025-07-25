@@ -1,10 +1,10 @@
 #include "shadower/comp/workers/wd_worker.h"
 #include "shadower/modules/dummy_exploit.h"
+#include "shadower/test/test_variables.h"
 #include "shadower/utils/safe_queue.h"
 #include "shadower/utils/utils.h"
 #include "srsran/asn1/rrc_nr.h"
 #include "srsran/support/srsran_test.h"
-#include "test_variables.h"
 int main()
 {
   ShadowerConfig* config        = new ShadowerConfig();
