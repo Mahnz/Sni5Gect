@@ -87,6 +87,9 @@ target_link_libraries(pdsch_encode_test wd_worker utils)
 add_executable(dci_ul_encode_test dci_ul_encode_test.cc)
 target_link_libraries(dci_ul_encode_test wd_worker utils)
 
+add_executable(ssb_encode_test ssb_encode_test.cc)
+target_link_libraries(ssb_encode_test utils)
+
 add_executable(msg_helper_test msgs/msg_helper_test.cc)
 target_link_libraries(msg_helper_test wd_worker utils)
 add_test(shd_msg_helper_test ${CMAKE_BINARY_DIR}/shadower/test/msg_helper_test)
