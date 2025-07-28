@@ -96,10 +96,14 @@ int main(int argc, char* argv[])
       source->send(tx_buffers, slot_len, ts);
     }
     write_record_to_file(rx_buffers[0], sf_len, filename);
+    if (i % 10 == 0) {
+      printf(".");
+      fflush(stdout);
+    }
   }
   source->close();
   for (uint32_t i = 0; i < config.nof_channels; i++) {
     free(rx_buffers[i]);
-    free(tx_buffers[i]);
   }
+  free(test_buffer);
 }
