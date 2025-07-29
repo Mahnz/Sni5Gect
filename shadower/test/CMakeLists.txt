@@ -106,3 +106,9 @@ target_link_libraries(security_mode_command_construction wd_worker utils)
 
 add_executable(modify_rrc_setup_test msgs/modify_rrc_setup_test.cc)
 target_link_libraries(modify_rrc_setup_test wd_worker utils)
+
+add_executable(ssb_frequency_search hardware/ssb_frequency_search.cc)
+target_link_libraries(ssb_frequency_search utils source)
+
+add_executable(sdr_timing_test hardware/sdr_timing_test.cc)
+target_link_libraries(sdr_timing_test utils source syncer)

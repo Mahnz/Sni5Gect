@@ -77,6 +77,7 @@ void Syncer::run_tti()
   if (tti_jump != 0) {
     srsran_timestamp_copy(&timestamp_prev, &timestamp_new);
     tti = (tti + tti_jump) % (10240 * slot_per_sf);
+    source->set_current_slot(tti.load());
   }
 }
 
@@ -100,7 +101,7 @@ bool Syncer::listen(std::shared_ptr<samples_t>& samples)
   /* receive data */
   uint32_t offset     = 0;
   uint32_t to_receive = sf_len;
-  int32_t  limit      = 500;
+  int32_t  limit      = 2.4e-6 * srate;
   if (samples_delayed > limit) {
     /* If there's still a lot of samples belong to last subframe not processed,
       we receive the remaining samples and make it complete */
@@ -233,6 +234,7 @@ bool Syncer::handle_pbch(srsran_pbch_msg_nr_t& pbch_msg_)
   uint32_t sf_idx = srsran_ssb_candidate_sf_idx(&ssb, pbch_msg_.ssb_idx, pbch_msg_.hrf);
   /* Update the TTI value */
   tti = (mib.sfn * 10 * slot_per_sf + sf_idx) % (10240 * slot_per_sf);
+  source->set_current_slot(tti.load());
   return true;
 }
 
