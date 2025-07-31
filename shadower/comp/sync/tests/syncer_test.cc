@@ -6,8 +6,6 @@
 ShadowerConfig config = {};
 Source*        source = nullptr;
 
-SafeQueue<Task> task_queue = {};
-
 bool on_cell_found(srsran_mib_nr_t& mib, uint32_t ncellid_)
 {
   std::array<char, 512> mib_info_str = {};
@@ -22,10 +20,7 @@ void syncer_exit_handler()
 }
 
 // Handler for syncer to push new task to the task queue
-void push_new_task(std::shared_ptr<Task>& task)
-{
-  task_queue.push(task);
-}
+void push_new_task(std::shared_ptr<Task>& task) {}
 
 void parse_args(int argc, char* argv[])
 {

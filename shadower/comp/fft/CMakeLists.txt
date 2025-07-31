@@ -1,15 +1,15 @@
-if(USE_CUDA)
+if(ENABLE_CUDA)
     set_source_files_properties(fft_processor.cuh PROPERTIES LANGUAGE CUDA)
     set_source_files_properties(fft_processor.cu PROPERTIES LANGUAGE CUDA)
     add_library(fft_processor fft_processor.cu fft_processor.cuh)
     target_link_libraries(fft_processor CUDA::cufft CUDA::cudart)
-endif(USE_CUDA)
+endif(ENABLE_CUDA)
 
 add_executable(fft_test tests/fft_test.cc)
 target_link_libraries(fft_test utils)
-if(USE_CUDA)
+if(ENABLE_CUDA)
     target_link_libraries(fft_test fft_processor)
-endif(USE_CUDA)
+endif(ENABLE_CUDA)
 
 add_test(shd_fft_test_20
     fft_test

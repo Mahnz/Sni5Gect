@@ -1,15 +1,15 @@
-if(USE_CUDA)
+if(ENABLE_CUDA)
     set_source_files_properties(ssb_cuda.cuh PROPERTIES LANGUAGE CUDA)
     set_source_files_properties(ssb_cuda.cu PROPERTIES LANGUAGE CUDA)
     add_library(ssb_cuda ssb_cuda.cu ssb_cuda.cuh)
     target_link_libraries(ssb_cuda CUDA::cufft CUDA::cudart)
-endif(USE_CUDA)
+endif(ENABLE_CUDA)
 
 add_executable(ssb_test tests/ssb_test.cc)
 target_link_libraries(ssb_test utils)
-if(USE_CUDA)
+if(ENABLE_CUDA)
     target_link_libraries(ssb_test ssb_cuda)
-endif(USE_CUDA)
+endif(ENABLE_CUDA)
 
 add_test(shd_ssb_test_20
     ssb_test

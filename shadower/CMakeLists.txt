@@ -110,6 +110,6 @@ add_subdirectory(modules)
 
 add_executable(shadower main.cc comp/scheduler.cc comp/ue_tracker.cc modules/exploit_loader.cc)
 target_link_libraries(shadower source syncer exploit_loader thread_pool broadcast_worker ue_dl_worker gnb_ul_worker gnb_dl_worker ${Boost_LIBRARIES})
-if(USE_CUDA)
+if(ENABLE_CUDA)
   target_link_libraries(shadower fft_processor ssb_cuda)
-endif(USE_CUDA)
+endif(ENABLE_CUDA)
