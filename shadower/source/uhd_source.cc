@@ -11,14 +11,15 @@ public:
             double             ul_freq,
             double             rx_gain,
             double             tx_gain,
-            uint32_t           nof_channels,
+            uint32_t           nof_channels_,
             const std::string& device_args) :
-    nof_channels(nof_channels), rf(std::make_unique<srsran_rf_t>())
+    rf(std::make_unique<srsran_rf_t>())
   {
+    set_num_channels(nof_channels_);
     /* If dl and ul frequency is different, then it means FDD by default */
     if (dl_freq != ul_freq) {
       fdd = true;
-      if (nof_channels < 2 || nof_channels % 2 != 0) {
+      if (nof_channels > 1 && nof_channels % 2 != 0) {
         throw std::invalid_argument("Number of channels must be even for FDD operation.");
       }
     }

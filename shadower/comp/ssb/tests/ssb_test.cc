@@ -14,12 +14,15 @@
 ShadowerConfig config = {};
 std::string    sample_file;
 uint32_t       cell_id = 1;
+int            band    = 78;
 uint32_t       rounds  = 1000;
+
+srsran_subcarrier_spacing_t scs = srsran_subcarrier_spacing_30kHz;
 
 void parse_args(int argc, char* argv[])
 {
   int opt;
-  while ((opt = getopt(argc, argv, "sfbFIr")) != -1) {
+  while ((opt = getopt(argc, argv, "sfbFIrBS")) != -1) {
     switch (opt) {
       case 's': {
         double srateMHz    = atof(argv[optind]);
@@ -38,6 +41,16 @@ void parse_args(int argc, char* argv[])
         double ssbFreqMHz = atof(argv[optind]);
         config.ssb_freq   = ssbFreqMHz * 1e6;
         printf("Using SSB Frequency: %f MHz\n", config.ssb_freq);
+        break;
+      }
+      case 'B': {
+        band = atoi(argv[optind]);
+        printf("Using band: %d\n", band);
+        config.band = band;
+        break;
+      }
+      case 'S': {
+        scs = srsran_subcarrier_spacing_from_str(argv[optind]);
         break;
       }
       case 'F': {
@@ -60,9 +73,10 @@ void parse_args(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
   }
-  config.ssb_pattern = srsran_ssb_pattern_t::SRSRAN_SSB_PATTERN_C;
-  config.duplex_mode = srsran_duplex_mode_t::SRSRAN_DUPLEX_MODE_TDD;
-  config.scs_ssb     = srsran_subcarrier_spacing_t::srsran_subcarrier_spacing_30kHz;
+  srsran::srsran_band_helper helper;
+  config.ssb_pattern = helper.get_ssb_pattern(band, scs);
+  config.duplex_mode = helper.get_duplex_mode(band);
+  config.scs_ssb     = scs;
   if (sample_file.empty()) {
     fprintf(stderr, "Sample file is required.\n");
     exit(EXIT_FAILURE);

@@ -9,8 +9,10 @@ extern "C" {
 #include "srsran/phy/phch/pbch_msg_nr.h"
 #include "srsran/phy/sync/ssb.h"
 #include "srsran/phy/ue/ue_dl_nr.h"
+#include <condition_variable>
 #include <dirent.h>
 #include <fstream>
+#include <mutex>
 #include <sys/types.h>
 
 SafeQueue<Task>   task_queue = {};
@@ -23,6 +25,11 @@ uint32_t          advancement   = 9;
 uint32_t          test_round    = 100;
 uint32_t          cell_id       = 0;
 uint32_t          ssb_period    = 10;
+uint32_t          count         = 0;
+double            total_cfo     = 0;
+std::mutex        mtx;
+
+std::map<int32_t, uint32_t> delay_map;
 
 /* When a cell is found log the cell information */
 bool on_cell_found(srsran_mib_nr_t& mib, uint32_t ncellid)
@@ -41,13 +48,93 @@ void push_new_task(std::shared_ptr<Task>& task)
   task_queue.push(task);
 }
 
+int init_ssb(ShadowerConfig& config, srsran_ssb_t& ssb, srsran_ssb_cfg_t& ssb_cfg)
+{
+  /* initialize SSB */
+  srsran_ssb_args_t ssb_args = {};
+  ssb_args.max_srate_hz      = config.sample_rate;
+  ssb_args.min_scs           = config.scs_ssb;
+  ssb_args.enable_search     = true;
+  ssb_args.enable_measure    = true;
+  ssb_args.enable_decode     = true;
+  ssb_args.enable_encode     = true;
+  if (srsran_ssb_init(&ssb, &ssb_args) != 0) {
+    printf("Failed to initialize ssb\n");
+    return -1;
+  }
+
+  /* Set SSB config */
+  ssb_cfg.srate_hz       = config.sample_rate;
+  ssb_cfg.center_freq_hz = config.dl_freq;
+  ssb_cfg.ssb_freq_hz    = test_ssb_freq;
+  ssb_cfg.scs            = config.scs_ssb;
+  ssb_cfg.pattern        = config.ssb_pattern;
+  ssb_cfg.duplex_mode    = config.duplex_mode;
+  ssb_cfg.periodicity_ms = 10;
+  if (srsran_ssb_set_cfg(&ssb, &ssb_cfg) < SRSRAN_SUCCESS) {
+    printf("Failed to set ssb config\n");
+    return -1;
+  }
+  return 0;
+}
+
+int generate_ssb_block(ShadowerConfig& config, srsran::phy_cfg_nr_t& phy_cfg, uint32_t slot_len, cf_t* buffer)
+{
+  srsran_ssb_t     ssb     = {};
+  srsran_ssb_cfg_t ssb_cfg = {};
+  if (init_ssb(config, ssb, ssb_cfg) != 0) {
+    printf("Failed to initialize SSB\n");
+    return -1;
+  }
+  /* GNB DL init with configuration from phy_cfg */
+  srsran_gnb_dl_t gnb_dl        = {};
+  cf_t*           gnb_dl_buffer = srsran_vec_cf_malloc(slot_len);
+  if (!init_gnb_dl(gnb_dl, gnb_dl_buffer, phy_cfg, config.sample_rate)) {
+    printf("Failed to init GNB DL\n");
+    return -1;
+  }
+
+  /* Add ssb config to gnb_dl */
+  srsran_gnb_dl_set_ssb_config(&gnb_dl, &ssb_cfg);
+  srsran_mib_nr_t mib        = {};
+  mib.sfn                    = 100;
+  mib.ssb_idx                = 0;
+  mib.hrf                    = false;
+  mib.scs_common             = config.scs_ssb;
+  mib.ssb_offset             = 14;
+  mib.dmrs_typeA_pos         = srsran_dmrs_sch_typeA_pos_2;
+  mib.coreset0_idx           = 2;
+  mib.ss0_idx                = 2;
+  mib.cell_barred            = false;
+  mib.intra_freq_reselection = false;
+  mib.spare                  = 0;
+
+  srsran_pbch_msg_nr_t pbch_msg = {};
+  if (srsran_pbch_msg_nr_mib_pack(&mib, &pbch_msg) < SRSRAN_SUCCESS) {
+    printf("Failed to pack MIB into PBCH message\n");
+    return -1;
+  }
+
+  if (srsran_gnb_dl_add_ssb(&gnb_dl, &pbch_msg, mib.sfn) < SRSRAN_SUCCESS) {
+    printf("Failed to add SSB\n");
+    return -1;
+  }
+  srsran_vec_cf_copy(buffer, gnb_dl_buffer, slot_len);
+  srsran_ssb_free(&ssb);
+  srsran_gnb_dl_free(&gnb_dl);
+  free(gnb_dl_buffer);
+  return 0;
+}
+
 /* Exit on syncer error, and also stop the sender thread */
-void handle_syncer_exit(Syncer* syncer, std::thread& sender, std::thread& receiver)
+void handle_syncer_exit(Syncer* syncer, std::thread& sender, std::vector<std::thread>& receivers)
 {
   running = false;
   syncer->thread_cancel();
   pthread_cancel(sender.native_handle());
-  pthread_cancel(receiver.native_handle());
+  for (auto& receiver : receivers) {
+    pthread_cancel(receiver.native_handle());
+  }
 }
 
 void sender_thread(srslog::basic_logger& logger,
@@ -88,16 +175,16 @@ void sender_thread(srslog::basic_logger& logger,
   }
 }
 
-void receiver_thread(srsran_ssb_t&         ssb,
-                     srslog::basic_logger& logger,
-                     ShadowerConfig&       config,
-                     uint32_t              slot_len,
-                     double                test_freq)
+void receiver_thread(srslog::basic_logger& logger, ShadowerConfig& config, uint32_t slot_len, double test_freq)
 {
+  srsran_ssb_t     ssb     = {};
+  srsran_ssb_cfg_t ssb_cfg = {};
+  if (init_ssb(config, ssb, ssb_cfg) != 0) {
+    logger.error("Failed to initialize SSB");
+    return;
+  }
+
   std::shared_ptr<std::vector<cf_t> > buffer = std::make_shared<std::vector<cf_t> >(config.sample_rate * SF_DURATION);
-  std::map<int32_t, uint32_t>         delay_map;
-  uint32_t                            count     = 0;
-  double                              total_cfo = 0;
   while (running) {
     /* Retrieve the well aligned slots */
     if (!cell_found) {
@@ -136,35 +223,38 @@ void receiver_thread(srsran_ssb_t&         ssb,
     std::array<char, 512> mib_info_str = {};
     srsran_pbch_msg_nr_mib_info(&mib, mib_info_str.data(), mib_info_str.size());
     logger.debug("SSB Delay: %u %s ", res.t_offset, mib_info_str.data());
-
-    int32_t delay_samples = res.t_offset;
-    total_cfo += res.measurements.cfo_hz;
-    /* Count the delays */
-    if (delay_map.find(delay_samples) == delay_map.end()) {
-      delay_map[delay_samples] = 1;
-    } else {
-      delay_map[delay_samples]++;
-    }
-    if (count % test_round == 0 && count > 1) {
-      /* Log the static information */
-      int32_t total = 0;
-      int32_t min   = 10000;
-      int32_t max   = 0;
-      for (const auto& pair : delay_map) {
-        logger.info("Delay: %d Count: %u", pair.first, pair.second);
-        if (pair.first < min) {
-          min = pair.first;
-        }
-        if (pair.first > max) {
-          max = pair.first;
-        }
-        total += pair.first * pair.second;
+    {
+      std::lock_guard<std::mutex> lock(mtx);
+      count++;
+      int32_t delay_samples = res.t_offset;
+      total_cfo += res.measurements.cfo_hz;
+      /* Count the delays */
+      if (delay_map.find(delay_samples) == delay_map.end()) {
+        delay_map[delay_samples] = 1;
+      } else {
+        delay_map[delay_samples]++;
       }
-      logger.info("Min: %d Max: %d Avg: %d", min, max, total / count);
-      logger.info("Avg CFO: %f", total_cfo / count);
+      if (count % test_round == 0 && count > 1) {
+        /* Log the static information */
+        int32_t total = 0;
+        int32_t min   = 10000;
+        int32_t max   = 0;
+        for (const auto& pair : delay_map) {
+          logger.info("Delay: %d Count: %u", pair.first, pair.second);
+          if (pair.first < min) {
+            min = pair.first;
+          }
+          if (pair.first > max) {
+            max = pair.first;
+          }
+          total += pair.first * pair.second;
+        }
+        logger.info("Min: %d Max: %d Avg: %d", min, max, total / count);
+        logger.info("Avg CFO: %f", total_cfo / count);
+      }
     }
-    count++;
   }
+  srsran_ssb_free(&ssb);
 }
 
 void parse_args(int argc, char* argv[])
@@ -241,71 +331,11 @@ int main(int argc, char* argv[])
   Source* source             = uhd_source(config);
   logger.info("Selected target test SSB frequency %.3f MHz", test_ssb_freq / 1e6);
 
-  /* initialize SSB */
-  srsran_ssb_t ssb = {};
-
-  srsran_ssb_args_t ssb_args = {};
-  ssb_args.max_srate_hz      = config.sample_rate;
-  ssb_args.min_scs           = config.scs_ssb;
-  ssb_args.enable_search     = true;
-  ssb_args.enable_measure    = true;
-  ssb_args.enable_decode     = true;
-  ssb_args.enable_encode     = true;
-  if (srsran_ssb_init(&ssb, &ssb_args) != 0) {
-    logger.error("Failed to initialize ssb");
-    return -1;
-  }
-
-  /* Set SSB config */
-  srsran_ssb_cfg_t ssb_cfg = {};
-  ssb_cfg.srate_hz         = config.sample_rate;
-  ssb_cfg.center_freq_hz   = config.dl_freq;
-  ssb_cfg.ssb_freq_hz      = test_ssb_freq;
-  ssb_cfg.scs              = config.scs_ssb;
-  ssb_cfg.pattern          = config.ssb_pattern;
-  ssb_cfg.duplex_mode      = config.duplex_mode;
-  ssb_cfg.periodicity_ms   = 10;
-  if (srsran_ssb_set_cfg(&ssb, &ssb_cfg) < SRSRAN_SUCCESS) {
-    logger.error("Failed to set ssb config");
-    return -1;
-  }
-
-  /* GNB DL init with configuration from phy_cfg */
-  srsran_gnb_dl_t gnb_dl        = {};
-  cf_t*           gnb_dl_buffer = srsran_vec_cf_malloc(args.slot_len);
-  if (!init_gnb_dl(gnb_dl, gnb_dl_buffer, phy_cfg, config.sample_rate)) {
-    logger.error("Failed to init GNB DL");
-    return -1;
-  }
-
-  /* Add ssb config to gnb_dl */
-  srsran_gnb_dl_set_ssb_config(&gnb_dl, &ssb_cfg);
-  srsran_mib_nr_t mib        = {};
-  mib.sfn                    = 100;
-  mib.ssb_idx                = 0;
-  mib.hrf                    = false;
-  mib.scs_common             = config.scs_ssb;
-  mib.ssb_offset             = 14;
-  mib.dmrs_typeA_pos         = srsran_dmrs_sch_typeA_pos_2;
-  mib.coreset0_idx           = 2;
-  mib.ss0_idx                = 2;
-  mib.cell_barred            = false;
-  mib.intra_freq_reselection = false;
-  mib.spare                  = 0;
-
-  srsran_pbch_msg_nr_t pbch_msg = {};
-  if (srsran_pbch_msg_nr_mib_pack(&mib, &pbch_msg) < SRSRAN_SUCCESS) {
-    logger.error("Failed to pack MIB into PBCH message");
-    return -1;
-  }
-
-  if (srsran_gnb_dl_add_ssb(&gnb_dl, &pbch_msg, mib.sfn) < SRSRAN_SUCCESS) {
-    logger.error("Failed to add SSB");
-    return -1;
-  }
-
   std::vector<cf_t> test_ssb_samples(args.slot_len);
-  srsran_vec_cf_copy(test_ssb_samples.data(), gnb_dl_buffer, args.slot_len);
+  if (generate_ssb_block(config, phy_cfg, args.slot_len, test_ssb_samples.data()) != 0) {
+    logger.error("Failed to generate SSB block");
+    return -1;
+  }
   char filename[64];
   sprintf(filename, "generated_ssb");
   write_record_to_file(test_ssb_samples.data(), args.slot_len, filename);
@@ -327,15 +357,20 @@ int main(int argc, char* argv[])
   /* Sender thread keep sending SSB blocks */
   std::thread sender(
       sender_thread, std::ref(logger), std::ref(test_ssb_samples), args.slot_len, source, syncer, std::ref(config));
-  set_thread_priority(sender, 60);
+
   /* Receiver thread keep processing sent SSB blocks */
-  std::thread receiver(
-      receiver_thread, std::ref(ssb), std::ref(logger), std::ref(config), args.slot_len, test_ssb_freq);
-  set_thread_priority(receiver, 60);
-  syncer->error_handler = std::bind([&]() { handle_syncer_exit(syncer, sender, receiver); });
+  int                      num_receiver_threads = 8;
+  std::vector<std::thread> receiver_threads;
+  for (int i = 0; i < num_receiver_threads; i++) {
+    std::thread receiver(receiver_thread, std::ref(logger), std::ref(config), args.slot_len, test_ssb_freq);
+    receiver_threads.push_back(std::move(receiver));
+  }
+  syncer->error_handler = std::bind([&]() { handle_syncer_exit(syncer, sender, receiver_threads); });
   syncer->start(0);
   syncer->wait_thread_finish();
   sender.join();
-  receiver.join();
+  for (auto& receiver : receiver_threads) {
+    receiver.join();
+  }
   source->close();
 }

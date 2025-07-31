@@ -368,12 +368,23 @@ void Syncer::run_thread()
       srsran_vec_apply_cfo(samples->dl_buffer[i]->data(), -cfo_hz / srate, samples->dl_buffer[i]->data(), sf_len);
     }
     std::shared_ptr<Task> task = std::make_shared<Task>();
-    for (uint32_t i = 0; i < num_channels; i++) {
-      task->dl_buffer[i]      = samples->dl_buffer[i];
-      task->ul_buffer[i]      = samples->dl_buffer[i];
-      task->last_dl_buffer[i] = last_samples->dl_buffer[i];
-      task->last_ul_buffer[i] = last_samples->dl_buffer[i];
+    if (args.duplex_mode == SRSRAN_DUPLEX_MODE_FDD && source->nof_channels > 1 && source->nof_channels % 2 == 0) {
+      for (uint32_t i = 0; i < num_channels; i += 2) {
+        int index                   = i / 2;
+        task->dl_buffer[index]      = samples->dl_buffer[i];
+        task->ul_buffer[index]      = samples->dl_buffer[i + 1];
+        task->last_dl_buffer[index] = last_samples->dl_buffer[i];
+        task->last_ul_buffer[index] = last_samples->dl_buffer[i + 1];
+      }
+    } else {
+      for (uint32_t i = 0; i < num_channels; i++) {
+        task->dl_buffer[i]      = samples->dl_buffer[i];
+        task->ul_buffer[i]      = samples->dl_buffer[i];
+        task->last_dl_buffer[i] = last_samples->dl_buffer[i];
+        task->last_ul_buffer[i] = last_samples->dl_buffer[i];
+      }
     }
+
     task->slot_idx = tti;
     task->task_idx = task_idx++;
     task->ts       = timestamp_new;

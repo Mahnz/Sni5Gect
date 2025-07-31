@@ -6,8 +6,6 @@
 ShadowerConfig config = {};
 Source*        source = nullptr;
 
-SafeQueue<Task> task_queue = {};
-
 bool on_cell_found(srsran_mib_nr_t& mib, uint32_t ncellid_)
 {
   std::array<char, 512> mib_info_str = {};
@@ -22,16 +20,13 @@ void syncer_exit_handler()
 }
 
 // Handler for syncer to push new task to the task queue
-void push_new_task(std::shared_ptr<Task>& task)
-{
-  task_queue.push(task);
-}
+void push_new_task(std::shared_ptr<Task>& task) {}
 
 void parse_args(int argc, char* argv[])
 {
   int opt;
 
-  while ((opt = getopt(argc, argv, "sSfbtdcrp")) != -1) {
+  while ((opt = getopt(argc, argv, "sSfbBtdcCrp")) != -1) {
     switch (opt) {
       case 's': {
         double srateMHz    = atof(argv[optind]);
@@ -58,6 +53,10 @@ void parse_args(int argc, char* argv[])
         printf("Using SSB Frequency: %f MHz\n", config.ssb_freq);
         break;
       }
+      case 'B':
+        config.band = atoi(argv[optind]);
+        printf("Using band: %u\n", config.band);
+        break;
       case 't':
         config.source_type = argv[optind];
         printf("Using source type: %s\n", config.source_type.c_str());
@@ -69,6 +68,10 @@ void parse_args(int argc, char* argv[])
       case 'c':
         config.nof_channels = atoi(argv[optind]);
         printf("Using number of channels: %u\n", config.nof_channels);
+        break;
+      case 'C':
+        config.scs_ssb = srsran_subcarrier_spacing_from_str(argv[optind]);
+        printf("Using SCS: %s\n", argv[optind]);
         break;
       case 'p':
         config.ssb_period = atoi(argv[optind]);
@@ -86,11 +89,12 @@ void parse_args(int argc, char* argv[])
   if (config.ssb_period == 0) {
     config.ssb_period = 20; // Default SSB period if not specified
   }
-  config.rx_gain     = 40;
-  config.tx_gain     = 0;
-  config.ssb_pattern = srsran_ssb_pattern_t::SRSRAN_SSB_PATTERN_C;
-  config.duplex_mode = srsran_duplex_mode_t::SRSRAN_DUPLEX_MODE_TDD;
-  config.scs_ssb     = srsran_subcarrier_spacing_t::srsran_subcarrier_spacing_30kHz;
+  config.rx_gain = 40;
+  config.tx_gain = 0;
+  srsran::srsran_band_helper helper;
+
+  config.duplex_mode = helper.get_duplex_mode(config.band);
+  config.ssb_pattern = helper.get_ssb_pattern(config.band, config.scs_ssb);
   if (config.source_srate == 0) {
     config.source_srate = config.sample_rate;
   }
@@ -98,6 +102,10 @@ void parse_args(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
+  config.band        = 78;
+  config.ssb_pattern = srsran_ssb_pattern_t::SRSRAN_SSB_PATTERN_C;
+  config.scs_ssb     = srsran_subcarrier_spacing_t::srsran_subcarrier_spacing_30kHz;
+  config.rx_gain     = 60;
   parse_args(argc, argv);
   /* initialize logger */
   config.log_level             = srslog::basic_levels::debug;
