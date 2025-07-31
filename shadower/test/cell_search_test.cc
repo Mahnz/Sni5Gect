@@ -34,6 +34,9 @@ int main(int argc, char* argv[])
     case 3:
       sample_file = "shadower/test/data/singtel-n78-100MHz/ssb.fc32";
       break;
+    case 4:
+      sample_file = "shadower/test/data/srsran-n3-20MHz/ssb.fc32";
+      break;
     default:
       fprintf(stderr, "Unknown test number: %d\n", test_number);
       exit(EXIT_FAILURE);
@@ -92,6 +95,7 @@ int main(int argc, char* argv[])
   std::ofstream mib_raw{args.mib_config_raw, std::ios::binary};
   mib_raw.write(reinterpret_cast<const char*>(&mib), sizeof(mib));
 
+  logger.info("Delay: %f us", res.measurements.delay_us);
   logger.info("Found cell: %s", mib_info_str.data());
   logger.info("Cell id: %u", res.N_id);
   logger.info("Offset: %u", res.t_offset);

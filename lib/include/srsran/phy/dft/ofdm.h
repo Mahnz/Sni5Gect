@@ -86,8 +86,9 @@ typedef struct SRSRAN_API {
   uint32_t          window_offset_n;
   cf_t*             shift_buffer;
   cf_t*             window_offset_buffer;
-  cf_t              phase_compensation[SRSRAN_MAX_NSYMB * SRSRAN_NOF_SLOTS_PER_SF];
+  cf_t              phase_compensation[SRSRAN_MAX_NSYMB * 2 * SRSRAN_NOF_SLOTS_PER_SF];
   srsran_cfr_t      tx_cfr; ///< Tx CFR object
+  uint32_t          ofdm_group_sz;
 } srsran_ofdm_t;
 
 /**

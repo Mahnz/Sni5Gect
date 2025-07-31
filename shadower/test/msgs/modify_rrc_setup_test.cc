@@ -1,12 +1,11 @@
-#include "dummy_exploit.h"
-#include "shadower/hdr/exploit.h"
-#include "shadower/hdr/utils.h"
-#include "shadower/hdr/wd_worker.h"
-#include "shadower/modules/hdr/rrc_setup_helper.h"
+#include "shadower/comp/workers/wd_worker.h"
+#include "shadower/modules/dummy_exploit.h"
+#include "shadower/test/test_variables.h"
+#include "shadower/utils/msg_helper.h"
+#include "shadower/utils/utils.h"
 #include "srsran/asn1/asn1_utils.h"
 #include "srsran/asn1/rrc_nr.h"
 #include "srsran/mac/mac_sch_pdu_nr.h"
-#include "test_variables.h"
 #include <iomanip>
 #include <sstream>
 
@@ -26,7 +25,10 @@ const uint8_t original_rrc_setup[] = {
 
 int main()
 {
-  srslog::basic_logger& logger = srslog_init();
+  ShadowerConfig config = {};
+  config.log_level      = srslog::basic_levels::debug;
+
+  srslog::basic_logger& logger = srslog_init(&config);
   logger.set_level(srslog::basic_levels::debug);
 
   /* Extract the contention resolution id first */
@@ -84,7 +86,7 @@ int main()
   }
 
   /* Run wdissector for packet summary */
-  WDWorker*                        wd_worker = new WDWorker(config.duplex_mode, config.bc_worker_log_level);
+  WDWorker*                        wd_worker = new WDWorker(config.duplex_mode, config.log_level);
   SafeQueue<std::vector<uint8_t> > dl_msg_queue;
   SafeQueue<std::vector<uint8_t> > ul_msg_queue;
   DummyExploit*                    exploit = new DummyExploit(dl_msg_queue, ul_msg_queue);

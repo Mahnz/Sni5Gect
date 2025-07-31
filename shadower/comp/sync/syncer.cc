@@ -77,6 +77,7 @@ void Syncer::run_tti()
   if (tti_jump != 0) {
     srsran_timestamp_copy(&timestamp_prev, &timestamp_new);
     tti = (tti + tti_jump) % (10240 * slot_per_sf);
+    source->set_current_slot(tti.load());
   }
 }
 
@@ -100,7 +101,7 @@ bool Syncer::listen(std::shared_ptr<samples_t>& samples)
   /* receive data */
   uint32_t offset     = 0;
   uint32_t to_receive = sf_len;
-  int32_t  limit      = 500;
+  int32_t  limit      = 2.4e-6 * srate;
   if (samples_delayed > limit) {
     /* If there's still a lot of samples belong to last subframe not processed,
       we receive the remaining samples and make it complete */
@@ -233,6 +234,7 @@ bool Syncer::handle_pbch(srsran_pbch_msg_nr_t& pbch_msg_)
   uint32_t sf_idx = srsran_ssb_candidate_sf_idx(&ssb, pbch_msg_.ssb_idx, pbch_msg_.hrf);
   /* Update the TTI value */
   tti = (mib.sfn * 10 * slot_per_sf + sf_idx) % (10240 * slot_per_sf);
+  source->set_current_slot(tti.load());
   return true;
 }
 
@@ -366,12 +368,23 @@ void Syncer::run_thread()
       srsran_vec_apply_cfo(samples->dl_buffer[i]->data(), -cfo_hz / srate, samples->dl_buffer[i]->data(), sf_len);
     }
     std::shared_ptr<Task> task = std::make_shared<Task>();
-    for (uint32_t i = 0; i < num_channels; i++) {
-      task->dl_buffer[i]      = samples->dl_buffer[i];
-      task->ul_buffer[i]      = samples->dl_buffer[i];
-      task->last_dl_buffer[i] = last_samples->dl_buffer[i];
-      task->last_ul_buffer[i] = last_samples->dl_buffer[i];
+    if (args.duplex_mode == SRSRAN_DUPLEX_MODE_FDD && source->nof_channels > 1 && source->nof_channels % 2 == 0) {
+      for (uint32_t i = 0; i < num_channels; i += 2) {
+        int index                   = i / 2;
+        task->dl_buffer[index]      = samples->dl_buffer[i];
+        task->ul_buffer[index]      = samples->dl_buffer[i + 1];
+        task->last_dl_buffer[index] = last_samples->dl_buffer[i];
+        task->last_ul_buffer[index] = last_samples->dl_buffer[i + 1];
+      }
+    } else {
+      for (uint32_t i = 0; i < num_channels; i++) {
+        task->dl_buffer[i]      = samples->dl_buffer[i];
+        task->ul_buffer[i]      = samples->dl_buffer[i];
+        task->last_dl_buffer[i] = last_samples->dl_buffer[i];
+        task->last_ul_buffer[i] = last_samples->dl_buffer[i];
+      }
     }
+
     task->slot_idx = tti;
     task->task_idx = task_idx++;
     task->ts       = timestamp_new;

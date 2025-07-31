@@ -1,16 +1,21 @@
-#include "dummy_exploit.h"
-#include "shadower/hdr/msg_helper.h"
-#include "shadower/hdr/utils.h"
-#include "shadower/hdr/wd_worker.h"
+#include "shadower/comp/workers/wd_worker.h"
+#include "shadower/modules/dummy_exploit.h"
+#include "shadower/utils/msg_helper.h"
+#include "shadower/utils/utils.h"
 #include "srsran/asn1/rrc_nr.h"
 #include "srsran/mac/mac_sch_pdu_nr.h"
+
 #include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <string>
 int main()
 {
-  srslog::basic_logger& logger = srslog_init();
+  ShadowerConfig config = {};
+  config.log_level      = srslog::basic_levels::debug;
+
+  /* initialize logger */
+  srslog::basic_logger& logger = srslog_init(&config);
   logger.set_level(srslog::basic_levels::debug);
 
   /* Initialize unique byte buffer*/

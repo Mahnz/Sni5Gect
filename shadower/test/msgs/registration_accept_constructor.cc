@@ -1,14 +1,18 @@
-#include "dummy_exploit.h"
-#include "shadower/hdr/msg_helper.h"
-#include "shadower/hdr/safe_queue.h"
-#include "shadower/hdr/utils.h"
-#include "shadower/hdr/wd_worker.h"
+#include "shadower/comp/workers/wd_worker.h"
+#include "shadower/modules/dummy_exploit.h"
+#include "shadower/test/test_variables.h"
+#include "shadower/utils/msg_helper.h"
+#include "shadower/utils/safe_queue.h"
+#include "shadower/utils/utils.h"
 #include "srsran/asn1/nas_5g_msg.h"
 #include "srsran/asn1/rrc_nr.h"
-#include "test_variables.h"
 int main()
 {
-  srslog::basic_logger& logger = srslog_init();
+  ShadowerConfig config = {};
+  config.log_level      = srslog::basic_levels::debug;
+
+  /* initialize logger */
+  srslog::basic_logger& logger = srslog_init(&config);
   logger.set_level(srslog::basic_levels::debug);
   /* Run wdissector for packet summary */
   WDWorker*                        wd_worker = new WDWorker(SRSRAN_DUPLEX_MODE_TDD, srslog::basic_levels::debug);

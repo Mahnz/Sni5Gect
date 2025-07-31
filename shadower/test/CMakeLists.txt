@@ -81,7 +81,34 @@ set_tests_properties(shd_pusch_decode_test_0 PROPERTIES WORKING_DIRECTORY ${PROJ
 add_test(shd_pusch_decode_test_srsran_n78_40MHz ${CMAKE_BINARY_DIR}/shadower/test/pusch_decode_test 1)
 set_tests_properties(shd_pusch_decode_test_srsran_n78_40MHz PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-add_executable(msg_helper_test msg_helper_test.cc)
+add_executable(pdsch_encode_test pdsch_encode_test.cc)
+target_link_libraries(pdsch_encode_test wd_worker utils)
+
+add_executable(dci_ul_encode_test dci_ul_encode_test.cc)
+target_link_libraries(dci_ul_encode_test wd_worker utils)
+
+add_executable(ssb_encode_test ssb_encode_test.cc)
+target_link_libraries(ssb_encode_test utils)
+
+add_executable(msg_helper_test msgs/msg_helper_test.cc)
 target_link_libraries(msg_helper_test wd_worker utils)
 add_test(shd_msg_helper_test ${CMAKE_BINARY_DIR}/shadower/test/msg_helper_test)
 set_tests_properties(shd_msg_helper_test PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+
+add_executable(registration_accept_constructor msgs/registration_accept_constructor.cc)
+target_link_libraries(registration_accept_constructor wd_worker utils)
+
+add_executable(rrc_release_construction msgs/rrc_release_construction.cc)
+target_link_libraries(rrc_release_construction wd_worker utils)
+
+add_executable(security_mode_command_construction msgs/security_mode_command_construction.cc)
+target_link_libraries(security_mode_command_construction wd_worker utils)
+
+add_executable(modify_rrc_setup_test msgs/modify_rrc_setup_test.cc)
+target_link_libraries(modify_rrc_setup_test wd_worker utils)
+
+add_executable(ssb_frequency_search hardware/ssb_frequency_search.cc)
+target_link_libraries(ssb_frequency_search utils source)
+
+add_executable(sdr_timing_test hardware/sdr_timing_test.cc)
+target_link_libraries(sdr_timing_test utils source syncer)
