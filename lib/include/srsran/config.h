@@ -67,7 +67,7 @@
 // cf_t definition
 typedef _Complex float cf_t;
 // Here fix the subcarrier spacing to 30 kHz
-#define SUBCARRIER_SPACING_KHZ 15
+#define SUBCARRIER_SPACING_KHZ 30
 
 #ifdef ENABLE_C16
 typedef _Complex short int c16_t;

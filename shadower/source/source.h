@@ -17,6 +17,9 @@ public:
   virtual void set_rx_srate(double sample_rate)                                                     = 0;
   virtual void set_tx_freq(double freq)                                                             = 0;
   virtual void set_rx_freq(double freq)                                                             = 0;
+
+  uint32_t nof_channels;
+  void     set_num_channels(uint32_t nof_channels_) { nof_channels = nof_channels_; }
 };
 
 using create_source_t = Source* (*)(ShadowerConfig & config);

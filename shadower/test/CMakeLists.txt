@@ -49,6 +49,9 @@ set_tests_properties(shd_rrc_setup_test_srsran_n78_40MHz PROPERTIES WORKING_DIRE
 add_executable(pdsch_decode_test pdsch_decode_test.cc)
 target_link_libraries(pdsch_decode_test utils wd_worker)
 
+add_executable(pdsch_decode_search pdsch_decode_search.cc)
+target_link_libraries(pdsch_decode_search utils)
+
 add_test(shd_pdsch_decode_test_srsran_n78_20MHz ${CMAKE_BINARY_DIR}/shadower/test/pdsch_decode_test 0)
 set_tests_properties(shd_pdsch_decode_test_srsran_n78_20MHz PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
@@ -80,6 +83,9 @@ set_tests_properties(shd_pusch_decode_test_0 PROPERTIES WORKING_DIRECTORY ${PROJ
 
 add_test(shd_pusch_decode_test_srsran_n78_40MHz ${CMAKE_BINARY_DIR}/shadower/test/pusch_decode_test 1)
 set_tests_properties(shd_pusch_decode_test_srsran_n78_40MHz PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+
+add_executable(pusch_cfo_search pusch_cfo_search.cc)
+target_link_libraries(pusch_cfo_search utils)
 
 add_executable(pdsch_encode_test pdsch_encode_test.cc)
 target_link_libraries(pdsch_encode_test wd_worker utils)
