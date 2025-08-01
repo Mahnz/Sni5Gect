@@ -18,9 +18,8 @@ extern "C" {
 SafeQueue<Task>   task_queue = {};
 std::atomic<bool> running{true};
 std::atomic<bool> cell_found{false};
-double            test_ssb_freq = 1844.55e6;
+double            test_ssb_freq = 3424.8e6;
 std::string       source_param  = "type=b200";
-uint32_t          ssb_offset    = 1650;
 uint32_t          advancement   = 9;
 uint32_t          test_round    = 100;
 uint32_t          cell_id       = 0;
@@ -260,7 +259,7 @@ void receiver_thread(srslog::basic_logger& logger, ShadowerConfig& config, uint3
 void parse_args(int argc, char* argv[])
 {
   int opt;
-  while ((opt = getopt(argc, argv, "pPsrf")) != -1) {
+  while ((opt = getopt(argc, argv, "pPsr")) != -1) {
     switch (opt) {
       case 'p':
         source_param = argv[optind];
@@ -269,11 +268,6 @@ void parse_args(int argc, char* argv[])
         ssb_period = atoi(argv[optind]);
         break;
       case 's': {
-        double test_ssb_freq_MHz = atof(argv[optind]);
-        test_ssb_freq            = test_ssb_freq_MHz * 1e6;
-        break;
-      }
-      case 'f': {
         double test_ssb_freq_MHz = atof(argv[optind]);
         test_ssb_freq            = test_ssb_freq_MHz * 1e6;
         break;
