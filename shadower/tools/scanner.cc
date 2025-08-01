@@ -86,7 +86,9 @@ void scan_ssb(Source*                     source,
   source->set_rx_freq(ssb_freq);
   cf_t* buffer = srsran_vec_cf_malloc(sf_len);
   cf_t* rx_buffer[SRSRAN_MAX_CHANNELS];
-
+  for (uint32_t i = 0; i < SRSRAN_MAX_CHANNELS; i++) {
+    rx_buffer[i] = nullptr;
+  }
   rx_buffer[0] = buffer;
   for (uint32_t i = 0; i < round; i++) {
     /* Receive samples */
