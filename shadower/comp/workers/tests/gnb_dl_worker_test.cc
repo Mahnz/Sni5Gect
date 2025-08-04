@@ -142,7 +142,6 @@ int main(int argc, char* argv[])
   }
 
   config.source_type             = "file";
-  config.source_srate            = config.sample_rate;
   config.source_params           = "/dev/random,/dev/random";
   create_source_t source_creator = load_source(file_source_module_path);
   if (source_creator == nullptr) {

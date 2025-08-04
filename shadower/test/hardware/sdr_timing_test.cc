@@ -320,7 +320,6 @@ int main(int argc, char* argv[])
   /* Initialize source */
   create_source_t uhd_source = load_source(uhd_source_module_path);
   config.source_params       = source_param;
-  config.source_srate        = config.sample_rate;
   config.sample_rate         = config.sample_rate;
   Source* source             = uhd_source(config);
   logger.info("Selected target test SSB frequency %.3f MHz", test_ssb_freq / 1e6);
@@ -336,13 +335,12 @@ int main(int argc, char* argv[])
 
   /* Initialize syncer */
   syncer_args_t syncer_args = {
-      .srate        = config.sample_rate,
-      .source_srate = config.source_srate,
-      .scs          = config.scs_ssb,
-      .dl_freq      = config.dl_freq,
-      .ssb_freq     = config.ssb_freq,
-      .pattern      = config.ssb_pattern,
-      .duplex_mode  = config.duplex_mode,
+      .srate       = config.sample_rate,
+      .scs         = config.scs_ssb,
+      .dl_freq     = config.dl_freq,
+      .ssb_freq    = config.ssb_freq,
+      .pattern     = config.ssb_pattern,
+      .duplex_mode = config.duplex_mode,
   };
   Syncer* syncer = new Syncer(syncer_args, source, config);
   syncer->init();

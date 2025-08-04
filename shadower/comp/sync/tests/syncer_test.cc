@@ -26,18 +26,12 @@ void parse_args(int argc, char* argv[])
 {
   int opt;
 
-  while ((opt = getopt(argc, argv, "sSfbBtdcCrp")) != -1) {
+  while ((opt = getopt(argc, argv, "sfbBtdcCrp")) != -1) {
     switch (opt) {
       case 's': {
         double srateMHz    = atof(argv[optind]);
         config.sample_rate = srateMHz * 1e6;
         printf("Using sample rate: %f MHz\n", srateMHz);
-        break;
-      }
-      case 'S': {
-        double sourceSrateMHz = atof(argv[optind]);
-        config.source_srate   = sourceSrateMHz * 1e6;
-        printf("Using sample rate: %f MHz\n", config.source_srate);
         break;
       }
       case 'f': {
@@ -95,9 +89,6 @@ void parse_args(int argc, char* argv[])
 
   config.duplex_mode = helper.get_duplex_mode(config.band);
   config.ssb_pattern = helper.get_ssb_pattern(config.band, config.scs_ssb);
-  if (config.source_srate == 0) {
-    config.source_srate = config.sample_rate;
-  }
 }
 
 int main(int argc, char* argv[])
@@ -114,13 +105,12 @@ int main(int argc, char* argv[])
 
   /* Initialize syncer args */
   syncer_args_t syncer_args = {
-      .srate        = config.sample_rate,
-      .source_srate = config.source_srate,
-      .scs          = config.scs_ssb,
-      .dl_freq      = config.dl_freq,
-      .ssb_freq     = config.ssb_freq,
-      .pattern      = config.ssb_pattern,
-      .duplex_mode  = config.duplex_mode,
+      .srate       = config.sample_rate,
+      .scs         = config.scs_ssb,
+      .dl_freq     = config.dl_freq,
+      .ssb_freq    = config.ssb_freq,
+      .pattern     = config.ssb_pattern,
+      .duplex_mode = config.duplex_mode,
   };
 
   if (config.source_type == "uhd") {

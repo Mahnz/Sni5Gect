@@ -29,7 +29,6 @@ void parse_args(int argc, char** argv)
       case 's': {
         double sampleRateMHz = atof(argv[optind]);
         config.sample_rate   = sampleRateMHz * 1e6;
-        config.source_srate  = sampleRateMHz * 1e6;
         break;
       }
       case 't':

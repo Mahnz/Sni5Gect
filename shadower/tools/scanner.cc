@@ -144,7 +144,6 @@ int main(int argc, char* argv[])
   config.source_module  = uhd_source_module_path;
   config.source_params  = source_params;
   config.sample_rate    = sample_rate;
-  config.source_srate   = sample_rate;
   config.dl_freq        = start_freq;
   config.ul_freq        = start_freq;
   config.rx_gain        = rx_gain;

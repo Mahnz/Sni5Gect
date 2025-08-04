@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/shadower/shadower",
             "args": [
-                "configs/config-srsran-n3-20MHz.conf"
+                "configs/config-srsran-n78-20MHz.conf"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -42,16 +42,20 @@
             "args": [
                 "-f",
                 "3427.5",
-                "-n",
-                "200000",
+                "-u",
+                "3427.5",
                 "-s",
                 "23.04",
-                "-S",
-                "23.04",
-                "-o",
-                "output",
+                "-g",
+                "40",
+                "-n",
+                "4000",
                 "-c",
                 "2",
+                "-o",
+                "output",
+                "-F",
+                "/root/records/",
                 "-t",
                 "uhd",
                 "-d",
@@ -62,6 +66,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
         {
             "name": "scanner",
@@ -75,6 +80,8 @@
                 "3420",
                 "-e",
                 "3425",
+                "-b",
+                "78",
                 "-S",
                 "30",
                 "-r",
@@ -89,6 +96,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
         {
             "name": "source_test",
@@ -107,13 +115,16 @@
                 "-d",
                 "type=b200",
                 "-c",
-                "1"
+                "1",
+                "-r",
+                "5000"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
         {
             "name": "pcap_writer",
@@ -128,6 +139,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
         {
             "name": "cutter",
@@ -151,6 +163,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
         {
             "name": "syncer_test_file",
@@ -164,19 +177,25 @@
                 "3427.5",
                 "-b",
                 "3421.92",
+                "-B",
+                "78",
                 "-t",
                 "file",
                 "-d",
-                "/root/records/example_ch_0.fc32,/root/records/example_ch_1.fc32",
+                "/root/records/example/example_ch_0.fc32,/root/records/example/example_ch_1.fc32",
                 "-c",
                 "2",
-                "-r"
+                "-C",
+                "30",
+                "-p",
+                "10",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
         {
             "name": "syncer_test_uhd",
@@ -190,18 +209,25 @@
                 "3427.5",
                 "-b",
                 "3421.92",
+                "-B",
+                "78",
                 "-t",
                 "uhd",
                 "-d",
                 "type=b200,master_clock_rate=23.04e6",
                 "-c",
                 "2",
+                "-C",
+                "30",
+                "-p",
+                "10"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
         {
             "name": "ssb_test",
@@ -215,8 +241,14 @@
                 "3427.5",
                 "-b",
                 "3421.92",
+                "-B",
+                "78",
+                "-S",
+                "30",
                 "-I",
                 "1",
+                "-r",
+                "10000",
                 "-F",
                 "${workspaceFolder}/shadower/test/data/srsran-n78-20MHz/sib.fc32",
             ],
@@ -225,6 +257,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
         {
             "name": "ssb_test_fdd",
@@ -254,6 +287,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
         {
             "name": "fft_test",
@@ -266,13 +300,13 @@
                 "-f",
                 "3427.5",
                 "-b",
-                "3413.28",
+                "3421.92",
                 "-p",
-                "106",
+                "51",
                 "-h",
                 "1",
                 "-F",
-                "${workspaceFolder}/shadower/test/data/srsran-n78-40MHz/sib.fc32",
+                "${workspaceFolder}/shadower/test/data/srsran-n78-20MHz/sib.fc32",
                 "-I",
                 "1"
             ],
@@ -281,6 +315,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
         {
             "name": "broadcast_worker_sib1_test",
@@ -310,6 +345,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
         {
             "name": "broadcast_worker_rar_test",
@@ -345,6 +381,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
         {
             "name": "ue_dl_worker_test",
@@ -386,6 +423,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
         {
             "name": "gnb_ul_worker_test",
@@ -435,6 +473,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
         {
             "name": "gnb_dl_worker_test",
@@ -476,6 +515,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
+            "preLaunchTask": "build_all"
         },
     ]
 }

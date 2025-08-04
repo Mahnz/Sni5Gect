@@ -64,7 +64,6 @@ struct ShadowerConfig {
   std::string source_type;   // Source type: file, uhd, limeSDR
   std::string source_params; // Source parameters, e.g., device args, record file
   std::string source_module; // Source module file
-  double      source_srate;  // Source sample rate (Hz)
 
   srslog::basic_levels log_level        = srslog::basic_levels::info;
   srslog::basic_levels bc_worker_level  = srslog::basic_levels::info;
@@ -123,7 +122,6 @@ inline int parse_args(ShadowerConfig& config, int argc, char* argv[])
       ("source.source_type",    bpo::value<std::string>(&config.source_type)->default_value("file"),                "Device args for downlink")
       ("source.source_params",  bpo::value<std::string>(&config.source_params)->default_value("/tmp/output.fc32"),  "Record file for downlink")
       ("source.source_module",  bpo::value<std::string>(&config.source_module)->default_value(""),                  "Module file used for source")
-      ("source.source_srate",   bpo::value<double>(&config.source_srate)->default_value(23.04e6),                   "The sample rate of the original source")
       // Pcap settings
       ("pcap.pcap_folder", bpo::value<std::string>(&config.pcap_folder)->default_value("/tmp/"), "Log level")
       // Recorder settings

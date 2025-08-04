@@ -19,7 +19,6 @@
 
 struct syncer_args_t {
   double                      srate;
-  double                      source_srate;
   srsran_subcarrier_spacing_t scs;
   double                      dl_freq;
   double                      ssb_freq;
@@ -62,7 +61,6 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("syncer", true);
 
   double       srate;
-  double       source_srate;
   uint32_t     sf_len;
   uint32_t     slot_per_sf;
   uint32_t     num_channels = 1;

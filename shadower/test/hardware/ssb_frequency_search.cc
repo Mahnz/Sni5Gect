@@ -95,14 +95,12 @@ int main(int argc, char* argv[])
   uint32_t sf_len      = srate * SF_DURATION;
   config.source_type   = source_type;
   config.source_params = source_param;
-  config.source_srate  = srate;
   Source* source;
   if (source_type == "file") {
     create_source_t file_source_creator = load_source(file_source_module_path);
     source                              = file_source_creator(config);
   } else if (source_type == "uhd") {
     config.source_module               = uhd_source_module_path;
-    config.source_srate                = srate;
     config.sample_rate                 = srate;
     create_source_t uhd_source_creator = load_source(uhd_source_module_path);
     source                             = uhd_source_creator(config);
