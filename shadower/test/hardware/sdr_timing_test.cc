@@ -22,6 +22,7 @@ std::atomic<bool> cell_found{false};
 double            test_ssb_freq = 3424.8e6;
 std::string       source_param  = "type=b200";
 uint32_t          advancement   = 9;
+uint32_t          ssb_offset    = 1650;
 uint32_t          test_round    = 500;
 uint32_t          cell_id       = 1;
 uint32_t          ssb_period    = 10;
@@ -119,6 +120,11 @@ int generate_ssb_block(ShadowerConfig& config, srsran::phy_cfg_nr_t& phy_cfg, ui
     printf("Failed to add SSB\n");
     return -1;
   }
+
+  uint32_t ssb_offset_calc = srsran_ssb_candidate_sf_offset(&ssb, 0);
+  printf("SSB offset: %u\n", ssb_offset_calc);
+  ssb_offset = ssb_offset_calc;
+
   srsran_vec_cf_copy(buffer, gnb_dl_buffer, slot_len);
   srsran_ssb_free(&ssb);
   srsran_gnb_dl_free(&gnb_dl);
@@ -139,7 +145,7 @@ void handle_syncer_exit(Syncer* syncer, std::thread& sender, std::vector<std::th
 
 void sender_thread(srslog::basic_logger& logger,
                    std::vector<cf_t>     samples,
-                   uint32_t              slot_len,
+                   uint32_t              sf_len,
                    Source*               source,
                    Syncer*               syncer,
                    ShadowerConfig&       config)
@@ -153,8 +159,10 @@ void sender_thread(srslog::basic_logger& logger,
     }
   }
 
-  uint32_t slot_advancement = 5;
+  uint32_t slot_advancement = 6;
   uint32_t last_slot        = 0;
+  auto     last_send_time   = std::chrono::steady_clock::now();
+  uint32_t send_idx         = 0;
   while (running) {
     /* Wait the cell be found first, we are aiming to matching the time of a base station */
     if (!cell_found) {
@@ -172,10 +180,19 @@ void sender_thread(srslog::basic_logger& logger,
       std::this_thread::sleep_for(std::chrono::microseconds(100));
       continue;
     }
+
     uint32_t target_slot_idx = slot_idx + slot_advancement;
-    srsran_timestamp_add(&ts, 0, 1e-4 * slot_advancement);
-    source->send(channels_ptr, slot_len, ts, target_slot_idx);
+    srsran_timestamp_add(&ts, 0, 2e-3);
+    source->send(channels_ptr, sf_len, ts, target_slot_idx);
     last_slot = slot_idx;
+
+    auto now          = std::chrono::steady_clock::now();
+    auto schedule_gap = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_send_time);
+    last_send_time    = now;
+    if (schedule_gap.count() > 10) {
+      logger.warning("Sender thread is running behind, schedule gap: %ld ms", schedule_gap.count());
+    }
+    send_idx++;
   }
 }
 
@@ -226,11 +243,11 @@ void receiver_thread(srslog::basic_logger& logger, ShadowerConfig& config, uint3
     /* write MIB to file */
     std::array<char, 512> mib_info_str = {};
     srsran_pbch_msg_nr_mib_info(&mib, mib_info_str.data(), mib_info_str.size());
-    logger.info("SSB Delay: %u %s ", res.t_offset, mib_info_str.data());
+    logger.debug("SSB Delay: %u %s ", res.t_offset, mib_info_str.data());
     {
       std::lock_guard<std::mutex> lock(mtx);
       count++;
-      int32_t delay_samples = res.t_offset;
+      int32_t delay_samples = res.t_offset - ssb_offset;
       total_cfo += res.measurements.cfo_hz;
       /* Count the delays */
       if (delay_map.find(delay_samples) == delay_map.end()) {
@@ -296,9 +313,11 @@ int main(int argc, char* argv[])
   parse_args(argc, argv);
   test_args_t     args    = init_test_args(test_number);
   ShadowerConfig& config  = args.config;
-  config.syncer_log_level = srslog::basic_levels::debug;
+  config.tx_gain          = 89;
+  config.syncer_log_level = srslog::basic_levels::info;
   /* initialize logger */
   srslog::basic_logger& logger = srslog_init(&config);
+  logger.set_level(srslog::basic_levels::info);
 
   /* initialize phy_cfg */
   srsran::phy_cfg_nr_t phy_cfg = {};
@@ -329,14 +348,18 @@ int main(int argc, char* argv[])
   Source* source             = uhd_source(config);
   logger.info("Selected target test SSB frequency %.3f MHz", test_ssb_freq / 1e6);
 
-  std::vector<cf_t> test_ssb_samples(args.slot_len);
-  if (generate_ssb_block(config, phy_cfg, args.slot_len, test_ssb_samples.data()) != 0) {
+  std::vector<cf_t> test_ssb_samples(args.sf_len * 2);
+  if (generate_ssb_block(config, phy_cfg, args.sf_len, test_ssb_samples.data()) != 0) {
     logger.error("Failed to generate SSB block");
     return -1;
   }
+
+  float scale = 20.0f;
+  srsran_vec_sc_prod_cfc(test_ssb_samples.data(), scale, test_ssb_samples.data(), args.sf_len);
+
   char filename[64];
   sprintf(filename, "generated_ssb");
-  write_record_to_file(test_ssb_samples.data(), args.slot_len, filename);
+  write_record_to_file(test_ssb_samples.data(), args.sf_len, filename);
 
   int                max_priority = sched_get_priority_max(SCHED_FIFO) - 1;
   struct sched_param param;
@@ -358,7 +381,7 @@ int main(int argc, char* argv[])
   syncer->publish_subframe = std::bind(push_new_task, std::placeholders::_1);
   /* Sender thread keep sending SSB blocks */
   std::thread sender(
-      sender_thread, std::ref(logger), std::ref(test_ssb_samples), args.slot_len, source, syncer, std::ref(config));
+      sender_thread, std::ref(logger), std::ref(test_ssb_samples), args.sf_len, source, syncer, std::ref(config));
   pthread_setschedparam(sender.native_handle(), SCHED_OTHER, &param);
 
   /* Receiver thread keep processing sent SSB blocks */
