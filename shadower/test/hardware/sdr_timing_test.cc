@@ -145,7 +145,7 @@ void handle_syncer_exit(Syncer* syncer, std::thread& sender, std::vector<std::th
 
 void sender_thread(srslog::basic_logger& logger,
                    std::vector<cf_t>     samples,
-                   uint32_t              sf_len,
+                   uint32_t              num_samples,
                    Source*               source,
                    Syncer*               syncer,
                    ShadowerConfig&       config)
@@ -183,7 +183,7 @@ void sender_thread(srslog::basic_logger& logger,
 
     uint32_t target_slot_idx = slot_idx + slot_advancement;
     srsran_timestamp_add(&ts, 0, 2e-3);
-    source->send(channels_ptr, sf_len, ts, target_slot_idx);
+    source->send(channels_ptr, num_samples, ts, target_slot_idx);
     last_slot = slot_idx;
 
     auto now          = std::chrono::steady_clock::now();
@@ -359,7 +359,7 @@ int main(int argc, char* argv[])
 
   char filename[64];
   sprintf(filename, "generated_ssb");
-  write_record_to_file(test_ssb_samples.data(), args.sf_len, filename);
+  write_record_to_file(test_ssb_samples.data(), args.slot_len, filename);
 
   int                max_priority = sched_get_priority_max(SCHED_FIFO) - 1;
   struct sched_param param;
@@ -381,7 +381,7 @@ int main(int argc, char* argv[])
   syncer->publish_subframe = std::bind(push_new_task, std::placeholders::_1);
   /* Sender thread keep sending SSB blocks */
   std::thread sender(
-      sender_thread, std::ref(logger), std::ref(test_ssb_samples), args.sf_len, source, syncer, std::ref(config));
+      sender_thread, std::ref(logger), std::ref(test_ssb_samples), args.slot_len, source, syncer, std::ref(config));
   pthread_setschedparam(sender.native_handle(), SCHED_OTHER, &param);
 
   /* Receiver thread keep processing sent SSB blocks */
