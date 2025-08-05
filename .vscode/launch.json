@@ -188,8 +188,7 @@
                 "-C",
                 "30",
                 "-p",
-                "10",
-            ],
+                "20"            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
@@ -220,7 +219,7 @@
                 "-C",
                 "30",
                 "-p",
-                "10"
+                "20"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

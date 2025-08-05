@@ -13,6 +13,7 @@ extern "C" {
 #include <dirent.h>
 #include <fstream>
 #include <mutex>
+#include <sched.h>
 #include <sys/types.h>
 
 SafeQueue<Task>   task_queue = {};
@@ -21,8 +22,8 @@ std::atomic<bool> cell_found{false};
 double            test_ssb_freq = 3424.8e6;
 std::string       source_param  = "type=b200";
 uint32_t          advancement   = 9;
-uint32_t          test_round    = 100;
-uint32_t          cell_id       = 0;
+uint32_t          test_round    = 500;
+uint32_t          cell_id       = 1;
 uint32_t          ssb_period    = 10;
 uint32_t          count         = 0;
 double            total_cfo     = 0;
@@ -143,7 +144,6 @@ void sender_thread(srslog::basic_logger& logger,
                    Syncer*               syncer,
                    ShadowerConfig&       config)
 {
-  int   target_slot_idx = 3;
   cf_t* channels_ptr[SRSRAN_MAX_CHANNELS];
   for (int i = 0; i < SRSRAN_MAX_CHANNELS; i++) {
     if (i < source->nof_channels) {
@@ -153,28 +153,33 @@ void sender_thread(srslog::basic_logger& logger,
     }
   }
 
-  auto last_send_time = std::chrono::steady_clock::now();
+  uint32_t slot_advancement = 5;
+  uint32_t last_slot        = 0;
   while (running) {
     /* Wait the cell be found first, we are aiming to matching the time of a base station */
     if (!cell_found) {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
       continue;
     }
-    auto now = std::chrono::steady_clock::now();
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - last_send_time).count() < 50) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
-      continue;
-    }
+    /* Get the timestamp from syncer */
     uint32_t           slot_idx = 0;
     srsran_timestamp_t ts       = {};
     syncer->get_tti(&slot_idx, &ts);
-    srsran_timestamp_add(&ts, 0, 3e-4);
-    source->send(channels_ptr, slot_len, ts, 0);
-    last_send_time = std::chrono::steady_clock::now();
+    if (slot_idx % 20 != 2) {
+      continue;
+    }
+    if (slot_idx == last_slot) {
+      std::this_thread::sleep_for(std::chrono::microseconds(100));
+      continue;
+    }
+    uint32_t target_slot_idx = slot_idx + slot_advancement;
+    srsran_timestamp_add(&ts, 0, 1e-4 * slot_advancement);
+    source->send(channels_ptr, slot_len, ts, target_slot_idx);
+    last_slot = slot_idx;
   }
 }
 
-void receiver_thread(srslog::basic_logger& logger, ShadowerConfig& config, uint32_t slot_len, double test_freq)
+void receiver_thread(srslog::basic_logger& logger, ShadowerConfig& config, uint32_t sf_len, double test_freq)
 {
   srsran_ssb_t     ssb     = {};
   srsran_ssb_cfg_t ssb_cfg = {};
@@ -200,7 +205,7 @@ void receiver_thread(srslog::basic_logger& logger, ShadowerConfig& config, uint3
 
     /* Run SSB search on the received slots */
     srsran_ssb_search_res_t res = {};
-    if (srsran_ssb_search(&ssb, task->dl_buffer[0]->data(), slot_len, &res) != 0) {
+    if (srsran_ssb_search(&ssb, task->dl_buffer[0]->data(), sf_len, &res) != 0) {
       logger.error("Failed to search ssb");
       continue;
     }
@@ -221,7 +226,7 @@ void receiver_thread(srslog::basic_logger& logger, ShadowerConfig& config, uint3
     /* write MIB to file */
     std::array<char, 512> mib_info_str = {};
     srsran_pbch_msg_nr_mib_info(&mib, mib_info_str.data(), mib_info_str.size());
-    logger.debug("SSB Delay: %u %s ", res.t_offset, mib_info_str.data());
+    logger.info("SSB Delay: %u %s ", res.t_offset, mib_info_str.data());
     {
       std::lock_guard<std::mutex> lock(mtx);
       count++;
@@ -333,6 +338,11 @@ int main(int argc, char* argv[])
   sprintf(filename, "generated_ssb");
   write_record_to_file(test_ssb_samples.data(), args.slot_len, filename);
 
+  int                max_priority = sched_get_priority_max(SCHED_FIFO) - 1;
+  struct sched_param param;
+  param.sched_priority = max_priority;
+  pthread_attr_t attr;
+
   /* Initialize syncer */
   syncer_args_t syncer_args = {
       .srate       = config.sample_rate,
@@ -349,12 +359,13 @@ int main(int argc, char* argv[])
   /* Sender thread keep sending SSB blocks */
   std::thread sender(
       sender_thread, std::ref(logger), std::ref(test_ssb_samples), args.slot_len, source, syncer, std::ref(config));
+  pthread_setschedparam(sender.native_handle(), SCHED_OTHER, &param);
 
   /* Receiver thread keep processing sent SSB blocks */
   int                      num_receiver_threads = 8;
   std::vector<std::thread> receiver_threads;
   for (int i = 0; i < num_receiver_threads; i++) {
-    std::thread receiver(receiver_thread, std::ref(logger), std::ref(config), args.slot_len, test_ssb_freq);
+    std::thread receiver(receiver_thread, std::ref(logger), std::ref(config), args.sf_len, test_ssb_freq);
     receiver_threads.push_back(std::move(receiver));
   }
   syncer->error_handler = std::bind([&]() { handle_syncer_exit(syncer, sender, receiver_threads); });

@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
   parse_args(argc, argv);
   /* initialize logger */
   ShadowerConfig config        = {};
-  config.log_level             = srslog::basic_levels::debug;
+  config.log_level             = srslog::basic_levels::info;
   srslog::basic_logger& logger = srslog_init(&config);
   logger.set_level(srslog::basic_levels::debug);
 

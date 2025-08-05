@@ -75,7 +75,7 @@ public:
     /* Start the rx stream */
     try {
       int samples_recv =
-          srsran_rf_recv_with_time_multi(rf.get(), (void**)buffer, nof_samples, true, &ts->full_secs, &ts->frac_secs);
+          srsran_rf_recv_with_time_multi(rf.get(), (void**)buffer, nof_samples, false, &ts->full_secs, &ts->frac_secs);
       if (samples_recv == SRSRAN_ERROR) {
         return -1;
       }

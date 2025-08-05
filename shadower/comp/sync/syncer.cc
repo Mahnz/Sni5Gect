@@ -93,8 +93,12 @@ Received:    --|s-------------| Delay -2 symbols Copy --| and then receive -----
 bool Syncer::listen(std::shared_ptr<samples_t>& samples)
 {
   cf_t* buffer[SRSRAN_MAX_CHANNELS];
-  for (int i = 0; i < num_channels; i++) {
-    buffer[i] = samples->dl_buffer[i]->data();
+  for (int i = 0; i < SRSRAN_MAX_CHANNELS; i++) {
+    if (i < num_channels) {
+      buffer[i] = samples->dl_buffer[i]->data();
+    } else {
+      buffer[i] = nullptr; // Fill the rest with nullptr if fewer channels
+    }
   }
 
   /* receive data */
