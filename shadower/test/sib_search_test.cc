@@ -85,11 +85,19 @@ int main(int argc, char* argv[])
   /* run ue_dl estimate fft */
   srsran_ue_dl_nr_estimate_fft(&ue_dl, &slot_cfg);
 
+  std::vector<cf_t> ofdm_from_srsran(args.nof_re);
+  srsran_vec_cf_copy(ofdm_from_srsran.data(), ue_dl.sf_symbols[0], args.nof_re);
+
 #if ENABLE_CUDA
-  FFTProcessor fft_processor(
-      config.sample_rate, ue_dl.carrier.dl_center_frequency_hz, ue_dl.carrier.scs, &ue_dl.fft[0]);
-  fft_processor.to_ofdm(buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
+  if (config.enable_gpu) {
+    FFTProcessor fft_processor(
+        config.sample_rate, ue_dl.carrier.dl_center_frequency_hz, ue_dl.carrier.scs, &ue_dl.fft[0]);
+    fft_processor.to_ofdm(buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
+  }
 #endif // ENABLE_CUDA
+
+  std::vector<cf_t> ofdm_from_gpu(args.nof_re);
+  srsran_vec_cf_copy(ofdm_from_gpu.data(), ue_dl.sf_symbols[0], args.nof_re);
 
   char filename[256];
   sprintf(filename, "ofdm_fft%u_sib", args.nof_sc);

@@ -159,6 +159,7 @@ void sender_thread(srslog::basic_logger& logger,
     }
   }
 
+  uint32_t slot_per_sf      = 10 * (1 << config.scs_ssb);
   uint32_t slot_advancement = 6;
   uint32_t last_slot        = 0;
   auto     last_send_time   = std::chrono::steady_clock::now();
@@ -173,7 +174,7 @@ void sender_thread(srslog::basic_logger& logger,
     uint32_t           slot_idx = 0;
     srsran_timestamp_t ts       = {};
     syncer->get_tti(&slot_idx, &ts);
-    if (slot_idx % 20 != 2) {
+    if (slot_idx % slot_per_sf != 2) {
       continue;
     }
     if (slot_idx == last_slot) {
@@ -343,6 +344,7 @@ int main(int argc, char* argv[])
 
   /* Initialize source */
   create_source_t uhd_source = load_source(uhd_source_module_path);
+  config.nof_channels        = 1;
   config.source_params       = source_param;
   config.sample_rate         = config.sample_rate;
   Source* source             = uhd_source(config);
@@ -354,8 +356,8 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  float scale = 20.0f;
-  srsran_vec_sc_prod_cfc(test_ssb_samples.data(), scale, test_ssb_samples.data(), args.sf_len);
+  // float scale = 20.0f;
+  // srsran_vec_sc_prod_cfc(test_ssb_samples.data(), scale, test_ssb_samples.data(), args.sf_len);
 
   char filename[64];
   sprintf(filename, "generated_ssb");
