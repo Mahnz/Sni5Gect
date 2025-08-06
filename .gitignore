@@ -29,3 +29,5 @@ cfo_search*.csv
 pcap_compare.csv
 evaluation_backup/
 *.so
+fdd/
+tdd/

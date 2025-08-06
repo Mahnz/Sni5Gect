@@ -231,12 +231,12 @@ void srsran_gnb_dl_gen_signal(srsran_gnb_dl_t* q)
     return;
   }
 
-  float norm_factor = gnb_dl_get_norm_factor(q->pdsch.carrier.nof_prb);
+  // float norm_factor = gnb_dl_get_norm_factor(q->pdsch.carrier.nof_prb);
 
   for (uint32_t i = 0; i < q->nof_tx_antennas; i++) {
     srsran_ofdm_tx_sf(&q->fft[i]);
-
-    srsran_vec_sc_prod_cfc(q->fft[i].cfg.out_buffer, norm_factor, q->fft[i].cfg.out_buffer, (uint32_t)q->fft[i].sf_sz);
+    // srsran_vec_sc_prod_cfc(q->fft[i].cfg.out_buffer, norm_factor, q->fft[i].cfg.out_buffer,
+    // (uint32_t)q->fft[i].sf_sz);
   }
 }
 

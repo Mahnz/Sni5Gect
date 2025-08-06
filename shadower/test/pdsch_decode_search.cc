@@ -16,28 +16,28 @@ int         end   = 100;
 void parse_args(int argc, char* argv[])
 {
   int opt;
-  while ((opt = getopt(argc, argv, "fshln")) != -1) {
+  while ((opt = getopt(argc, argv, "f:s:h:l:n:b:e:")) != -1) {
     switch (opt) {
       case 'f':
-        sample_file = argv[optind];
+        sample_file = optarg;
         break;
       case 's':
-        slot_number = atoi(argv[optind]);
+        slot_number = atoi(optarg);
         break;
       case 'h':
-        half = atoi(argv[optind]);
+        half = atoi(optarg);
         break;
       case 'l':
-        last_sample_file = argv[optind];
+        last_sample_file = optarg;
         break;
       case 'n':
-        next_sample_file = argv[optind];
+        next_sample_file = optarg;
         break;
       case 'b':
-        begin = atoi(argv[optind]);
+        begin = atoi(optarg);
         break;
       case 'e':
-        end = atoi(argv[optind]);
+        end = atoi(optarg);
         break;
       default:
         fprintf(stderr, "Unknown option: %c\n", opt);
@@ -141,23 +141,27 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  for (int offset = -100; offset < 100; offset++) {
-    if (half == 0 && offset < 0 && !last_sample_file.empty()) {
-      /* Copy the last section of the sample to the buffer */
-      srsran_vec_cf_copy(buffer, last_samples.data() + args.sf_len + offset, -offset);
-      /* Copy from the start of the current buffer */
+  for (int offset = begin; offset < end; offset++) {
+    if (half == 0 && offset < 0) {
+      /* Copy the last section of the samples to the buffer */
+      if (!last_sample_file.empty()) {
+        srsran_vec_cf_copy(buffer, last_samples.data() + args.sf_len + offset, -offset);
+      } else {
+        srsran_vec_cf_zero(buffer, -offset); // Zero fill if no last sample file
+      }
+      /* Copy the current section to the offset */
       srsran_vec_cf_copy(buffer - offset, samples.data(), args.slot_len + offset);
-    } else if (half > 0 && offset <= 0) {
-      /* If it is not the start of the slot, then copy directly */
-      srsran_vec_cf_copy(buffer, last_samples.data() + args.slot_len * half + offset, args.slot_len);
-    } else if (half > 0 && offset > 0 && !next_sample_file.empty()) {
+    } else if (half > 0 && offset > 0) {
       srsran_vec_cf_copy(buffer, samples.data() + args.slot_len * half + offset, args.slot_len - offset);
-      /* If it is the end of the slot, then copy from the next sample */
-      srsran_vec_cf_copy(buffer + args.slot_len - offset, next_samples.data(), offset);
-    } else if (half == 0 && offset > 0) {
-      /* If it is not the end of the slot, then copy directly*/
-      srsran_vec_cf_copy(buffer, samples.data() + offset, args.slot_len);
+      if (!next_sample_file.empty()) {
+        srsran_vec_cf_copy(buffer + args.slot_len * half - offset, next_samples.data(), offset);
+      } else {
+        srsran_vec_cf_zero(buffer + args.slot_len * half - offset, offset); // Zero fill if no next sample file
+      }
+    } else {
+      srsran_vec_cf_copy(buffer, samples.data() + args.slot_len * half + offset, args.slot_len);
     }
+
     /* Initialize slot cfg */
     srsran_slot_cfg_t slot_cfg = {.idx = slot_number + half};
     /* run ue_dl estimate fft */
@@ -176,7 +180,7 @@ int main(int argc, char* argv[])
     srsran_sch_cfg_nr_t        pdsch_cfg    = {};
     srsran_harq_ack_resource_t ack_resource = {};
     if (!phy_state.get_dl_pending_grant(slot_cfg.idx, pdsch_cfg, ack_resource, pid)) {
-      logger.error("Failed to get grant from dci search");
+      logger.error("Offset: %d Failed to get grant from dci search", offset);
       continue;
     }
     /* Initialize the buffer for output*/
@@ -203,9 +207,10 @@ int main(int argc, char* argv[])
     }
     /* if the message is not decoded correctly, then return */
     if (!pdsch_res.tb[0].crc) {
-      logger.debug("Error PDSCH got wrong CRC");
+      logger.debug("Offset: %d Error PDSCH got wrong CRC", offset);
       continue;
     }
+    logger.info("Offset: %d PDSCH decoded successfully", offset);
   }
   return 0;
 }

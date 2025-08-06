@@ -156,8 +156,12 @@ int main(int argc, char* argv[])
 
   /* Write the samples to file */
   char filename[64];
-  sprintf(filename, "gnb_dl_buffer_fft%u", args.nof_sc);
+  sprintf(filename, "gnb_dl_buffer");
   write_record_to_file(gnb_dl_buffer, args.slot_len, filename);
+
+  float avg_power    = srsran_vec_avg_power_cf(gnb_dl_buffer, args.slot_len);
+  float avg_power_dB = srsran_convert_power_to_dB(avg_power);
+  logger.info("Average Power of gnb_dl_buffer: %.2f dB %.2f", avg_power_dB, avg_power);
 
   /* ##############################################
     After generation, verify the message can be successfully decoded
