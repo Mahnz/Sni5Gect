@@ -34,15 +34,15 @@ public:
     srsran_rf_set_rx_srate(rf.get(), srate_hz);
     if (fdd && nof_channels % 2 == 0) {
       for (uint32_t i = 0; i < nof_channels / 2; i++) {
-        srsran_rf_set_rx_freq(rf.get(), i * 2, dl_freq);
-        srsran_rf_set_tx_freq(rf.get(), i * 2, dl_freq);
-        srsran_rf_set_tx_gain_ch(rf.get(), i * 2, tx_gain);
-        srsran_rf_set_rx_gain_ch(rf.get(), i * 2, rx_gain);
-
         srsran_rf_set_rx_freq(rf.get(), i * 2 + 1, ul_freq);
         srsran_rf_set_tx_freq(rf.get(), i * 2 + 1, ul_freq);
         srsran_rf_set_tx_gain_ch(rf.get(), i * 2 + 1, tx_gain);
         srsran_rf_set_rx_gain_ch(rf.get(), i * 2 + 1, rx_gain);
+
+        srsran_rf_set_rx_freq(rf.get(), i * 2, dl_freq);
+        srsran_rf_set_tx_freq(rf.get(), i * 2, dl_freq);
+        srsran_rf_set_tx_gain_ch(rf.get(), i * 2, tx_gain);
+        srsran_rf_set_rx_gain_ch(rf.get(), i * 2, rx_gain);
       }
     } else {
       for (uint32_t i = 0; i < nof_channels; i++) {

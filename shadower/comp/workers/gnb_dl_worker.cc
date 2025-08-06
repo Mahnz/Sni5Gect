@@ -109,7 +109,8 @@ void GNBDLWorker::work_imp()
   }
 
   /* check the target slot is ul slot */
-  if (srsran_duplex_nr_is_ul(&phy_cfg.duplex, numerology, gnb_dl_task.slot_idx + 1 + 4)) {
+  if ((phy_cfg.duplex.mode == srsran_duplex_mode_t::SRSRAN_DUPLEX_MODE_TDD) &&
+      srsran_duplex_nr_is_ul(&phy_cfg.duplex, numerology, gnb_dl_task.slot_idx + 1 + 4)) {
     if (send_dci_ul(gnb_dl_task.slot_idx + 1)) {
       uint32_t dci_len = 2 * (gnb_dl.fft->cfg.cp + gnb_dl.fft->cfg.symbol_sz);
       srsran_vec_cf_copy(output_buffer + slot_len, tx_buffer, dci_len);
@@ -118,7 +119,7 @@ void GNBDLWorker::work_imp()
     }
   }
   /* if the message only in one slot, then add noise to the rest of the subframe */
-  if (tx_size == slot_len) {
+  if ((phy_cfg.duplex.mode == srsran_duplex_mode_t::SRSRAN_DUPLEX_MODE_TDD) && tx_size == slot_len) {
     uint32_t noise_size = slot_len * 0.8;
     srsran_vec_cf_copy(output_buffer + slot_len, output_buffer, noise_size);
     tx_size += noise_size;

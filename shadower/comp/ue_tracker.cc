@@ -306,7 +306,9 @@ void UETracker::run_thread()
       srsran_timestamp_t rx_timestamp;
       syncer->get_tti(&rx_slot_idx, &rx_timestamp);
       /* If we have sent the pdsch in the slot, then skip */
-      if (rx_slot_idx == last_sent_slot) {
+      if (phy_cfg.duplex.mode == srsran_duplex_mode_t::SRSRAN_DUPLEX_MODE_FDD && rx_slot_idx <= (last_sent_slot + 1)) {
+        continue;
+      } else if (rx_slot_idx == last_sent_slot) {
         continue;
       }
       /* Calculate the target slot index */
