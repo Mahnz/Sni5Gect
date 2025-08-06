@@ -103,7 +103,11 @@ FFTProcessor::FFTProcessor(double                      sample_rate_,
   int istride  = fft_size + cp_normal_len;
   int ostide   = fft_size;
   plan         = new cufftHandle();
-  cufftPlanMany(plan, 1, n, embed, 1, istride, embed, 1, ostide, CUFFT_C2C, nof_symbols);
+  if (scs == srsran_subcarrier_spacing_15kHz) {
+    cufftPlanMany(plan, 1, n, embed, 1, istride, embed, 1, ostide, CUFFT_C2C, 7);
+  } else {
+    cufftPlanMany(plan, 1, n, embed, 1, istride, embed, 1, ostide, CUFFT_C2C, nof_symbols);
+  }
   /* Allocated memory for phase compensation on GPU */
   cudaMalloc((void**)&d_phase_compensation, symbols_per_subframe * sizeof(cufftComplex));
   /* Allocate memory for window offset buffer */
@@ -150,32 +154,50 @@ void FFTProcessor::set_phase_compensation(double center_freq_hz)
 /* Process the samples from a slot at a time */
 void FFTProcessor::to_ofdm(cf_t* buffer, cf_t* ofdm_symbols, uint32_t slot_idx)
 {
+  if (scs == srsran_subcarrier_spacing_15kHz) {
+    uint32_t nof_samples = slot_sz / 2;
+    uint32_t re_count    = nof_re * 7;
+    for (uint32_t i = 0; i < 2; i++) {
+      to_ofdm_imp(buffer + i * nof_samples, ofdm_symbols + i * re_count, re_count, 7, nof_samples);
+    }
+  } else {
+    to_ofdm_imp(buffer, ofdm_symbols, half_fft, nof_symbols, slot_sz);
+  }
+}
+
+/* Actual implementation of convert IQ samples to OFDM symbols */
+void FFTProcessor::to_ofdm_imp(cf_t*    buffer,
+                               cf_t*    ofdm_symbols,
+                               uint32_t half,
+                               uint32_t symbol_count,
+                               uint32_t sample_count)
+{
   /* Copy the to GPU pinned buffer */
-  memcpy(h_pinned_buffer, buffer, slot_sz * sizeof(cufftComplex));
+  memcpy(h_pinned_buffer, buffer, sample_count * sizeof(cufftComplex));
 
   /* Asynchronous transfer to GPU */
-  cudaMemcpyAsync(d_signal, h_pinned_buffer, slot_sz * sizeof(cufftComplex), cudaMemcpyHostToDevice, *stream);
+  cudaMemcpyAsync(d_signal, h_pinned_buffer, sample_count * sizeof(cufftComplex), cudaMemcpyHostToDevice, *stream);
 
   // Run fft
   cufftExecC2C(*plan, d_signal + cp_long_len - window_offset_n, d_signal, CUFFT_FORWARD);
 
   // Apply frequency domain window offset
   if (window_offset_n) {
-    launch_gpu_vec_prod_ccc(d_signal, d_window_offset_buffer, fft_size, nof_symbols);
+    launch_gpu_vec_prod_ccc(d_signal, d_window_offset_buffer, fft_size, symbol_count);
   }
 
   // Apply phase compensation
-  launch_gpu_vec_sc_prod_ccc(d_signal, d_phase_compensation, fft_size, nof_symbols);
+  launch_gpu_vec_sc_prod_ccc(d_signal, d_phase_compensation, fft_size, symbol_count);
 
   // Copy result back asynchronously
   cudaMemcpyAsync(
-      h_pinned_buffer, d_signal, nof_symbols * fft_size * sizeof(cufftComplex), cudaMemcpyDeviceToHost, *stream);
+      h_pinned_buffer, d_signal, symbol_count * fft_size * sizeof(cufftComplex), cudaMemcpyDeviceToHost, *stream);
 
   // Wait for all operations to complete
   cudaStreamSynchronize(*stream);
 
   // Copy final output back to host
-  for (uint32_t i = 0; i < nof_symbols; i++) {
+  for (uint32_t i = 0; i < symbol_count; i++) {
     // Copy the result to OFDM symbols
     memcpy(ofdm_symbols + i * nof_re, h_pinned_buffer + i * fft_size + fft_size - half_re, half_re * sizeof(cf_t));
     memcpy(ofdm_symbols + i * nof_re + half_re, h_pinned_buffer + i * fft_size, half_re * sizeof(cf_t));

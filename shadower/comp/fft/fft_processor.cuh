@@ -44,6 +44,9 @@ public:
   /* Convert IQ samples to OFDM symbols */
   void to_ofdm(cf_t* buffer, cf_t* ofdm_symbols, uint32_t slot_idx);
 
+  /* Actual implementation of convert IQ samples to OFDM symbols */
+  void to_ofdm_imp(cf_t* buffer, cf_t* ofdm_symbols, uint32_t half, uint32_t symbol_count, uint32_t sample_count);
+
   /* Update the phase compensation list */
   void set_phase_compensation(double center_freq);
 

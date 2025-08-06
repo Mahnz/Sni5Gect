@@ -32,7 +32,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
-            "preLaunchTask": "build_active"
+            "preLaunchTask": "build_all"
         },
         {
             "name": "recorder",
