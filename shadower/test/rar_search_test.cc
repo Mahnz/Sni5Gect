@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
       break;
     case 4:
       sample_file = "shadower/test/data/srsran-n3-20MHz/rar.fc32";
-      slot_number = 847;
+      slot_number = 4557;
       half        = 0;
       break;
     default:

@@ -59,8 +59,8 @@ int main(int argc, char* argv[])
       half        = 1;
       break;
     case 4:
-      sample_file = "shadower/test/data/srsran-n3-20MHz/pdsch_2855.fc32";
-      slot_number = 2855;
+      sample_file = "shadower/test/data/srsran-n3-20MHz/pdsch_4615.fc32";
+      slot_number = 4615;
       half        = 0;
       break;
     default:

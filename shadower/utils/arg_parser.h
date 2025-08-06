@@ -166,6 +166,9 @@ inline int parse_args(ShadowerConfig& config, int argc, char* argv[])
   config.ssb_freq         = bands.nr_arfcn_to_freq(config.ssb_arfcn);
   double frequency_pointA = bands.get_abs_freq_point_a_from_center_freq(config.nof_prb, config.dl_freq);
   printf("Frequency point A: %f MHz\n", frequency_pointA / 1e6);
+  printf("DL Frequency: %f MHz\n", config.dl_freq / 1e6);
+  printf("UL Frequency: %f MHz\n", config.ul_freq / 1e6);
+  printf("SSB Frequency: %f MHz\n", config.ssb_freq / 1e6);
 
   config.ssb_pattern = srsran::srsran_band_helper::get_ssb_pattern(config.band, config.scs_ssb);
   config.duplex_mode = bands.get_duplex_mode(config.band);

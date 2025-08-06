@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
 
   std::vector<cf_t> ofdm_from_srsran(args.nof_re);
   srsran_vec_cf_copy(ofdm_from_srsran.data(), ue_dl.sf_symbols[0], args.nof_re);
-
+  config.enable_gpu = true;
 #if ENABLE_CUDA
   if (config.enable_gpu) {
     FFTProcessor fft_processor(
