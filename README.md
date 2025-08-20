@@ -38,9 +38,9 @@ We recommend running the entire stack within an Ubuntu 22.04 Docker container to
 Build and Start the Docker Container:
 
 ```bash
-docker compose build # Build container
-docker compose up -d # Start Conteriner
-docker exec -it artifacts bash # Access Container
+docker compose build sni5gect # Build container
+docker compose up -d sni5gect # Start Conteriner
+docker exec -it sni5gect bash # Access Container
 ./build/shadower/shadower configs/config-srsran-n78-20MHz.conf # Run Sniffer for Band N78 with 20Mhz Bandwith
 # See Running Sni5Gect in the README.md
 ```
