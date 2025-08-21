@@ -46,6 +46,11 @@ int main(int argc, char* argv[])
       slot_number = 1761;
       half        = 0;
       break;
+    case 5:
+      sample_file = "shadower/test/data/singtel-n1-20MHz/sib.fc32";
+      slot_number = 5402;
+      half        = 0;
+      break;
     default:
       fprintf(stderr, "Unknown test number: %d\n", test_number);
       exit(EXIT_FAILURE);

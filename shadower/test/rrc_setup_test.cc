@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
   std::string           sample_file;
   uint32_t              slot_number;
   uint32_t              half = 0;
-  uint16_t              rnti = args.ra_rnti;
+  uint16_t              rnti = args.c_rnti;
   switch (test_number) {
     case 0:
       sample_file = "shadower/test/data/srsran-n78-20MHz/rrc_setup.fc32";
@@ -41,6 +41,12 @@ int main(int argc, char* argv[])
       sample_file = "shadower/test/data/srsran-n3-20MHz/rrc_setup.fc32";
       slot_number = 4571;
       half        = 0;
+      break;
+    case 5:
+      sample_file = "/root/records/singtel_n1/sf_422_8442.fc32";
+      slot_number = 42;
+      half        = 0;
+      rnti        = 21758;
       break;
     default:
       fprintf(stderr, "Unknown test number: %d\n", test_number);
@@ -98,7 +104,7 @@ int main(int argc, char* argv[])
   write_record_to_file(buffer, args.slot_len, filename);
 
   /* search for dci */
-  ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, args.c_rnti, srsran_rnti_type_c, phy_state, logger, 0);
+  ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, rnti, srsran_rnti_type_c, phy_state, logger, 0);
 
   /* get grant from dci search */
   uint32_t                   pid          = 0;

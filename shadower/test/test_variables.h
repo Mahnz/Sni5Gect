@@ -195,6 +195,49 @@ ShadowerConfig effnet_n78_20MHz = {
     .pcap_folder       = "/tmp/",
 };
 
+/* Shadower config for Singtel 20MHz*/
+ShadowerConfig singtel_n1_20MHz = {
+    .band              = 1,
+    .nof_prb           = 106,
+    .scs_common        = srsran_subcarrier_spacing_15kHz,
+    .scs_ssb           = srsran_subcarrier_spacing_15kHz,
+    .ssb_period_ms     = 20,
+    .ssb_period        = 20,
+    .freq_offset       = 0,
+    .tx_gain           = 80,
+    .rx_gain           = 40,
+    .dl_freq           = 2135e6,
+    .ul_freq           = 1945e6,
+    .ssb_freq          = 2134.85e6,
+    .sample_rate       = 23.04e6,
+    .nof_channels      = 2,
+    .uplink_cfo        = 0.0,
+    .ssb_pattern       = SRSRAN_SSB_PATTERN_A,
+    .duplex_mode       = SRSRAN_DUPLEX_MODE_FDD,
+    .delay_n_slots     = 5,
+    .duplications      = 4,
+    .tx_cfo_correction = 0.0,
+    .tx_advancement    = 160,
+    .pdsch_mcs         = 3,
+    .pdsch_prbs        = 24,
+    .n_ue_dl_worker    = 4,
+    .n_ue_ul_worker    = 4,
+    .n_gnb_ul_worker   = 4,
+    .n_gnb_dl_worker   = 4,
+    .close_timeout     = 5000,
+    .parse_messages    = true,
+    .enable_gpu        = false,
+    .enable_recorder   = false,
+    .source_type       = "file",
+    .source_params     = "/root/records/band1/sniffed_2UEs.fc32,/root/records/band1/sniffed_2UEs.fc32",
+    .source_module     = file_source_module_path,
+    .log_level         = srslog::basic_levels::debug,
+    .bc_worker_level   = srslog::basic_levels::debug,
+    .worker_log_level  = srslog::basic_levels::debug,
+    .syncer_log_level  = srslog::basic_levels::debug,
+    .pcap_folder       = "/tmp/",
+};
+
 /* Shadower config for Singtel 100MHz*/
 ShadowerConfig singtel_n78_100MHz = {
     .band              = 78,
@@ -296,6 +339,17 @@ test_args_t init_test_args(int test_number)
     test_args.c_rnti            = 17921;
     test_args.ra_rnti           = 15;
     test_args.ncellid           = 1;
+  } else if (test_number == 5) {
+    test_args.config            = singtel_n1_20MHz;
+    test_args.mib_config_raw    = "shadower/test/data/singtel-n1-20MHz/mib.raw";
+    test_args.sib_config_raw    = "shadower/test/data/singtel-n1-20MHz/sib1.raw";
+    test_args.sib_size          = 96;
+    test_args.rrc_setup_raw     = "shadower/test/data/singtel-n1-20MHz/rrc_setup.raw";
+    test_args.rrc_setup_size    = 295;
+    test_args.rar_ul_grant_file = "shadower/test/data/singtel-n1-20MHz/rach_msg2_ul_grant.raw";
+    test_args.c_rnti            = 22754;
+    test_args.ra_rnti           = 57;
+    test_args.ncellid           = 471;
   } else {
     throw std::invalid_argument("Invalid test number");
   }

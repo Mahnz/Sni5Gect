@@ -37,6 +37,9 @@ int main(int argc, char* argv[])
     case 4:
       sample_file = "shadower/test/data/srsran-n3-20MHz/ssb.fc32";
       break;
+    case 5:
+      sample_file = "shadower/test/data/singtel-n1-20MHz/ssb.fc32";
+      break;
     default:
       fprintf(stderr, "Unknown test number: %d\n", test_number);
       exit(EXIT_FAILURE);
@@ -101,5 +104,6 @@ int main(int argc, char* argv[])
   logger.info("Offset: %u", res.t_offset);
   logger.info("CFO: %f", res.measurements.cfo_hz);
   TESTASSERT(res.pbch_msg.crc);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   return 0;
 }
