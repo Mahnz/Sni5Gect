@@ -338,7 +338,7 @@ if(Backward_FOUND)
 endif()
 
 if (USE_CUDA)
-  find_package(CUDAToolkit REQUIRED)
+  find_package(CUDAToolkit QUIET)
   if(CUDAToolkit_FOUND)
     message(STATUS "CUDA found")
     enable_language(CUDA)
