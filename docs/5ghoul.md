@@ -9,7 +9,7 @@ These exploits are taken from paper [5Ghoul: Unleashing Chaos on 5G Edge Devices
 |CVE-2024-20003|lib_mac_sch_mtk_rrc_setup_crash_6.so|
 |CVE-2023-32845|lib_mac_sch_mtk_rrc_setup_crash_7.so|
 
-Upon receiving the `RRC Setup Request` message from the UE, Sni5Gect replies with malformed `RRC Setup` to the target UE. If the UE accepts such malformed `RRC Setup` message, it crashes immediately, this can be confirmed from the adb log containing keyword `sModemReason`, which indicates the MTK modem crashes. For example:
+Upon receiving the `RRC Setup Request` message from the UE, Sni5Gect replies with malformed `RRC Setup` to the target UE. If the UE accepts such malformed `RRC Setup` message, it crashes immediately, this can be confirmed from the adb log containing the keyword `sModemReason`, which indicates the MTK modem crashes. For example:
 
 ```
 MDMKernelUeventObserver: sModemEvent: modem_failure

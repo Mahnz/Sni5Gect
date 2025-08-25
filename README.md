@@ -4,11 +4,11 @@
 </a>
 
 <a href="http://sni5gect.com/">
-<img src="https://raw.githubusercontent.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation/main/images\usenixbadges-reproduced.png"
+<img src="https://raw.githubusercontent.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation/main/images/usenixbadges-reproduced.png"
     width="110" align="right" />
-<img src="https://raw.githubusercontent.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation/main/images\usenixbadges-functional.png"
+<img src="https://raw.githubusercontent.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation/main/images/usenixbadges-functional.png"
     width="110" align="right" />
-<img src="https://raw.githubusercontent.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation/main/images\usenixbadges-available.png"
+<img src="https://raw.githubusercontent.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation/main/images/usenixbadges-available.png"
     width="110" align="right" />
 </a>
 
@@ -25,7 +25,7 @@
 * 👆 Device Fingerprinting.
 * 👹 Anomaly Detection.
 
-*Sni5Gect artifacts paper received badges **Available**, **Functional** and **Reproduced** in the 34th USENIX Security Symposium. Artifacts pdf available at [here](https://raw.githubusercontent.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation/main/docs/_media/USENIX_Security__25_Artifact_Appendix__SNI5GECT__A_Practical_Approach_to_Inject_aNRchy_into_5G_NR.pdf)*
+*Sni5Gect artifacts paper received badges **Available**, **Functional** and **Reproduced** in the 34th USENIX Security Symposium. Artifacts PDF available [here](https://raw.githubusercontent.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation/main/docs/_media/USENIX_Security__25_Artifact_Appendix__SNI5GECT__A_Practical_Approach_to_Inject_aNRchy_into_5G_NR.pdf)*
 
 ## Overview
 
@@ -39,9 +39,9 @@ Build and Start the Docker Container:
 
 ```bash
 docker compose build sni5gect # Build container
-docker compose up -d sni5gect # Start Conteriner
+docker compose up -d sni5gect # Start Container
 docker exec -it sni5gect bash # Access Container
-./build/shadower/shadower configs/config-srsran-n78-20MHz.conf # Run Sniffer for Band N78 with 20Mhz Bandwith
+./build/shadower/shadower configs/config-srsran-n78-20MHz.conf # Run Sniffer for Band N78 with 20MHz Bandwidth
 # See Running Sni5Gect in the README.md
 ```
 
@@ -53,12 +53,12 @@ docker exec -it sni5gect bash # Access Container
 - [Requirements](#requirements)
 - [Running Sni5Gect](#running-sni5gect)
 - [Exploit Modules](#exploit-modules)
-  - [Sniffing: DL/UL & DCI](#sniffing-dummy)
-  - [Crash: 5Ghoul Attacks](#crash5ghoulattacks)
+  - [Sniffing: DL/UL & DCI](#sniffing-dlul--dci)
+  - [Crash: 5Ghoul Attacks](#crash-5ghoul-attacks)
   - [Downgrade: Registration Reject](#downgrade-registration-reject)
   - [Fingerprinting: Identity Request](#fingerprinting-identity-request)
   - [Downgrade: Authentication Replay](#downgrade-authentication-replay)
-  - [Authentication Bypass: Registration Accept 5G AKA bypass](#authentication-bypass-5g-aka-bypass)
+  - [Authentication Bypass: Registration Accept 5G AKA bypass](#authentication-bypass-registration-accept-5g-aka-bypass)
 - [Example Configuration](#example-configuration)
 - [Overview of Components](#overview-of-components)
 - [Project Structure](#project-structure)
@@ -74,7 +74,7 @@ We have tested with the following configurations:
 - Subcarrier Spacing: 30 kHz
 - Bandwidth: 20–50 MHz
 - MIMO Configuration: Single-input single-output (SISO)
-- Distance: 0 meter to upto 20 meters (with amplifier)
+- Distance: 0 meter to up to 20 meters (with amplifier)
 
 An example srsRAN base station configuration is available at `configs/srsran-n78.yml`.
 
@@ -82,7 +82,7 @@ An example srsRAN base station configuration is available at `configs/srsran-n78
 
 ### Hardware Requirements
 
-Sni5Gect utilizes a USRP Software Defined Radio (SDR) device to send and receive IQ samples during communication between a legitimate 5G base station and a UE. Following SDRs are supported:
+Sni5Gect utilizes a USRP Software Defined Radio (SDR) device to send and receive IQ samples during communication between a legitimate 5G base station and a UE. The following SDRs are supported:
 
 - USRP B210 SDR
 - USRP x310 SDR
@@ -92,7 +92,7 @@ Host Machine Recommendations:
 - Minimum: 12-core CPU
 - 16 GB RAM
 
-Our setup consists of AMD 5950x processor with 32 GB memory.
+Our setup consists of an AMD 5950x processor with 32 GB of memory.
 
 ### Software Requirements
 
@@ -108,7 +108,7 @@ Sni5Gect builds upon [srsRAN 4G](https://github.com/srsran/srsRAN_4G) utilizing 
 
 ### Evaluated Devices
 
-The following COTS devices are evaluated:
+The following COTS devices were evaluated:
 
 |Model|Modem|Patch Version|
 |-----|-----|-------------|
@@ -180,9 +180,9 @@ Upon startup, Sni5Gect will do the following:
 
 ## Exploit Modules
 
-The exploit modules are designed to provide a flexible way to load different attack or exploits. When receiving a message, it will first send to wDissector to analyze the packet and if the packet matches with any [Wireshark display filters](https://www.wireshark.org/docs/dfref/) specified, it will react according to the `post_dissection` specified, either inject messages to the communication or extract certain fields.
+The exploit modules are designed to provide a flexible way to load different attacks or exploits. When receiving a message, it will first be sent to wDissector to analyze the packet and if the packet matches with any [Wireshark display filters](https://www.wireshark.org/docs/dfref/) specified, it will react according to the `post_dissection` specified, either to inject messages to the communication or to extract certain fields.
 
-### Sniffing: Dummy
+### Sniffing: DL/UL & DCI
 
 This module performs passive sniffing. The wDissector framework dissects packets and provides summaries of received packets.
 
@@ -219,7 +219,7 @@ Example output:
 [I] 17921 [S:17520] --> [P:NR RRC/NAS-5GS] DL Information Transfer, Identity request  [13-bytes]  (Padding 31 bytes) 
 ```
 
-### Crash: 5Ghoul Attacks
+### Crash: 5Ghoul Attacks
 
 These exploits are taken from paper [5Ghoul: Unleashing Chaos on 5G Edge Devices](https://asset-group.github.io/disclosures/5ghoul/). These affect the MTK modems of the OnePlus Nord CE2.
 
@@ -231,7 +231,7 @@ These exploits are taken from paper [5Ghoul: Unleashing Chaos on 5G Edge Devices
 |CVE-2024-20003|lib_mac_sch_mtk_rrc_setup_crash_6.so|
 |CVE-2023-32845|lib_mac_sch_mtk_rrc_setup_crash_7.so|
 
-Upon receiving the `RRC Setup Request` message from the UE, Sni5Gect replies with malformed `RRC Setup` to the target UE. If the UE accepts such malformed `RRC Setup` message, it crashes immediately, this can be confirmed from the adb log containing keyword `sModemReason`, which indicates the MTK modem crashes. For example:
+Upon receiving the `RRC Setup Request` message from the UE, Sni5Gect replies with malformed `RRC Setup` to the target UE. If the UE accepts such malformed `RRC Setup` message, it crashes immediately, this can be confirmed from the adb log containing the keyword `sModemReason`, which indicates the MTK modem crashes. For example:
 
 ```
 MDMKernelUeventObserver: sModemEvent: modem_failure
@@ -262,7 +262,7 @@ Example output:
 
 ### Downgrade: Authentication Replay
 
-This exploit corresponds to `CVD-2024-0096`. It is the most complex exploit we have, which involves two stages, sniffing and replaying. Then during the relaying stage, it requires sniffing and injecting at multiple different states.
+This exploit corresponds to `CVD-2024-0096`. It is the most complex exploit we have, involving two stages: sniffing and replaying. During the replaying stage, it requires sniffing and injecting at multiple different states.
 
 1. Sniffing: Capture a legitimate Authentication Request from the base station to the UE.
 
@@ -282,22 +282,22 @@ Then load the module:
 module = modules/lib_dg_authentication_replay.so
 ```
 
-Upon receiving `Registration Request` from the UE, Sni5Gect replays the captured `Authentication Request` message to the target UE. Upon receiving the replayed `Authentication Request` message, the UE replies with `Authentication Failure` message with cause `Synch Failure` and starts the timer T3520. Then Sni5Gect update its RLC and PDCP sequence number accordingly and replays the `Authentication Request` message for a few more times. Eventually, after multiple attempts and timer T3520 expires, the UE deems that the network has failed the authentication check. Then it locally releases the communication and treats the active cell as barred. If no other 5G base station is available, then the UE will downgrade to 4G and persists in downgrade status up to 300 seconds according to the specification 3GPP TS 24.501 version 16.5.1 Release 16 `5.4.1.2.4.5 Abnormal cases in the UE`. (Some phone may stay in downgrade status for much longer time).
+Upon receiving `Registration Request` from the UE, Sni5Gect replays the captured `Authentication Request` message to the target UE. Upon receiving the replayed `Authentication Request` message, the UE replies with `Authentication Failure` message with cause `Synch Failure` and starts the timer T3520. Then Sni5Gect updates its RLC and PDCP sequence number accordingly and replays the `Authentication Request` message for a few more times. Eventually, after multiple attempts and timer T3520 expires, the UE deems that the network has failed the authentication check, locally releases the communication, and treats the active cell as barred. If no other 5G base station is available, then the UE will downgrade to 4G and persists in downgrade status up to 300 seconds according to the specification 3GPP TS 24.501 version 16.5.1 Release 16 `5.4.1.2.4.5 Abnormal cases in the UE`. (Some phones may stay in downgrade status for much longer time).
 
-In the example output, we can identify the UE replies the `Authentication Failure` message two times in the following screenshot.
+In the example output, we can identify that the UE replies with the `Authentication Failure` message two times in the following screenshot.
 ![Authentication Replay Attack Example output](./images/authentication_replay_output.png)
 
-### Authentication Bypass: 5G AKA Bypass
+### Authentication Bypass: Registration Accept 5G AKA bypass
 
-This exploit is utilizing $I_8$ 5G AKA Bypass from paper [Logic Gone Astray: A Security Analysis Framework for the Control Plane Protocols of 5G Basebands](https://www.usenix.org/conference/usenixsecurity24/presentation/tu). Only the Pixel 7 phone with Exynos modem is being affected.
-After receiving `Registation Request` from the UE, Sni5Gect injects the plaintext `Registration Accept` message with security header 4. The UE will ignore the wrong MAC and accept the `Registration Accpet` message, reply with `Registration Complete` and `PDU Session Establishment Requests`. Since the core network receives such unexpected messages, it instruct the gNB to release the connection by sending the `RRC Release` message to terminate the connection immediately.
+This exploit utilizes $I_8$ 5G AKA Bypass from paper [Logic Gone Astray: A Security Analysis Framework for the Control Plane Protocols of 5G Basebands](https://www.usenix.org/conference/usenixsecurity24/presentation/tu). Only the Pixel 7 phone with the Exynos modem is affected.
+After receiving `Registration Request` from the UE, Sni5Gect injects the plaintext `Registration Accept` message with security header 4. The UE will ignore the wrong MAC, accept the `Registration Accept` message, and reply with `Registration Complete` and `PDU Session Establishment Requests`. Since the core network receives such unexpected messages, it instructs the gNB to release the connection by sending the `RRC Release` message to terminate the connection immediately.
 
 ```conf
 module = modules/lib_plaintext_registration_accept.so
 ```
 
 Example output:
-![Registration_Accept](./images/registration_accpet.png)
+![Registration_Accept](./images/registration_accept.png)
 
 ## Example Configuration
 
@@ -363,9 +363,9 @@ module = modules/lib_dummy.so # Note only one exploit module can be loaded each 
 
 ## Overview of Components
 
-Sni5Gect comprises of several components, each responsible for handling different signals:
+Sni5Gect comprises several components, each responsible for handling different signals:
 
-- Syncher: Synchronizes time and frequency with the target base station.
+- Syncer: Synchronizes time and frequency with the target base station.
 - Broadcast Worker: Decodes broadcast information such as SIB1 and detects and decodes RAR.
 - UETracker: Tracks the connection between the UE and the base station.
 - UE DL Worker: Decodes messages sent from the base station to the UE.
@@ -394,7 +394,7 @@ The project is organized as follows. The core Sni5Gect framework resides in the 
 │   │   ├── gnb_dl_worker.cc    # GNB DL Injector implementation
 │   │   ├── gnb_ul_worker.cc    # GNB UL Worker implementation
 │   │   ├── scheduler.cc        # Distributes received subframes to components
-│   │   ├── syncer.cc           # Syncher implementation
+│   │   ├── syncer.cc           # Syncer implementation
 │   │   ├── ue_dl_worker.cc     # UE DL Worker implementation
 │   │   ├── ue_tracker.cc       # UE Tracker implementation
 │   │   └── wd_worker.cc        # wDissector wrapper

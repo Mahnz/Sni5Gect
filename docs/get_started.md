@@ -1,6 +1,6 @@
 # Get Started
 ## Hardware Requirements
-Sni5Gect utilizes a USRP Software Defined Radio (SDR) device to send and receive IQ samples during communication between a legitimate 5G base station and a UE. Following SDRs are supported:
+Sni5Gect utilizes a USRP Software Defined Radio (SDR) device to send and receive IQ samples during communication between a legitimate 5G base station and a UE. The following SDRs are supported:
 - USRP B210 SDR
 - USRP x310 SDR
 
@@ -13,7 +13,7 @@ Our setup consists of AMD 5950x processor with 32 GB memory.
 ## Installation
 Sni5Gect is modified from [srsRAN](https://github.com/srsran/srsRAN_4G) for message decoding and injection and it depends on [WDissector](https://github.com/asset-group/5ghoul-5g-nr-attacks) for dissecting the received messages.
 
-The simplest way to setup the framework is using docker. We have provided the Dockerfile to build the entire framework from scratch. You may simply use the following command to build the container from scratch.
+The simplest way to set up the framework is using docker. We have provided a Dockerfile to build the entire framework from scratch. You may use the following command to build the container from scratch.
 ```bash
 docker compose build
 ```
@@ -25,7 +25,7 @@ docker compose up -d
 
 ## Run Sni5Gect
 The Sni5Gect executable is located in the `build/shadower` directory, and configuration files are available in the `configs` folder.
-Please use the following command to run Sni5Gect as follows:
+Please use the following command to run Sni5Gect:
 
 ```bash
 docker exec -it sni5gect bash
@@ -33,7 +33,7 @@ docker exec -it sni5gect bash
 ```
 
 ### Use file recording
-The easiest way to get started with Sni5Gect is to run it using a pre-recorded IQ sample file. We have provided a sample for offline testing.
+The easiest way to get started with Sni5Gect is to run it using a pre-recorded IQ sample file. We provide a sample for offline testing.
 
 Download and Extract the example recording file from Zenodo:
 ```bash

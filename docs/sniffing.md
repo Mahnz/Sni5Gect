@@ -8,7 +8,7 @@ Example output:
 <img src="https://raw.githubusercontent.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation/main/images/sniffing_example_output.png"/>
 
 ## DCI Sniffing
-If you want to monitor decoded DCI (Downlink Control Information) messages in real time, simply set the following logging configuration:
+If you want to monitor decoded DCI (Downlink Control Information) messages in real time, set the following logging configuration:
 ```conf
 worker_log_level = DEBUG
 ```

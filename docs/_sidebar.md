@@ -10,6 +10,6 @@
     - [Downgrade: Authentication Replay](authentication_replay.md)
     - [Fingerprinting: Identity Request](identity_request.md)
     - [Authentication Bypass: Registration Accept](registration_accept.md)
-    - [Custom Exploit module](modules.md)
+    - [Custom Exploit Module](modules.md)
 - [Cite](cite.md)
 - [Disclaimer](disclaimer.md)

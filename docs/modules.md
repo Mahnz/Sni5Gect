@@ -1,8 +1,8 @@
 # Custom Exploit module
 
-The exploit modules are designed to provide a flexible way to load different attack or exploits. When receiving a message, it will first send to wDissector to analyze the packet and if the packet matches with any Wireshark display filters specified, it will react according to the `post_dissection` specified, either inject messages to the communication or extract certain fields.
+The exploit modules are designed to provide a flexible way to load different attacks or exploits. When receiving a message, it will first be sent to wDissector to analyze the packet and if the packet matches with any Wireshark display filters specified, it will react according to the `post_dissection` specified, either inject messages to the communication or extract certain fields.
 
-All exploit modules are extended from the `Exploit` class.
+All exploit modules are extensions from the `Exploit` class.
 
 ```cpp
 #include "shadower/hdr/exploit.h"
@@ -43,18 +43,18 @@ __attribute__((visibility("default"))) Exploit* create_exploit(SafeQueue<std::ve
 }
 ```
 
-The `setup()` function is used to initialize the filters, these filters are similar to the filters in wireshark, but have some simple difference, for instance `nas-5gs` has to change to `nas_5gs`. Following lines shows how to intialize these filters.
+The `setup()` function is used to initialize the filters, these filters are similar to the filters in Wireshark, but have some simple differences, for instance `nas-5gs` has to be changed to `nas_5gs`. Following lines show how to initialize these filters.
 
 ```cpp
 f_rrc_setup_request      = wd_filter("nr-rrc.c1 == 0");
 f_ack_sn                 = wd_field("rlc-nr.am.ack-sn");
 ```
 
-The `pre_dissection` function is used to register your initialized fields before dissection. Simply use the following code to register the fields.
+The `pre_dissection` function is used to register your initialized fields before the dissection. Simply use the following code to register these fields.
 
 ```cpp
 wd_register_filter(wd, f_rrc_setup_request);
 wd_register_field(wd, f_ack_sn);
 ```
 
-The `post_dissection` function is the part where Sni5Gect decides whether to generate and send out the message to the UE. If the exploit script decides to inject a message to the UE, then it will push a new `std::shared_ptr<std::vector<uint8_t>>` buffer to the `dl_buffer_queue` queue, then later the UE DL injector will poll the queue, encode and then inject the signal to the target UE.
+The `post_dissection` function is the part where Sni5Gect decides whether to generate and send out the message to the UE. If the exploit script decides to inject a message to the UE, then it will push a new `std::shared_ptr<std::vector<uint8_t>>` buffer to the `dl_buffer_queue` queue, then the UE DL injector will poll the queue, encode and then inject the signal to the target UE.
