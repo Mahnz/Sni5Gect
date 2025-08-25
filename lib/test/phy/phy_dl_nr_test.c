@@ -241,7 +241,7 @@ int main(int argc, char** argv)
     goto clean_exit;
   }
 
-  uint32_t sf_len = SRSRAN_SF_LEN_PRB_NR(carrier.nof_prb);
+  uint32_t sf_len = SRSRAN_SF_LEN_PRB_NR(carrier.nof_prb, carrier.scs);
   buffer_gnb[0]   = srsran_vec_cf_malloc(sf_len);
   buffer_ue[0]    = srsran_vec_cf_malloc(sf_len);
   if (buffer_gnb[0] == NULL || buffer_ue[0] == NULL) {

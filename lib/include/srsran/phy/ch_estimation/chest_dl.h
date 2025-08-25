@@ -46,6 +46,7 @@
 #include "srsran/phy/resampling/interp.h"
 #include "srsran/phy/sync/pss.h"
 #include "wiener_dl.h"
+#include "srsran/phy/common/phy_common_nr.h"
 
 typedef struct SRSRAN_API {
   cf_t*    ce[SRSRAN_MAX_PORTS][SRSRAN_MAX_PORTS];
@@ -139,7 +140,7 @@ SRSRAN_API int srsran_chest_dl_init(srsran_chest_dl_t* q, uint32_t max_prb, uint
 
 SRSRAN_API void srsran_chest_dl_free(srsran_chest_dl_t* q);
 
-SRSRAN_API int srsran_chest_dl_res_init(srsran_chest_dl_res_t* q, uint32_t max_prb);
+SRSRAN_API int srsran_chest_dl_res_init(srsran_chest_dl_res_t* q, uint32_t max_prb, srsran_subcarrier_spacing_t scs);
 SRSRAN_API int srsran_chest_dl_res_init_re(srsran_chest_dl_res_t* q, uint32_t nof_re);
 
 SRSRAN_API void srsran_chest_dl_res_set_identity(srsran_chest_dl_res_t* q);

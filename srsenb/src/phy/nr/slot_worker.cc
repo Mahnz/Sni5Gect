@@ -471,7 +471,7 @@ bool slot_worker::set_common_cfg(const srsran_carrier_nr_t&   carrier,
   pdcch_cfg = pdcch_cfg_;
 
   // Update subframe length
-  sf_len = SRSRAN_SF_LEN_PRB_NR(carrier.nof_prb);
+  sf_len = SRSRAN_SF_LEN_PRB_NR(carrier.nof_prb, carrier.scs);
 
   return true;
 }

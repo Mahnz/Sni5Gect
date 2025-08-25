@@ -45,6 +45,7 @@
 #include "srsran/phy/phch/pucch_cfg.h"
 #include "srsran/phy/phch/pusch_cfg.h"
 #include "srsran/phy/resampling/interp.h"
+#include "srsran/phy/common/phy_common_nr.h"
 
 typedef struct SRSRAN_API {
   cf_t*    ce;
@@ -93,7 +94,7 @@ SRSRAN_API int srsran_chest_ul_init(srsran_chest_ul_t* q, uint32_t max_prb);
 
 SRSRAN_API void srsran_chest_ul_free(srsran_chest_ul_t* q);
 
-SRSRAN_API int srsran_chest_ul_res_init(srsran_chest_ul_res_t* q, uint32_t max_prb);
+SRSRAN_API int srsran_chest_ul_res_init(srsran_chest_ul_res_t* q, uint32_t max_prb, srsran_subcarrier_spacing_t scs);
 
 SRSRAN_API void srsran_chest_ul_res_set_identity(srsran_chest_ul_res_t* q);
 

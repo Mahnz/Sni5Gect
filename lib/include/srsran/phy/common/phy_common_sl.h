@@ -152,7 +152,7 @@ typedef enum SRSRAN_API {
 #define SRSRAN_PSSCH_TM34_NUM_DATA_SYMBOLS (10) // PSSCH is in 10 OFDM symbols (but only 9 are tx'ed)
 #define SRSRAN_PSSCH_TM34_NUM_DMRS_SYMBOLS (4)  // PSSCH has 4 DMRS symbols in TM3 and TM4
 
-SRSRAN_API int srsran_sl_group_hopping_f_gh(uint32_t f_gh[SRSRAN_NSLOTS_X_FRAME * 2], uint32_t N_x_id);
+SRSRAN_API int srsran_sl_group_hopping_f_gh(uint32_t f_gh[SRSRAN_NSLOTS_X_FRAME(0) * 2], uint32_t N_x_id);
 #define SRSRAN_PSCCH_MAX_NUM_DATA_SYMBOLS (SRSRAN_PSCCH_TM12_NUM_DATA_SYMBOLS)
 
 SRSRAN_API bool srsran_slss_side_peak_pos_is_valid(uint32_t side_peak_pos,

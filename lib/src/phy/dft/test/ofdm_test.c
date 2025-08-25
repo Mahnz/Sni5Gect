@@ -112,7 +112,7 @@ int main(int argc, char** argv)
   }
   while (n_prb <= max_prb) {
     uint32_t symbol_sz = (force_symbol_sz) ? force_symbol_sz : (uint32_t)srsran_symbol_sz(n_prb);
-    uint32_t n_re      = SRSRAN_CP_NSYMB(cp) * n_prb * SRSRAN_NRE * SRSRAN_NOF_SLOTS_PER_SF;
+    uint32_t n_re      = SRSRAN_CP_NSYMB(cp) * n_prb * SRSRAN_NRE * SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz);
     uint32_t sf_len    = SRSRAN_SF_LEN(symbol_sz);
 
     printf("Running test for %d PRB, %d RE... ", n_prb, n_re);

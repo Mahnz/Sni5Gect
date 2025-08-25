@@ -114,7 +114,7 @@ int srsran_ue_dl_init(srsran_ue_dl_t* q, cf_t* in_buffer[SRSRAN_MAX_PORTS], uint
       ERROR("Error initiating channel estimator");
       goto clean_exit;
     }
-    if (srsran_chest_dl_res_init(&q->chest_res, max_prb)) {
+    if (srsran_chest_dl_res_init(&q->chest_res, max_prb, srsran_subcarrier_spacing_15kHz)) {
       ERROR("Error initiating channel estimator");
       goto clean_exit;
     }

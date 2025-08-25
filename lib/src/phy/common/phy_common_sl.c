@@ -26,7 +26,7 @@
 #include "srsran/phy/utils/debug.h"
 #include "srsran/phy/utils/vector.h"
 
-int srsran_sl_group_hopping_f_gh(uint32_t f_gh[SRSRAN_NSLOTS_X_FRAME * 2], uint32_t N_x_id)
+int srsran_sl_group_hopping_f_gh(uint32_t f_gh[SRSRAN_NSLOTS_X_FRAME(0) * 2], uint32_t N_x_id)
 {
   srsran_sequence_t seq;
   bzero(&seq, sizeof(srsran_sequence_t));
@@ -35,7 +35,7 @@ int srsran_sl_group_hopping_f_gh(uint32_t f_gh[SRSRAN_NSLOTS_X_FRAME * 2], uint3
     return SRSRAN_ERROR;
   }
 
-  for (uint32_t ns = 0; ns < SRSRAN_NSLOTS_X_FRAME * 2; ns++) {
+  for (uint32_t ns = 0; ns < SRSRAN_NSLOTS_X_FRAME(0) * 2; ns++) {
     f_gh[ns] = 0;
     for (int i = 0; i < 8; i++) {
       f_gh[ns] += (((uint32_t)seq.c[8 * ns + i]) << i);

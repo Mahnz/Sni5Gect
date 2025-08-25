@@ -277,7 +277,7 @@ int main(int argc, char** argv)
     goto quit;
   }
 
-  srsran_chest_ul_res_init(&chest_res, cell.nof_prb);
+  srsran_chest_ul_res_init(&chest_res, cell.nof_prb, srsran_subcarrier_spacing_15kHz);
   srsran_chest_ul_res_set_identity(&chest_res);
 
   cfg.enable_64qam     = enable_64_qam;

@@ -235,7 +235,7 @@ int main(int argc, char** argv)
   sch_hl_cfg.beta_offsets.fix_csi1  = 2.25F;
   sch_hl_cfg.beta_offsets.fix_csi2  = 2.25F;
 
-  if (srsran_chest_dl_res_init(&chest, carrier.nof_prb) < SRSRAN_SUCCESS) {
+  if (srsran_chest_dl_res_init(&chest, carrier.nof_prb, carrier.scs) < SRSRAN_SUCCESS) {
     ERROR("Initiating chest");
     goto clean_exit;
   }

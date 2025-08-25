@@ -127,7 +127,7 @@ int base_init()
     ERROR("Error initializing equalizer");
     return -1;
   }
-  if (srsran_chest_dl_res_init(&chest_res, cell.nof_prb)) {
+  if (srsran_chest_dl_res_init(&chest_res, cell.nof_prb, srsran_subcarrier_spacing_15kHz)) {
     ERROR("Error initializing equalizer");
     return -1;
   }

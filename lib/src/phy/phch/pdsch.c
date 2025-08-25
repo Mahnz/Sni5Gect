@@ -146,7 +146,7 @@ static int srsran_pdsch_cp(const srsran_pdsch_t*       q,
   uint32_t nof_refs = (q->cell.nof_ports == 1) ? 2 : 4;
 
   // Iterate over slots
-  for (uint32_t s = 0; s < SRSRAN_NOF_SLOTS_PER_SF; s++) {
+  for (uint32_t s = 0; s < SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz); s++) {
     // Skip PDCCH symbols
     uint32_t lstart = (s == 0) ? lstart_grant : 0;
 

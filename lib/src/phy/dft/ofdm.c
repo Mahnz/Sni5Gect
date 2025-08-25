@@ -73,8 +73,8 @@ static int ofdm_init_mbsfn_(srsran_ofdm_t* q, srsran_ofdm_cfg_t* cfg, srsran_dft
   q->nof_re     = cfg->nof_prb * SRSRAN_NRE;
   q->nof_guards = (q->cfg.symbol_sz - q->nof_re) / 2U;
   q->slot_sz    = (uint32_t)SRSRAN_SLOT_LEN(q->cfg.symbol_sz);
-  q->sf_sz      = (uint32_t)SRSRAN_SF_LEN(q->cfg.symbol_sz);
-  if (SUBCARRIER_SPACING_KHZ == 15) {
+  q->sf_sz      = (uint32_t)(q->cfg.symbol_sz * (1 << q->cfg.scs) * 15);
+  if (q->cfg.scs == srsran_subcarrier_spacing_15kHz) {
     q->nof_symbols       = SRSRAN_CP_NSYMB(cp);
     q->ofdm_group_sz     = q->sf_sz / 2;
     q->nof_symbols_mbsfn = SRSRAN_CP_NSYMB(SRSRAN_CP_EXT);
@@ -175,7 +175,7 @@ static int ofdm_init_mbsfn_(srsran_ofdm_t* q, srsran_ofdm_cfg_t* cfg, srsran_dft
   }
 
   int num_groups_per_slot = 1;
-  if (SUBCARRIER_SPACING_KHZ == 15) {
+  if (q->cfg.scs == srsran_subcarrier_spacing_15kHz) {
     num_groups_per_slot = 2; // 2 groups in a slot
   }
   for (int slot = 0; slot < num_groups_per_slot; slot++) {
@@ -387,7 +387,7 @@ int srsran_ofdm_set_phase_compensation(srsran_ofdm_t* q, double center_freq_hz)
 
   // Extract modulation required parameters
   uint32_t symbol_sz = q->cfg.symbol_sz;
-  double   scs       = SUBCARRIER_SPACING_KHZ * 1e3; //< Assume 15kHz subcarrier spacing
+  double   scs       = (1 << q->cfg.scs) * 15e3; //< Assume 15kHz subcarrier spacing
   double   srate_hz  = symbol_sz * scs;
 
   // Assert parameters
@@ -398,10 +398,9 @@ int srsran_ofdm_set_phase_compensation(srsran_ofdm_t* q, double center_freq_hz)
   // Otherwise calculate the phase
   uint32_t count = 0;
   for (uint32_t l = 0; l < SRSRAN_MAX_NSYMB * 2; l++) {
-    uint32_t cp_len =
-        SRSRAN_CP_ISNORM(q->cfg.cp)
-            ? SRSRAN_CP_LEN_NORM(l % (SRSRAN_MAX_NSYMB * (1 << (SUBCARRIER_SPACING_KHZ / 15 - 1))), symbol_sz)
-            : SRSRAN_CP_LEN_EXT(symbol_sz);
+    uint32_t cp_len = SRSRAN_CP_ISNORM(q->cfg.cp)
+                          ? SRSRAN_CP_LEN_NORM(l % (SRSRAN_MAX_NSYMB * (1 << q->cfg.scs)), symbol_sz)
+                          : SRSRAN_CP_LEN_EXT(symbol_sz);
 
     // Advance CP
     count += cp_len;
@@ -445,7 +444,7 @@ int srsran_ofdm_set_freq_shift(srsran_ofdm_t* q, float freq_shift)
   srsran_cp_t cp        = q->cfg.cp;
 
   cf_t* ptr = q->shift_buffer;
-  for (uint32_t n = 0; n < SRSRAN_NOF_SLOTS_PER_SF; n++) {
+  for (uint32_t n = 0; n < SRSRAN_NOF_SLOTS_PER_SF(q->cfg.scs); n++) {
     for (uint32_t i = 0; i < q->nof_symbols; i++) {
       uint32_t cplen = SRSRAN_CP_ISNORM(cp) ? SRSRAN_CP_LEN_NORM(i, symbol_sz) : SRSRAN_CP_LEN_EXT(symbol_sz);
       for (uint32_t t = 0; t < symbol_sz + cplen; t++) {
@@ -567,7 +566,7 @@ void srsran_ofdm_rx_sf(srsran_ofdm_t* q)
     srsran_vec_prod_ccc(q->cfg.in_buffer, q->shift_buffer, q->cfg.in_buffer, q->sf_sz);
   }
   if (!q->mbsfn_subframe) {
-    if (SUBCARRIER_SPACING_KHZ == 15) {
+    if (q->cfg.scs == srsran_subcarrier_spacing_15kHz) {
       ofdm_rx_slot(q, 0);
       ofdm_rx_slot(q, 1);
     } else {
@@ -586,7 +585,7 @@ void srsran_ofdm_rx_sf_ng(srsran_ofdm_t* q, cf_t* input, cf_t* output)
     srsran_vec_prod_ccc(input, q->shift_buffer, input, q->sf_sz);
   }
   if (!q->mbsfn_subframe) {
-    for (n = 0; n < SRSRAN_NOF_SLOTS_PER_SF; n++) {
+    for (n = 0; n < SRSRAN_NOF_SLOTS_PER_SF(q->cfg.scs); n++) {
       srsran_ofdm_rx_slot_ng(q, &input[n * q->slot_sz], &output[n * q->nof_re * q->nof_symbols]);
     }
   } else {
@@ -692,7 +691,7 @@ void srsran_ofdm_set_normalize(srsran_ofdm_t* q, bool normalize_enable)
 void srsran_ofdm_tx_sf(srsran_ofdm_t* q)
 {
   if (!q->mbsfn_subframe) {
-    if (SUBCARRIER_SPACING_KHZ == 15) {
+    if (q->cfg.scs == srsran_subcarrier_spacing_15kHz) {
       ofdm_tx_slot(q, 0);
       ofdm_tx_slot(q, 1);
     } else {

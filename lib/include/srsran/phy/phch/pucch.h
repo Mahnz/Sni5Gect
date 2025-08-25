@@ -38,6 +38,7 @@
 #include "srsran/phy/phch/cqi.h"
 #include "srsran/phy/phch/pucch_cfg.h"
 #include "srsran/phy/phch/uci.h"
+#include "srsran/phy/common/phy_common_nr.h"
 
 #define SRSRAN_PUCCH_N_SEQ SRSRAN_NRE
 #define SRSRAN_PUCCH2_NOF_BITS SRSRAN_UCI_CQI_CODED_PUCCH_B
@@ -45,7 +46,7 @@
 #define SRSRAN_PUCCH_1A_2A_NOF_ACK (1)
 #define SRSRAN_PUCCH_1B_2B_NOF_ACK (2)
 #define SRSRAN_PUCCH3_NOF_BITS (4 * SRSRAN_NRE)
-#define SRSRAN_PUCCH_MAX_SYMBOLS (SRSRAN_PUCCH_N_SEQ * SRSRAN_PUCCH2_N_SF * SRSRAN_NOF_SLOTS_PER_SF)
+#define SRSRAN_PUCCH_MAX_SYMBOLS (SRSRAN_PUCCH_N_SEQ * SRSRAN_PUCCH2_N_SF * SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz))
 
 // PUCCH Format 1B Channel selection
 #define SRSRAN_PUCCH_CS_MAX_ACK 4
@@ -71,8 +72,8 @@ typedef struct SRSRAN_API {
   int16_t  llr[SRSRAN_PUCCH3_NOF_BITS];
   uint8_t  bits_scram[SRSRAN_PUCCH_MAX_BITS];
   cf_t     d[SRSRAN_PUCCH_MAX_BITS / 2];
-  uint32_t n_cs_cell[SRSRAN_NSLOTS_X_FRAME][SRSRAN_CP_NORM_NSYMB];
-  uint32_t f_gh[SRSRAN_NSLOTS_X_FRAME];
+  uint32_t n_cs_cell[SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz)][SRSRAN_CP_NORM_NSYMB];
+  uint32_t f_gh[SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz)];
 
   cf_t* z;
   cf_t* z_tmp;
@@ -120,7 +121,7 @@ SRSRAN_API int srsran_pucch_decode(srsran_pucch_t*        q,
                                    srsran_pucch_res_t*    data);
 
 /* Other utilities. These functions do not modify the state and run in real-time */
-SRSRAN_API float srsran_pucch_alpha_format1(const uint32_t n_cs_cell[SRSRAN_NSLOTS_X_FRAME][SRSRAN_CP_NORM_NSYMB],
+SRSRAN_API float srsran_pucch_alpha_format1(const uint32_t n_cs_cell[SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz)][SRSRAN_CP_NORM_NSYMB],
                                             const srsran_pucch_cfg_t* cfg,
                                             srsran_cp_t               cp,
                                             bool                      is_dmrs,
@@ -129,7 +130,7 @@ SRSRAN_API float srsran_pucch_alpha_format1(const uint32_t n_cs_cell[SRSRAN_NSLO
                                             uint32_t*                 n_oc,
                                             uint32_t*                 n_prime_ns);
 
-SRSRAN_API float srsran_pucch_alpha_format2(const uint32_t n_cs_cell[SRSRAN_NSLOTS_X_FRAME][SRSRAN_CP_NORM_NSYMB],
+SRSRAN_API float srsran_pucch_alpha_format2(const uint32_t n_cs_cell[SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz)][SRSRAN_CP_NORM_NSYMB],
                                             const srsran_pucch_cfg_t* cfg,
                                             uint32_t                  ns,
                                             uint32_t                  l);
@@ -141,7 +142,7 @@ SRSRAN_API uint32_t srsran_pucch_m(const srsran_pucch_cfg_t* cfg, srsran_cp_t cp
 SRSRAN_API uint32_t srsran_pucch_n_prb(const srsran_cell_t* cell, const srsran_pucch_cfg_t* cfg, uint32_t ns);
 
 SRSRAN_API int srsran_pucch_n_cs_cell(srsran_cell_t cell,
-                                      uint32_t      n_cs_cell[SRSRAN_NSLOTS_X_FRAME][SRSRAN_CP_NORM_NSYMB]);
+                                      uint32_t      n_cs_cell[SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz)][SRSRAN_CP_NORM_NSYMB]);
 
 /**
  * Checks PUCCH collision from cell and two PUCCH configurations. The provided configurations shall provide format and

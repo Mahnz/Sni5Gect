@@ -183,7 +183,7 @@ int main(int argc, char** argv)
     goto quit;
   }
 
-  if (srsran_chest_ul_res_init(&chest_res, cell.nof_prb) < SRSRAN_SUCCESS) {
+  if (srsran_chest_ul_res_init(&chest_res, cell.nof_prb, srsran_subcarrier_spacing_15kHz) < SRSRAN_SUCCESS) {
     ERROR("Error initiating channel estimator result");
     goto quit;
   }

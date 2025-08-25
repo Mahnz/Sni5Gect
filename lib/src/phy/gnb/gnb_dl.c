@@ -85,6 +85,7 @@ int srsran_gnb_dl_init(srsran_gnb_dl_t* q, cf_t* output[SRSRAN_MAX_PORTS], const
   fft_cfg.nof_prb           = args->nof_max_prb;
   fft_cfg.symbol_sz         = (uint32_t)symbol_sz;
   fft_cfg.keep_dc           = true;
+  fft_cfg.scs               = args->scs;
 
   // Initialise a different OFDM modulator per channel
   for (uint32_t i = 0; i < q->nof_tx_antennas; i++) {
@@ -160,6 +161,7 @@ int srsran_gnb_dl_set_carrier(srsran_gnb_dl_t* q, const srsran_carrier_nr_t* car
     fft_cfg.symbol_sz             = srsran_min_symbol_sz_rb(carrier->nof_prb);
     fft_cfg.keep_dc               = true;
     fft_cfg.phase_compensation_hz = carrier->dl_center_frequency_hz;
+    fft_cfg.scs                   = carrier->scs;
 
     for (uint32_t i = 0; i < q->nof_tx_antennas; i++) {
       fft_cfg.in_buffer = q->sf_symbols[i];

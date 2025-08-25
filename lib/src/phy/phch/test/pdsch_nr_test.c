@@ -180,7 +180,7 @@ int main(int argc, char** argv)
     mcs_end   = SRSRAN_MIN(mcs + 1, mcs_end);
   }
 
-  if (srsran_chest_dl_res_init(&chest, carrier.nof_prb) < SRSRAN_SUCCESS) {
+  if (srsran_chest_dl_res_init(&chest, carrier.nof_prb, carrier.scs) < SRSRAN_SUCCESS) {
     ERROR("Initiating chest");
     goto clean_exit;
   }
