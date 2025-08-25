@@ -142,10 +142,10 @@ void srsran_chest_ul_free(srsran_chest_ul_t* q)
   bzero(q, sizeof(srsran_chest_ul_t));
 }
 
-int srsran_chest_ul_res_init(srsran_chest_ul_res_t* q, uint32_t max_prb)
+int srsran_chest_ul_res_init(srsran_chest_ul_res_t* q, uint32_t max_prb, srsran_subcarrier_spacing_t scs)
 {
   bzero(q, sizeof(srsran_chest_ul_res_t));
-  q->nof_re = SRSRAN_SF_LEN_RE_NR(max_prb);
+  q->nof_re = SRSRAN_SF_LEN_RE_NR(max_prb, scs);
   q->ce     = srsran_vec_cf_malloc(q->nof_re);
   if (!q->ce) {
     perror("malloc");

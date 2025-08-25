@@ -60,7 +60,7 @@ int srsran_ue_mib_init(srsran_ue_mib_t* q, cf_t* in_buffer, uint32_t max_prb)
       ERROR("Error initializing reference signal");
       goto clean_exit;
     }
-    if (srsran_chest_dl_res_init(&q->chest_res, max_prb)) {
+    if (srsran_chest_dl_res_init(&q->chest_res, max_prb, srsran_subcarrier_spacing_15kHz)) {
       ERROR("Error initializing reference signal");
       goto clean_exit;
     }

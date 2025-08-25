@@ -106,7 +106,7 @@ int srs_test_context_init(srs_test_context_t* q)
   }
 
   // Initialise UL channel estimator result
-  if (srsran_chest_ul_res_init(&q->chest_ul_res, SRSRAN_MAX_PRB) != SRSRAN_SUCCESS) {
+  if (srsran_chest_ul_res_init(&q->chest_ul_res, SRSRAN_MAX_PRB, srsran_subcarrier_spacing_15kHz) != SRSRAN_SUCCESS) {
     return SRSRAN_ERROR;
   }
 

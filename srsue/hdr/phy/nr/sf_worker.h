@@ -57,7 +57,7 @@ public:
     for (unsigned i = 0, e = cc_workers.size(); i != e; ++i) {
       update_cfg(i, new_cfg);
     }
-    sf_len = SRSRAN_SF_LEN_PRB_NR(new_cfg.carrier.nof_prb);
+    sf_len = SRSRAN_SF_LEN_PRB_NR(new_cfg.carrier.nof_prb, new_cfg.carrier.scs);
   }
 
   void set_prach(cf_t* prach_ptr, float prach_power);

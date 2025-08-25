@@ -207,7 +207,7 @@ int srsran_ue_ul_nr_encode_pucch(srsran_ue_ul_nr_t*                  q,
   }
 
   // Fill with zeros the whole resource grid
-  srsran_vec_cf_zero(q->sf_symbols[0], SRSRAN_SF_LEN_RE_NR(q->carrier.nof_prb));
+  srsran_vec_cf_zero(q->sf_symbols[0], SRSRAN_SF_LEN_RE_NR(q->carrier.nof_prb, q->carrier.scs));
 
   // Actual PUCCH encoding
   switch (resource->format) {

@@ -365,7 +365,7 @@ int main(int argc, char** argv)
   cell.phich_length    = SRSRAN_PHICH_NORM;
 
   // Initialise channel estimates with identity matrix
-  if (srsran_chest_dl_res_init(&chest_dl_res, cell.nof_prb) < SRSRAN_SUCCESS) {
+  if (srsran_chest_dl_res_init(&chest_dl_res, cell.nof_prb, srsran_subcarrier_spacing_15kHz) < SRSRAN_SUCCESS) {
     ERROR("Error channel estimates");
     goto quit;
   }

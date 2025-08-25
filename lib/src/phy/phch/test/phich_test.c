@@ -118,7 +118,7 @@ int main(int argc, char** argv)
   /* init memory */
 
   srsran_chest_dl_res_t chest_res;
-  srsran_chest_dl_res_init(&chest_res, cell.nof_prb);
+  srsran_chest_dl_res_init(&chest_res, cell.nof_prb, srsran_subcarrier_spacing_15kHz);
   srsran_chest_dl_res_set_ones(&chest_res);
 
   for (i = 0; i < SRSRAN_MAX_PORTS; i++) {

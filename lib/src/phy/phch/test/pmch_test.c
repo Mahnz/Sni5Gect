@@ -156,7 +156,7 @@ int main(int argc, char** argv)
   cell.nof_ports = 1;
 
   /* init memory */
-  srsran_chest_dl_res_init(&chest_dl_res, cell.nof_prb);
+  srsran_chest_dl_res_init(&chest_dl_res, cell.nof_prb, srsran_subcarrier_spacing_15kHz);
   srsran_chest_dl_res_set_identity(&chest_dl_res);
 
   for (i = 0; i < SRSRAN_MAX_PORTS; i++) {

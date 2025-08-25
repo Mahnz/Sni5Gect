@@ -205,9 +205,9 @@ void srsran_chest_dl_free(srsran_chest_dl_t* q)
   bzero(q, sizeof(srsran_chest_dl_t));
 }
 
-int srsran_chest_dl_res_init(srsran_chest_dl_res_t* q, uint32_t max_prb)
+int srsran_chest_dl_res_init(srsran_chest_dl_res_t* q, uint32_t max_prb, srsran_subcarrier_spacing_t scs)
 {
-  return srsran_chest_dl_res_init_re(q, SRSRAN_SF_LEN_RE_NR(max_prb));
+  return srsran_chest_dl_res_init_re(q, SRSRAN_SF_LEN_RE_NR(max_prb, scs));
 }
 
 int srsran_chest_dl_res_init_re(srsran_chest_dl_res_t* q, uint32_t nof_re)

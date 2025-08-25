@@ -38,7 +38,7 @@ static int ue_dl_nr_alloc_prb(srsran_ue_dl_nr_t* q, uint32_t new_nof_prb)
     q->max_prb = new_nof_prb;
 
     srsran_chest_dl_res_free(&q->chest);
-    if (srsran_chest_dl_res_init(&q->chest, q->max_prb) < SRSRAN_SUCCESS) {
+    if (srsran_chest_dl_res_init(&q->chest, q->max_prb, q->carrier.scs) < SRSRAN_SUCCESS) {
       return SRSRAN_ERROR;
     }
 

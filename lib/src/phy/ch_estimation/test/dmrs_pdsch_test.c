@@ -270,7 +270,7 @@ int main(int argc, char** argv)
     goto clean_exit;
   }
 
-  if (srsran_chest_dl_res_init(&chest_dl_res, carrier.nof_prb) != SRSRAN_SUCCESS) {
+  if (srsran_chest_dl_res_init(&chest_dl_res, carrier.nof_prb, carrier.scs) != SRSRAN_SUCCESS) {
     ERROR("Initiating channel estimation  result");
     goto clean_exit;
   }
