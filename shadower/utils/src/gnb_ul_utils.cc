@@ -11,6 +11,7 @@ bool init_gnb_ul(srsran_gnb_ul_t& gnb_ul, cf_t* buffer, srsran::phy_cfg_nr_t& ph
   ul_args.pusch.max_prb          = phy_cfg.carrier.nof_prb;
   ul_args.nof_max_prb            = phy_cfg.carrier.nof_prb;
   ul_args.pusch_min_snr_dB       = -10;
+  ul_args.scs                    = phy_cfg.carrier.scs;
   if (srsran_gnb_ul_init(&gnb_ul, buffer, &ul_args) != 0) {
     return false;
   }
