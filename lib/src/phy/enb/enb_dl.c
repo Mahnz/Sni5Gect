@@ -452,14 +452,14 @@ void srsran_enb_dl_gen_signal(srsran_enb_dl_t* q)
     srsran_vec_sc_prod_cfc(q->ifft_mbsfn.cfg.in_buffer,
                            norm_factor,
                            q->ifft_mbsfn.cfg.in_buffer,
-                           SRSRAN_NOF_SLOTS_PER_SF * q->cell.nof_prb * SRSRAN_NRE * SRSRAN_CP_NSYMB(q->cell.cp));
+                           SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz) * q->cell.nof_prb * SRSRAN_NRE * SRSRAN_CP_NSYMB(q->cell.cp));
     srsran_ofdm_tx_sf(&q->ifft_mbsfn);
   } else {
     for (int i = 0; i < q->cell.nof_ports; i++) {
       srsran_vec_sc_prod_cfc(q->ifft[i].cfg.in_buffer,
                              norm_factor,
                              q->ifft[i].cfg.in_buffer,
-                             SRSRAN_NOF_SLOTS_PER_SF * q->cell.nof_prb * SRSRAN_NRE * SRSRAN_CP_NSYMB(q->cell.cp));
+                             SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz) * q->cell.nof_prb * SRSRAN_NRE * SRSRAN_CP_NSYMB(q->cell.cp));
       srsran_ofdm_tx_sf(&q->ifft[i]);
     }
   }

@@ -36,6 +36,7 @@
 #include "srsran/config.h"
 #include "srsran/phy/cfr/cfr.h"
 #include "srsran/phy/common/phy_common.h"
+#include "srsran/phy/common/phy_common_nr.h"
 #include "srsran/phy/dft/dft.h"
 
 /**
@@ -62,6 +63,7 @@ typedef struct SRSRAN_API {
   bool             keep_dc;          ///< If true, it does not remove the DC
   double           phase_compensation_hz; ///< Carrier frequency in Hz for phase compensation, set to 0 to disable
   srsran_cfr_cfg_t cfr_tx_cfg;            ///< Tx CFR configuration
+  srsran_subcarrier_spacing_t scs;
 } srsran_ofdm_cfg_t;
 
 /**
@@ -86,7 +88,7 @@ typedef struct SRSRAN_API {
   uint32_t          window_offset_n;
   cf_t*             shift_buffer;
   cf_t*             window_offset_buffer;
-  cf_t              phase_compensation[SRSRAN_MAX_NSYMB * 2 * SRSRAN_NOF_SLOTS_PER_SF];
+  cf_t              phase_compensation[SRSRAN_MAX_NSYMB * 2 * SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_240kHz)];
   srsran_cfr_t      tx_cfr; ///< Tx CFR object
   uint32_t          ofdm_group_sz;
 } srsran_ofdm_t;

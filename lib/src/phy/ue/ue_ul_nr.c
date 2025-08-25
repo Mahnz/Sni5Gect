@@ -51,6 +51,7 @@ int srsran_ue_ul_nr_init(srsran_ue_ul_nr_t* q, cf_t* output, const srsran_ue_ul_
   fft_cfg.keep_dc           = true;
   fft_cfg.in_buffer         = q->sf_symbols[0];
   fft_cfg.out_buffer        = output;
+  fft_cfg.scs               = args->scs;
   if (srsran_ofdm_tx_init_cfg(&q->ifft, &fft_cfg) < SRSRAN_SUCCESS) {
     ERROR("Initiating OFDM");
     return SRSRAN_ERROR;
@@ -82,6 +83,7 @@ int srsran_ue_ul_nr_set_carrier(srsran_ue_ul_nr_t* q, const srsran_carrier_nr_t*
   fft_cfg.symbol_sz             = srsran_min_symbol_sz_rb(carrier->nof_prb);
   fft_cfg.keep_dc               = true;
   fft_cfg.phase_compensation_hz = carrier->ul_center_frequency_hz;
+  fft_cfg.scs                   = carrier->scs;
   if (srsran_ofdm_tx_init_cfg(&q->ifft, &fft_cfg) < SRSRAN_SUCCESS) {
     ERROR("Initiating OFDM");
     return SRSRAN_ERROR;

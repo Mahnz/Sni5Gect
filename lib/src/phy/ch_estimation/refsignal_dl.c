@@ -87,7 +87,7 @@ int srsran_refsignal_cs_set_cell(srsran_refsignal_t* q, srsran_cell_t cell)
       srsran_dl_sf_cfg_t sf_cfg;
       ZERO_OBJECT(sf_cfg);
 
-      for (uint32_t ns = 0; ns < SRSRAN_NSLOTS_X_FRAME; ns++) {
+      for (uint32_t ns = 0; ns < SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz); ns++) {
         for (uint32_t p = 0; p < 2; p++) {
           sf_cfg.tti        = ns / 2;
           uint32_t nsymbols = srsran_refsignal_cs_nof_symbols(q, &sf_cfg, 2 * p) / 2;

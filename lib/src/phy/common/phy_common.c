@@ -478,7 +478,7 @@ uint32_t srsran_voffset(uint32_t symbol_id, uint32_t cell_id, uint32_t nof_ports
 }
 
 /** Computes sequence-group pattern f_gh according to 5.5.1.3 of 36.211 */
-int srsran_group_hopping_f_gh(uint32_t f_gh[SRSRAN_NSLOTS_X_FRAME], uint32_t cell_id)
+int srsran_group_hopping_f_gh(uint32_t f_gh[SRSRAN_NSLOTS_X_FRAME(0)], uint32_t cell_id)
 {
   srsran_sequence_t seq;
   bzero(&seq, sizeof(srsran_sequence_t));
@@ -487,7 +487,7 @@ int srsran_group_hopping_f_gh(uint32_t f_gh[SRSRAN_NSLOTS_X_FRAME], uint32_t cel
     return SRSRAN_ERROR;
   }
 
-  for (uint32_t ns = 0; ns < SRSRAN_NSLOTS_X_FRAME; ns++) {
+  for (uint32_t ns = 0; ns < SRSRAN_NSLOTS_X_FRAME(0); ns++) {
     f_gh[ns] = 0;
     for (int i = 0; i < 8; i++) {
       f_gh[ns] += (((uint32_t)seq.c[8 * ns + i]) << i);

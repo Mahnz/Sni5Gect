@@ -92,6 +92,7 @@ int srsran_gnb_ul_init(srsran_gnb_ul_t* q, cf_t* input, const srsran_gnb_ul_args
   ofdm_cfg.rx_window_offset  = GNB_UL_NR_FFT_WINDOW_OFFSET;
   ofdm_cfg.symbol_sz         = srsran_min_symbol_sz_rb(args->nof_max_prb);
   ofdm_cfg.keep_dc           = true;
+  ofdm_cfg.scs               = args->scs;
 
   if (srsran_ofdm_rx_init_cfg(&q->fft, &ofdm_cfg) < SRSRAN_SUCCESS) {
     return SRSRAN_ERROR;
@@ -156,6 +157,7 @@ int srsran_gnb_ul_set_carrier(srsran_gnb_ul_t* q, const srsran_carrier_nr_t* car
   ofdm_cfg.symbol_sz             = srsran_min_symbol_sz_rb(carrier->nof_prb);
   ofdm_cfg.keep_dc               = true;
   ofdm_cfg.phase_compensation_hz = carrier->ul_center_frequency_hz;
+  ofdm_cfg.scs                   = carrier->scs;
 
   if (srsran_ofdm_rx_init_cfg(&q->fft, &ofdm_cfg) < SRSRAN_SUCCESS) {
     return SRSRAN_ERROR;

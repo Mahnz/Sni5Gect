@@ -161,7 +161,7 @@ int main(int argc, char** argv)
     const uint32_t symbol_sz      = (force_symbol_sz) ? force_symbol_sz : (uint32_t)srsran_symbol_sz(nof_prb);
     const uint32_t symbol_bw      = nof_prb * SRSRAN_NRE;
     const uint32_t nof_symb_slot  = SRSRAN_CP_NSYMB(cp);
-    const uint32_t nof_symb_frame = nof_symb_slot * SRSRAN_NOF_SLOTS_PER_SF * SRSRAN_NOF_SF_X_FRAME;
+    const uint32_t nof_symb_frame = nof_symb_slot * SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz) * SRSRAN_NOF_SF_X_FRAME;
     const uint32_t frame_sz       = symbol_sz * nof_symb_frame;
     const uint32_t total_nof_re   = frame_sz * nof_frames;
     const uint32_t total_nof_symb = nof_symb_frame * nof_frames;

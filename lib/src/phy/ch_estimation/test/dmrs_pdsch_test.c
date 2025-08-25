@@ -20,6 +20,7 @@
  */
 
 #include "srsran/phy/ch_estimation/dmrs_sch.h"
+#include "srsran/phy/common/phy_common_nr.h"
 #include "srsran/phy/phch/ra_dl_nr.h"
 #include "srsran/srsran.h"
 #include "srsran/support/srsran_test.h"
@@ -252,7 +253,7 @@ int main(int argc, char** argv)
   srsran_sch_grant_nr_t grant        = {};
   srsran_chest_dl_res_t chest_dl_res = {};
 
-  uint32_t nof_re     = carrier.nof_prb * SRSRAN_NRE * SRSRAN_NOF_SLOTS_PER_SF * SRSRAN_MAX_NSYMB;
+  uint32_t nof_re     = carrier.nof_prb * SRSRAN_NRE * SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz) * SRSRAN_MAX_NSYMB;
   cf_t*    sf_symbols = srsran_vec_cf_malloc(nof_re);
 
   uint32_t test_counter = 0;

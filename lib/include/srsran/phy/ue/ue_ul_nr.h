@@ -41,9 +41,10 @@
 #include "srsran/phy/phch/pusch_nr.h"
 
 typedef struct SRSRAN_API {
-  srsran_pusch_nr_args_t pusch;
-  srsran_pucch_nr_args_t pucch;
-  uint32_t               nof_max_prb;
+  srsran_pusch_nr_args_t      pusch;
+  srsran_pucch_nr_args_t      pucch;
+  uint32_t                    nof_max_prb;
+  srsran_subcarrier_spacing_t scs;
 } srsran_ue_ul_nr_args_t;
 
 typedef struct SRSRAN_API {

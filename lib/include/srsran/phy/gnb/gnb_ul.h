@@ -28,10 +28,11 @@
 #include "srsran/phy/phch/pusch_nr.h"
 
 typedef struct SRSRAN_API {
-  srsran_pusch_nr_args_t pusch;
-  srsran_pucch_nr_args_t pucch;
-  float                  pusch_min_snr_dB; ///< Minimum SNR threshold to decode PUSCH, set to 0 for default value
-  uint32_t               nof_max_prb;
+  srsran_pusch_nr_args_t      pusch;
+  srsran_pucch_nr_args_t      pucch;
+  float                       pusch_min_snr_dB; ///< Minimum SNR threshold to decode PUSCH, set to 0 for default value
+  uint32_t                    nof_max_prb;
+  srsran_subcarrier_spacing_t scs;
 } srsran_gnb_ul_args_t;
 
 typedef struct SRSRAN_API {

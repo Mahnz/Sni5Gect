@@ -42,8 +42,8 @@ extern "C" {
 #include "srsran/config.h"
 
 #define SRSRAN_NOF_SF_X_FRAME 10
-#define SRSRAN_NOF_SLOTS_PER_SF (1 << (SUBCARRIER_SPACING_KHZ / 15 - 1))
-#define SRSRAN_NSLOTS_X_FRAME (SRSRAN_NOF_SLOTS_PER_SF * SRSRAN_NOF_SF_X_FRAME)
+#define SRSRAN_NOF_SLOTS_PER_SF(scs) (1 << scs)
+#define SRSRAN_NSLOTS_X_FRAME(scs) (SRSRAN_NOF_SLOTS_PER_SF(scs) * SRSRAN_NOF_SF_X_FRAME)
 
 #define SRSRAN_NSOFT_BITS 250368 // Soft buffer size for Category 1 UE
 
@@ -131,7 +131,7 @@ typedef enum { SRSRAN_SF_NORM = 0, SRSRAN_SF_MBSFN } srsran_sf_t;
 #define SRSRAN_CP_SZ(symbol_sz, cp)                                                                                    \
   (SRSRAN_CP_LEN(symbol_sz, (SRSRAN_CP_ISNORM(cp) ? SRSRAN_CP_NORM_LEN : SRSRAN_CP_EXT_LEN)))
 #define SRSRAN_SYMBOL_SZ(symbol_sz, cp) (symbol_sz + SRSRAN_CP_SZ(symbol_sz, cp))
-#define SRSRAN_SLOT_LEN(symbol_sz) (symbol_sz * SUBCARRIER_SPACING_KHZ / SRSRAN_NOF_SLOTS_PER_SF)
+#define SRSRAN_SLOT_LEN(symbol_sz) (symbol_sz * 15)     // symbol_sz * (15 * 1 << scs) / (1 << scs)
 #define SRSRAN_SF_LEN(symbol_sz) (symbol_sz * SUBCARRIER_SPACING_KHZ)
 #define SRSRAN_SF_LEN_MAX (SRSRAN_SF_LEN(SRSRAN_SYMBOL_SZ_MAX))
 
@@ -455,7 +455,8 @@ SRSRAN_API uint32_t srsran_re_x_prb(uint32_t ns, uint32_t symbol, uint32_t nof_p
 
 SRSRAN_API uint32_t srsran_voffset(uint32_t symbol_id, uint32_t cell_id, uint32_t nof_ports);
 
-SRSRAN_API int srsran_group_hopping_f_gh(uint32_t f_gh[SRSRAN_NSLOTS_X_FRAME], uint32_t cell_id);
+// 0 represents srsran_subcarrier_spacing_15kHz for LTE
+SRSRAN_API int srsran_group_hopping_f_gh(uint32_t f_gh[SRSRAN_NSLOTS_X_FRAME(0)], uint32_t cell_id);
 
 SRSRAN_API uint32_t srsran_N_ta_new_rar(uint32_t ta);
 
