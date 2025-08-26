@@ -43,7 +43,7 @@ void scan_ssb(double ssb_freq, srslog::basic_logger& logger)
     goto cleanup;
   }
 
-  for (uint32_t i = 0; i < 100; i++) {
+  for (uint32_t i = 0; i < 1000; i++) {
     /* Receive samples */
     source->receive(buffer, sf_len * 0.1, &ts);
     source->receive(buffer, sf_len, &ts);
