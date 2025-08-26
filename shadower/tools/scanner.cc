@@ -87,22 +87,20 @@ int main(int argc, char* argv[])
   logger.set_level(srslog::basic_levels::info);
 
   /* Retrieve parameters from command line */
-  if (argc < 3) {
-    printf("Usage: %s <band> <scs>\n", argv[0]);
+  if (argc < 2) {
+    printf("Usage: %s <band> <center frequency> <sample rate>\n", argv[0]);
     return 1;
   }
   band             = atoi(argv[1]);
-  uint32_t scs_kHz = atoi(argv[2]);
-  scs              = static_cast<srsran_subcarrier_spacing_t>((scs_kHz / 15) >> 1);
 
   /* If center frequency config is provided */
-  if (argc > 3) {
-    double centerFreqMHz = atof(argv[3]);
+  if (argc > 2) {
+    double centerFreqMHz = atof(argv[2]);
     center_frequency     = centerFreqMHz * 1e6;
   }
 
-  if (argc > 4) {
-    double srateMHz = atof(argv[4]);
+  if (argc > 3) {
+    double srateMHz = atof(argv[3]);
     srate           = srateMHz * 1e6;
   }
 
@@ -137,7 +135,7 @@ int main(int argc, char* argv[])
   srsran::srsran_band_helper                band_helper;
   srsran::srsran_band_helper::sync_raster_t sync_raster = band_helper.get_sync_raster(band, scs);
   if (!sync_raster.valid()) {
-    printf("Invalid band %d or SCS %d kHz\n", band, scs_kHz);
+    printf("Can not get the sync raster for band %u\n", band);
     return 1;
   }
 
