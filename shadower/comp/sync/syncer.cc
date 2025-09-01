@@ -248,6 +248,7 @@ void Syncer::handle_measurements(srsran_csi_trs_measurements_t& feedback)
   samples_delayed = (uint32_t)round((double)feedback.delay_us * (srate * 1e-6));
   cfo_hz          = feedback.cfo_hz;
   measurements    = feedback;
+  // logger.debug("CFO: %f SNR: %f", feedback.cfo_hz, feedback.snr_dB);
   tracer_status.send_string(fmt::format(
       "{{\"CFO\": {:.2f}, \"SNR\": {:.2f}, \"RSRP\": {:.2f}}}", feedback.cfo_hz, feedback.snr_dB, feedback.rsrp_dB));
 }
@@ -393,8 +394,10 @@ void Syncer::run_thread()
     publish_subframe(task);
     if (config.enable_recorder) {
       char filename[64];
-      sprintf(filename, "sf_%u_%u", task->task_idx, task->slot_idx);
-      write_record_to_file(samples->dl_buffer[0]->data(), sf_len, filename);
+      for (int ch = 0; ch < config.nof_channels; ch++) {
+        sprintf(filename, "sf_%u_%u_ch_%d", task->task_idx, task->slot_idx, ch);
+        write_record_to_file(samples->dl_buffer[ch]->data(), sf_len, filename);
+      }
     }
   }
 }
