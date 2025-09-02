@@ -74,7 +74,12 @@ bool set_rar_grant(uint16_t                                        rnti,
     srsran_dci_ul_nr_to_str(&dci, &dci_ul, str.data(), str.size());
     logger.debug("Setting RAR Grant: %s", str.data());
   }
-  srsran_slot_cfg_t slot_cfg = {.idx = slot_idx + 1};
+  srsran_slot_cfg_t slot_cfg = {};
+  if (phy_cfg.duplex.mode == SRSRAN_DUPLEX_MODE_TDD) {
+    slot_cfg.idx = slot_idx + 1;
+  } else {
+    slot_cfg.idx = slot_idx;
+  }
   phy_state.set_ul_pending_grant(phy_cfg, slot_cfg, dci_ul);
   return true;
 }

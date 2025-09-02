@@ -15,6 +15,7 @@ int main(int argc, char* argv[])
   /* initialize logger */
   srslog::basic_logger& logger = srslog_init(&config);
   std::string           sample_file;
+  std::string           last_sample_file;
   uint32_t              rach_msg2_slot_idx;
   uint32_t              rach_msg3_slot_idx;
   int                   ul_sample_offset;
@@ -40,6 +41,14 @@ int main(int argc, char* argv[])
       rach_msg3_slot_idx = 8;
       ul_sample_offset   = 468;
       half               = 1;
+      break;
+    case 4:
+      sample_file        = "shadower/test/data/srsran-n3-20MHz/rach_msg3.fc32";
+      last_sample_file   = "shadower/test/data/srsran-n3-20MHz/rach_msg3_last.fc32";
+      rach_msg2_slot_idx = 17;
+      rach_msg3_slot_idx = 23;
+      ul_sample_offset   = 480;
+      half               = 0;
       break;
     default:
       fprintf(stderr, "Unknown test number: %d\n", test_number);
@@ -88,6 +97,14 @@ int main(int argc, char* argv[])
     return -1;
   }
 
+  std::vector<cf_t> last_samples(args.sf_len);
+  if (!last_samples.empty()) {
+    if (!load_samples(last_sample_file, last_samples.data(), args.sf_len)) {
+      logger.error("Failed to load data from %s", sample_file.c_str());
+      return -1;
+    }
+  }
+
   srsran_softbuffer_rx_t softbuffer_rx = {};
   if (srsran_softbuffer_rx_init_guru(&softbuffer_rx, SRSRAN_SCH_NR_MAX_NOF_CB_LDPC, SRSRAN_LDPC_MAX_LEN_ENCODED_CB) !=
       0) {
@@ -102,11 +119,16 @@ int main(int argc, char* argv[])
   }
 
   /* copy samples to gnb_ul processing buffer */
-  if (half < 1) {
+  if (half < 1 && last_sample_file.empty()) {
     logger.error("Last subframe is required");
     return -1;
   }
-  srsran_vec_cf_copy(gnb_ul_buffer, samples.data() + half * args.slot_len - ul_sample_offset, args.slot_len);
+  if (half > 1) {
+    srsran_vec_cf_copy(gnb_ul_buffer, samples.data() + half * args.slot_len - ul_sample_offset, args.slot_len);
+  } else {
+    srsran_vec_cf_copy(gnb_ul_buffer, last_samples.data() + args.slot_len - ul_sample_offset, ul_sample_offset);
+    srsran_vec_cf_copy(gnb_ul_buffer + ul_sample_offset, samples.data(), args.slot_len - ul_sample_offset);
+  }
   srsran_slot_cfg_t slot_cfg = {.idx = rach_msg3_slot_idx + half};
 
   /* get uplink grant */

@@ -23,7 +23,7 @@ double            test_ssb_freq = 3424.8e6;
 std::string       source_param  = "type=b200";
 uint32_t          advancement   = 9;
 uint32_t          ssb_offset    = 1650;
-uint32_t          test_round    = 500;
+uint32_t          test_round    = 100;
 uint32_t          cell_id       = 1;
 uint32_t          ssb_period    = 10;
 uint32_t          count         = 0;
@@ -160,7 +160,7 @@ void sender_thread(srslog::basic_logger& logger,
   }
 
   uint32_t slot_per_sf      = 10 * (1 << config.scs_ssb);
-  uint32_t slot_advancement = 6;
+  uint32_t slot_advancement = 7;
   uint32_t last_slot        = 0;
   auto     last_send_time   = std::chrono::steady_clock::now();
   uint32_t send_idx         = 0;
@@ -318,7 +318,7 @@ int main(int argc, char* argv[])
   config.syncer_log_level = srslog::basic_levels::info;
   /* initialize logger */
   srslog::basic_logger& logger = srslog_init(&config);
-  logger.set_level(srslog::basic_levels::info);
+  logger.set_level(srslog::basic_levels::debug);
 
   /* initialize phy_cfg */
   srsran::phy_cfg_nr_t phy_cfg = {};

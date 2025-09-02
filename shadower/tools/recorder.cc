@@ -174,7 +174,7 @@ void receiver_worker()
     exit(EXIT_FAILURE);
   }
 
-  buffer_pool              = new SharedBufferPool(sf_len, 100);
+  buffer_pool              = new SharedBufferPool(sf_len, 2048);
   srsran_timestamp_t ts    = {};
   uint32_t           count = 0;
   while (count++ < num_frames) {

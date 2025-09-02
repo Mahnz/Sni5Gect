@@ -95,6 +95,15 @@ int main(int argc, char* argv[])
       half             = 1;
       ul_offset        = 468;
       break;
+    case 4:
+      dci_sample_file  = "shadower/test/data/srsran-n3-20MHz/dci_6685.fc32";
+      dci_slot_number  = 5;
+      ul_sample_file   = "shadower/test/data/srsran-n3-20MHz/pusch_6689.fc32";
+      ul_slot_number   = 9;
+      last_sample_file = "shadower/test/data/srsran-n3-20MHz/pusch_6688.fc32";
+      half             = 0;
+      ul_offset        = 480;
+      break;
     default:
       fprintf(stderr, "Unknown test number: %d\n", test_number);
       exit(EXIT_FAILURE);
@@ -200,61 +209,64 @@ int main(int argc, char* argv[])
     return -1;
   }
 
-  /* copy samples to gnb_ul processing buffer */
-  if (half == 0 && ul_offset > 0) {
-    /* Copy the last samples to current buffer */
-    srsran_vec_cf_copy(gnb_ul_buffer, last_samples.data() + args.sf_len - ul_offset, ul_offset);
-    /* Copy the remaining samples from the sample file */
-    srsran_vec_cf_copy(gnb_ul_buffer + ul_offset, samples.data(), args.slot_len - ul_offset);
-  } else {
-    /* Copy the samples to the buffer */
-    srsran_vec_cf_copy(gnb_ul_buffer, samples.data() + half * args.slot_len - ul_offset, args.slot_len);
-  }
-
-  /* run gnb_ul estimate fft */
-  if (srsran_gnb_ul_fft(&gnb_ul)) {
-    logger.error("Error running srsran_gnb_ul_fft");
-    return -1;
-  }
-
-  /* Write OFDM symbols to file for debug purpose */
-  char filename[64];
-  sprintf(filename, "ofdm_pusch_%u_fft%u", ul_offset, args.nof_sc);
-  write_record_to_file(gnb_ul.sf_symbols[0], args.nof_re, filename);
-
-  for (double uplink_cfo = start_cfo; uplink_cfo < end_cfo; uplink_cfo += 1e-5) {
-    /* Apply the cfo to the signal with magic number */
-    srsran_vec_apply_cfo(gnb_ul.sf_symbols[0], uplink_cfo, gnb_ul.sf_symbols[0], args.nof_re);
-
-    /* Initialize the buffer for output*/
-    srsran::unique_byte_buffer_t data = srsran::make_byte_buffer();
-    if (data == nullptr) {
-      logger.error("Error creating byte buffer");
-      continue;
-    }
-    data->N_bytes = pusch_cfg.grant.tb[0].tbs / 8U;
-
-    /* Initialize pusch result*/
-    srsran_pusch_res_nr_t pusch_res      = {};
-    pusch_res.tb[0].payload              = data->msg;
-    srsran_softbuffer_rx_t softbuffer_rx = {};
-    if (srsran_softbuffer_rx_init_guru(&softbuffer_rx, SRSRAN_SCH_NR_MAX_NOF_CB_LDPC, SRSRAN_LDPC_MAX_LEN_ENCODED_CB) !=
-        0) {
-      logger.error("Couldn't allocate and/or initialize softbuffer");
-      continue;
-    }
-
-    /* Decode PUSCH */
-    if (!gnb_ul_pusch_decode(gnb_ul, pusch_cfg, slot_cfg, pusch_res, softbuffer_rx, logger)) {
-      logger.error("Error running gnb_ul_pusch_decode");
-      continue;
-    }
-
-    /* if the message is not decoded correctly, then return */
-    if (!pusch_res.tb[0].crc) {
-      continue;
+  uint32_t orig_offset = ul_offset;
+  for (ul_offset = orig_offset - 10; ul_offset < orig_offset + 10; ul_offset += 1) {
+    /* copy samples to gnb_ul processing buffer */
+    if (half == 0 && ul_offset > 0) {
+      /* Copy the last samples to current buffer */
+      srsran_vec_cf_copy(gnb_ul_buffer, last_samples.data() + args.sf_len - ul_offset, ul_offset);
+      /* Copy the remaining samples from the sample file */
+      srsran_vec_cf_copy(gnb_ul_buffer + ul_offset, samples.data(), args.slot_len - ul_offset);
     } else {
-      logger.info("PUSCH CRC passed, CFO: %f", uplink_cfo);
+      /* Copy the samples to the buffer */
+      srsran_vec_cf_copy(gnb_ul_buffer, samples.data() + half * args.slot_len - ul_offset, args.slot_len);
+    }
+
+    /* run gnb_ul estimate fft */
+    if (srsran_gnb_ul_fft(&gnb_ul)) {
+      logger.error("Error running srsran_gnb_ul_fft");
+      return -1;
+    }
+
+    // /* Write OFDM symbols to file for debug purpose */
+    // char filename[64];
+    // sprintf(filename, "ofdm_pusch_%u_fft%u", ul_offset, args.nof_sc);
+    // write_record_to_file(gnb_ul.sf_symbols[0], args.nof_re, filename);
+
+    for (double uplink_cfo = start_cfo; uplink_cfo < end_cfo; uplink_cfo += 2e-3) {
+      /* Apply the cfo to the signal with magic number */
+      srsran_vec_apply_cfo(gnb_ul.sf_symbols[0], uplink_cfo, gnb_ul.sf_symbols[0], args.nof_re);
+
+      /* Initialize the buffer for output*/
+      srsran::unique_byte_buffer_t data = srsran::make_byte_buffer();
+      if (data == nullptr) {
+        logger.error("Error creating byte buffer");
+        continue;
+      }
+      data->N_bytes = pusch_cfg.grant.tb[0].tbs / 8U;
+
+      /* Initialize pusch result*/
+      srsran_pusch_res_nr_t pusch_res      = {};
+      pusch_res.tb[0].payload              = data->msg;
+      srsran_softbuffer_rx_t softbuffer_rx = {};
+      if (srsran_softbuffer_rx_init_guru(
+              &softbuffer_rx, SRSRAN_SCH_NR_MAX_NOF_CB_LDPC, SRSRAN_LDPC_MAX_LEN_ENCODED_CB) != 0) {
+        logger.error("Couldn't allocate and/or initialize softbuffer");
+        continue;
+      }
+
+      /* Decode PUSCH */
+      if (!gnb_ul_pusch_decode(gnb_ul, pusch_cfg, slot_cfg, pusch_res, softbuffer_rx, logger)) {
+        logger.error("Error running gnb_ul_pusch_decode");
+        continue;
+      }
+
+      /* if the message is not decoded correctly, then return */
+      if (!pusch_res.tb[0].crc) {
+        continue;
+      } else {
+        logger.info("PUSCH CRC passed, Offset: %u CFO: %f", ul_offset, uplink_cfo);
+      }
     }
   }
   return 0;

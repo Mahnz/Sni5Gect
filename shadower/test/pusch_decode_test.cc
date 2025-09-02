@@ -87,8 +87,35 @@ int main(int argc, char* argv[])
       ul_slot_number   = 8;
       last_sample_file = ul_sample_file;
       half             = 1;
-      ul_offset        = 468;
+      ul_offset        = 396;
       break;
+    case 4:
+      dci_sample_file  = "shadower/test/data/srsran-n3-20MHz/dci_6685.fc32";
+      dci_slot_number  = 5;
+      ul_sample_file   = "shadower/test/data/srsran-n3-20MHz/pusch_6689.fc32";
+      ul_slot_number   = 9;
+      last_sample_file = "shadower/test/data/srsran-n3-20MHz/pusch_6688.fc32";
+      half             = 0;
+      ul_offset        = 480;
+      break;
+    // case 4:
+    //   dci_sample_file  = "shadower/test/data/srsran-n3-20MHz/dci_6705.fc32";
+    //   dci_slot_number  = 5;
+    //   ul_sample_file   = "shadower/test/data/srsran-n3-20MHz/pusch_6709.fc32";
+    //   ul_slot_number   = 9;
+    //   last_sample_file = "shadower/test/data/srsran-n3-20MHz/pusch_6708.fc32";
+    //   half             = 0;
+    //   ul_offset        = 480;
+    //   break;
+    // case 4:
+    //   dci_sample_file  = "shadower/test/data/srsran-n3-20MHz/dci_6725.fc32";
+    //   dci_slot_number  = 5;
+    //   ul_sample_file   = "shadower/test/data/srsran-n3-20MHz/pusch_6729.fc32";
+    //   ul_slot_number   = 9;
+    //   last_sample_file = "shadower/test/data/srsran-n3-20MHz/pusch_6728.fc32";
+    //   half             = 0;
+    //   ul_offset        = 480;
+    //   break;
     default:
       fprintf(stderr, "Unknown test number: %d\n", test_number);
       exit(EXIT_FAILURE);
