@@ -6,9 +6,9 @@
 class FileSource final : public Source
 {
 public:
-  FileSource(std::vector<std::string> filenames, uint32_t num_channels, double sample_rate) :
-    srate(sample_rate), nof_channels(num_channels)
+  FileSource(std::vector<std::string> filenames, uint32_t num_channels, double sample_rate) : srate(sample_rate)
   {
+    set_num_channels(num_channels);
     for (uint32_t i = 0; i < num_channels; i++) {
       std::string filename = filenames[i];
       if (filename.empty()) {
@@ -75,7 +75,6 @@ public:
 private:
   std::vector<std::ifstream> ifiles;
   double                     srate;
-  uint32_t                   nof_channels;
   srsran_timestamp_t         timestamp_prev{};
 };
 

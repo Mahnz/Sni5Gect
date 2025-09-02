@@ -239,9 +239,9 @@ int main(int argc, char* argv[])
       logger.error("Failed to load last samples\n");
       return -1;
     }
-    ul_task->last_dl_buffer[0] = last_samples;
+    ul_task->last_ul_buffer[0] = last_samples;
   } else {
-    ul_task->last_dl_buffer[0] = samples;
+    ul_task->last_ul_buffer[0] = samples;
   }
   ul_task->ul_buffer[0] = samples;
   ul_task->slot_idx     = ul_slot_idx;
