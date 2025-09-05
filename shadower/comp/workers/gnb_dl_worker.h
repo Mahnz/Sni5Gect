@@ -40,8 +40,8 @@ public:
   // Encode pdsch message and send to UE
   bool send_pdsch();
 
-  cf_t* output_buffer = nullptr;
   cf_t* tx_buffer     = nullptr;
+  cf_t* gnb_dl_buffer = nullptr;
 
 private:
   srslog::basic_logger& logger;

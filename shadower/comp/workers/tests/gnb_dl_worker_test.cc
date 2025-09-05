@@ -165,5 +165,5 @@ int main(int argc, char* argv[])
   gnb_dl_worker->set_context(task);
   bool success    = gnb_dl_worker->send_pdsch();
   char filename[] = "gnb_dl_worker_test";
-  write_record_to_file(gnb_dl_worker->tx_buffer, sf_len / 2, filename);
+  write_record_to_file(gnb_dl_worker->gnb_dl_buffer, sf_len / 2, filename);
 }

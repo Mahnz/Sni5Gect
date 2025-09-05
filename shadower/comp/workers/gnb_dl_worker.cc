@@ -7,13 +7,13 @@ GNBDLWorker::GNBDLWorker(srslog::basic_logger& logger_, Source* source_, Shadowe
 
 GNBDLWorker::~GNBDLWorker()
 {
+  if (gnb_dl_buffer) {
+    free(gnb_dl_buffer);
+    gnb_dl_buffer = nullptr;
+  }
   if (tx_buffer) {
     free(tx_buffer);
     tx_buffer = nullptr;
-  }
-  if (output_buffer) {
-    free(output_buffer);
-    output_buffer = nullptr;
   }
   if (data_tx[0]) {
     free(data_tx[0]);
@@ -33,19 +33,19 @@ bool GNBDLWorker::init()
   nof_re        = nof_sc * SRSRAN_NSYMB_PER_SLOT_NR;
   numerology    = (uint32_t)config.scs_common;
 
-  /* Init tx_buffer */
-  tx_buffer = srsran_vec_cf_malloc(sf_len);
-  if (!tx_buffer) {
+  /* Init gnb_dl_buffer */
+  gnb_dl_buffer = srsran_vec_cf_malloc(sf_len);
+  if (!gnb_dl_buffer) {
     logger.error("Error allocating buffer");
     return false;
   }
-  output_buffer = srsran_vec_cf_malloc(sf_len);
-  if (!output_buffer) {
+  tx_buffer = srsran_vec_cf_malloc(sf_len * 2);
+  if (!tx_buffer) {
     logger.error("Error allocating output buffer");
     return false;
   }
   cf_t* buffer_gnb[SRSRAN_MAX_PORTS] = {};
-  buffer_gnb[0]                      = tx_buffer;
+  buffer_gnb[0]                      = gnb_dl_buffer;
   /* buffer for data to send */
   data_tx[0] = srsran_vec_u8_malloc(SRSRAN_SLOT_MAX_NOF_BITS_NR);
   if (data_tx[0] == nullptr) {
@@ -97,11 +97,12 @@ void GNBDLWorker::set_context(gnb_dl_task_t& task_)
 void GNBDLWorker::work_imp()
 {
   std::lock_guard<std::mutex> lock(mutex);
-  uint32_t                    tx_size;
+  uint32_t                    tx_buffer_len = 0;
+
   /* Construct and encode the pdsch message */
   if (send_pdsch()) {
-    srsran_vec_cf_copy(output_buffer, tx_buffer, slot_len);
-    tx_size = slot_len;
+    srsran_vec_cf_copy(tx_buffer + config.front_padding, gnb_dl_buffer, slot_len);
+    tx_buffer_len = config.front_padding + slot_len;
     logger.info("Attached PDSCH to slot %u", gnb_dl_task.slot_idx);
   } else {
     logger.error("Error packing message");
@@ -109,34 +110,42 @@ void GNBDLWorker::work_imp()
   }
 
   /* check the target slot is ul slot */
-  if ((phy_cfg.duplex.mode == srsran_duplex_mode_t::SRSRAN_DUPLEX_MODE_TDD) &&
-      srsran_duplex_nr_is_ul(&phy_cfg.duplex, numerology, gnb_dl_task.slot_idx + 1 + 4)) {
+  if (srsran_duplex_nr_is_ul(&phy_cfg.duplex, numerology, gnb_dl_task.slot_idx + 1 + 4)) {
     if (send_dci_ul(gnb_dl_task.slot_idx + 1)) {
       uint32_t dci_len = 2 * (gnb_dl.fft->cfg.cp + gnb_dl.fft->cfg.symbol_sz);
-      srsran_vec_cf_copy(output_buffer + slot_len, tx_buffer, dci_len);
-      tx_size += dci_len;
+      srsran_vec_cf_copy(tx_buffer + tx_buffer_len, gnb_dl_buffer, dci_len);
+      tx_buffer_len += dci_len;
       logger.info("Attached DCI UL to slot %u", gnb_dl_task.slot_idx + 1);
     }
   }
   /* if the message only in one slot, then add noise to the rest of the subframe */
-  if ((phy_cfg.duplex.mode == srsran_duplex_mode_t::SRSRAN_DUPLEX_MODE_TDD) && tx_size == slot_len) {
+  if ((phy_cfg.duplex.mode == srsran_duplex_mode_t::SRSRAN_DUPLEX_MODE_TDD) &&
+      tx_buffer_len == (slot_len + config.front_padding)) {
     uint32_t noise_size = slot_len * 0.8;
-    srsran_vec_cf_copy(output_buffer + slot_len, output_buffer, noise_size);
-    tx_size += noise_size;
+    srsran_vec_cf_copy(tx_buffer + tx_buffer_len, gnb_dl_buffer, noise_size);
+    tx_buffer_len += noise_size;
   }
 
-  srsran_vec_apply_cfo(output_buffer, -config.tx_cfo_correction / config.sample_rate, output_buffer, tx_size);
+  srsran_vec_apply_cfo(tx_buffer, -config.tx_cfo_correction / config.sample_rate, tx_buffer, tx_buffer_len);
+  uint32_t end_padding_size = config.end_padding;
+  if (tx_buffer_len + config.end_padding > 1.8 * sf_len) {
+    end_padding_size = 1.8 * sf_len - tx_buffer_len;
+  }
+  srsran_vec_cf_zero(tx_buffer, config.front_padding);
+  srsran_vec_cf_zero(tx_buffer + tx_buffer_len, end_padding_size);
+  tx_buffer_len += end_padding_size;
 
   /* calculate the timestamp to send out the message */
   srsran_timestamp_add(&gnb_dl_task.rx_time,
                        0,
                        slot_duration * (gnb_dl_task.slot_idx - gnb_dl_task.rx_tti) -
-                           config.tx_advancement / config.sample_rate);
+                           (config.tx_advancement + config.front_padding) / config.sample_rate);
   cf_t* sdr_buffer[SRSRAN_MAX_PORTS] = {};
   for (uint32_t ch = 0; ch < config.nof_channels; ch++) {
-    sdr_buffer[ch] = output_buffer;
+    sdr_buffer[ch] = nullptr;
   }
-  source->send(sdr_buffer, tx_size, gnb_dl_task.rx_time, gnb_dl_task.slot_idx);
+  sdr_buffer[0] = tx_buffer;
+  source->send(sdr_buffer, tx_buffer_len, gnb_dl_task.rx_time, gnb_dl_task.slot_idx);
   logger.info("Send message to UE: RNTI %u Slot: %u Current Slot: %u",
               gnb_dl_task.rnti,
               gnb_dl_task.slot_idx,

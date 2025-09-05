@@ -33,6 +33,8 @@ struct ShadowerConfig {
   uint32_t nof_channels = 1; // Number of channels
   double   uplink_cfo;       // Uplink CFO correction for PUSCH decoding
   bool     fdd = false;      // FDD mode, true if uplink and downlink frequencies are different
+  uint32_t front_padding;    // Number of samples to pad in front of the signal
+  uint32_t end_padding;      // Number of samples to pad at the end of the signal
 
   // Derived Cell configurations
   srsran_ssb_pattern_t ssb_pattern;
@@ -101,6 +103,8 @@ inline int parse_args(ShadowerConfig& config, int argc, char* argv[])
       ("rf.sample_rate",  bpo::value<double>(&config.sample_rate)->default_value(23.04e6),  "Sample rate")
       ("rf.num_channels", bpo::value<uint32_t>(&config.nof_channels)->default_value(1),       "Number of channels")
       ("rf.uplink_cfo",   bpo::value<double>(&config.uplink_cfo)->default_value(0),         "Uplink CFO to apply")
+      ("rf.front_padding", bpo::value<uint32_t>(&config.front_padding)->default_value(0), "Number of samples to pad in front of the signal")
+      ("rf.end_padding",   bpo::value<uint32_t>(&config.end_padding)->default_value(0),   "Number of samples to pad at the end of the signal")
       // injector configuration section
       ("injector.delay_n_slots",      bpo::value<uint32_t>(&config.delay_n_slots)->default_value(2),    "Number of slots to delay before sending out")
       ("injector.duplications",       bpo::value<uint32_t>(&config.duplications)->default_value(100),   "Number of duplications to inject")

@@ -31,9 +31,12 @@ uint16_t           rnti            = 0x4601;
 srsran_rnti_type_t rnti_type       = srsran_rnti_type_c;
 uint32_t           mcs             = 0;
 uint32_t           prbs            = 12;
-uint32_t           tx_advancement  = 0;
+uint32_t           tx_advancement  = 59;
 uint32_t           total_send      = 0;
 uint32_t           total_decoded   = 0;
+uint32_t           dci_decoded     = 0;
+uint32_t           front_padding   = 108 + 1536;
+uint32_t           end_padding     = 120 + 1536;
 
 const uint8_t message_to_send[] = {0x01, 0x03, 0x00, 0x01, 0x00, 0x01, 0x0f, 0xc0, 0x00, 0x00, 0x00, 0x28, 0x80,
                                    0x8f, 0xc0, 0x0b, 0x60, 0x20, 0x00, 0x00, 0x00, 0x00, 0x3f, 0x00, 0x00};
@@ -55,13 +58,17 @@ void push_new_task(std::shared_ptr<Task>& task)
   task_queue.push(task);
 }
 
-int generate_test_waveform(ShadowerConfig& config, srsran::phy_cfg_nr_t& phy_cfg, uint32_t slot_len, cf_t* buffer)
+int generate_test_waveform(srslog::basic_logger& logger,
+                           ShadowerConfig&       config,
+                           srsran::phy_cfg_nr_t& phy_cfg,
+                           uint32_t              slot_len,
+                           cf_t*                 buffer)
 {
   /* GNB DL init with configuration from phy_cfg */
   srsran_gnb_dl_t gnb_dl        = {};
   cf_t*           gnb_dl_buffer = srsran_vec_cf_malloc(slot_len);
   if (!init_gnb_dl(gnb_dl, gnb_dl_buffer, phy_cfg, config.sample_rate)) {
-    printf("Failed to init GNB DL\n");
+    logger.error("Failed to init GNB DL");
     return -1;
   }
 
@@ -69,19 +76,19 @@ int generate_test_waveform(ShadowerConfig& config, srsran::phy_cfg_nr_t& phy_cfg
   srsran_softbuffer_tx_t softbuffer_tx = {};
   if (srsran_softbuffer_tx_init_guru(&softbuffer_tx, SRSRAN_SCH_NR_MAX_NOF_CB_LDPC, SRSRAN_LDPC_MAX_LEN_ENCODED_CB) <
       SRSRAN_SUCCESS) {
-    printf("Error initializing softbuffer_tx\n");
+    logger.error("Error initializing softbuffer_tx");
     return -1;
   }
   /* Zero out the gnb_dl resource grid */
   if (srsran_gnb_dl_base_zero(&gnb_dl) < SRSRAN_SUCCESS) {
-    printf("Error zero RE grid of gNB DL");
+    logger.error("Error zero RE grid of gNB DL");
     return -1;
   }
 
   /* Update pdcch with dci_cfg */
   srsran_dci_cfg_nr_t dci_cfg = phy_cfg.get_dci_cfg();
   if (srsran_gnb_dl_set_pdcch_config(&gnb_dl, &phy_cfg.pdcch, &dci_cfg) < SRSRAN_SUCCESS) {
-    printf("Error setting PDCCH config for gnb dl\n");
+    logger.error("Error setting PDCCH config for gnb dl");
     return -1;
   }
   srsran_slot_cfg_t slot_cfg = {.idx = target_slot_idx};
@@ -89,19 +96,19 @@ int generate_test_waveform(ShadowerConfig& config, srsran::phy_cfg_nr_t& phy_cfg
   /* Build the DCI message */
   srsran_dci_dl_nr_t dci_to_send = {};
   if (!construct_dci_dl_to_send(dci_to_send, phy_cfg, slot_cfg.idx, rnti, rnti_type, mcs, prbs)) {
-    printf("Error constructing DCI to send\n");
+    logger.error("Error constructing DCI to send");
     return -1;
   }
 
   /* Pack dci into pdcch */
   if (srsran_gnb_dl_pdcch_put_dl(&gnb_dl, &slot_cfg, &dci_to_send) < SRSRAN_SUCCESS) {
-    printf("Error putting DCI into PDCCH\n");
+    logger.error("Error putting DCI into PDCCH");
     return -1;
   }
   /* get pdsch_cfg from phy_cfg */
   srsran_sch_cfg_nr_t pdsch_cfg_gnb_dl = {};
   if (!phy_cfg.get_pdsch_cfg(slot_cfg, dci_to_send, pdsch_cfg_gnb_dl)) {
-    printf("Error getting PDSCH config from phy_cfg\n");
+    logger.error("Error getting PDSCH config from phy_cfg");
     return -1;
   }
 
@@ -109,7 +116,7 @@ int generate_test_waveform(ShadowerConfig& config, srsran::phy_cfg_nr_t& phy_cfg
   uint8_t* data_tx[SRSRAN_MAX_TB] = {};
   data_tx[0]                      = srsran_vec_u8_malloc(SRSRAN_SLOT_MAX_NOF_BITS_NR);
   if (data_tx[0] == nullptr) {
-    printf("Error allocating data buffer\n");
+    logger.error("Error allocating data buffer");
     return -1;
   }
 
@@ -120,7 +127,7 @@ int generate_test_waveform(ShadowerConfig& config, srsran::phy_cfg_nr_t& phy_cfg
   /* put the message into pdsch */
   pdsch_cfg_gnb_dl.grant.tb[0].softbuffer.tx = &softbuffer_tx;
   if (srsran_gnb_dl_pdsch_put(&gnb_dl, &slot_cfg, &pdsch_cfg_gnb_dl, data_tx) < SRSRAN_SUCCESS) {
-    printf("Error putting PDSCH message\n");
+    logger.error("Error putting PDSCH message");
     return -1;
   }
 
@@ -166,7 +173,7 @@ void sender_thread(srslog::basic_logger& logger,
     }
   }
 
-  uint32_t slot_per_sf      = 10 * (1 << config.scs_ssb);
+  uint32_t slot_per_frame   = 10 * (1 << config.scs_ssb);
   uint32_t slot_advancement = 7;
   uint32_t last_sent_slot   = 0;
   auto     last_send_time   = std::chrono::steady_clock::now();
@@ -180,7 +187,7 @@ void sender_thread(srslog::basic_logger& logger,
     uint32_t           slot_idx = 0;
     srsran_timestamp_t ts       = {};
     syncer->get_tti(&slot_idx, &ts);
-    if (slot_idx % slot_per_sf != 2) {
+    if (slot_idx % slot_per_frame != 4) {
       continue;
     }
     if (slot_idx == last_sent_slot) {
@@ -189,7 +196,7 @@ void sender_thread(srslog::basic_logger& logger,
     }
 
     uint32_t target_slot_idx = slot_idx + slot_advancement;
-    srsran_timestamp_add(&ts, 0, 2e-3 - tx_advancement / config.sample_rate);
+    srsran_timestamp_add(&ts, 0, 2e-3 - (tx_advancement + front_padding) / config.sample_rate);
     source->send(channels_ptr, num_samples, ts, target_slot_idx);
     last_sent_slot = slot_idx;
 
@@ -201,14 +208,31 @@ void sender_thread(srslog::basic_logger& logger,
     }
     total_send++;
     if (total_send % test_round == 0) {
-      logger.info("TX advancement: %u Total sent: %u, total decoded: %u", tx_advancement, total_send, total_decoded);
+      double success_rate = total_decoded / (double)total_send * 100;
+      double dci_rate     = dci_decoded / (double)total_send * 100;
+      double depend_rate  = total_decoded / (double)dci_decoded * 100;
+      logger.info(
+          "TX advancement: %u Total sent: %u, DCI decoded: %u (%.2f%%) PDSCH decoded: %u (%.2f%%) PDSCH/DCI %.2f%%",
+          tx_advancement,
+          total_send,
+          dci_decoded,
+          dci_rate,
+          total_decoded,
+          success_rate,
+          depend_rate);
     }
-    if (total_send % 500 == 0) {
-      tx_advancement += 6;
-      total_send    = 0;
-      total_decoded = 0;
-      logger.info("Increase TX advancement to %u", tx_advancement);
-    }
+    // if (total_send % 300 == 0) {
+    //   tx_advancement += 1;
+    //   total_send    = 0;
+    //   dci_decoded   = 0;
+    //   total_decoded = 0;
+    //   logger.info("Increase TX advancement to %u", tx_advancement);
+    //   if (tx_advancement > 65) {
+    //     logger.info("Test finished");
+    //     running = false;
+    //     break;
+    //   }
+    // }
   }
 }
 
@@ -278,6 +302,14 @@ void receiver_thread(srslog::basic_logger& logger,
       // logger.debug("Failed to get grant from dci search");
       continue;
     }
+    dci_decoded++;
+
+    // char filename[64];
+    // sprintf(filename, "decoded_msg_%u", dci_decoded);
+    // write_record_to_file(ue_dl_buffer, slot_len, filename);
+
+    // sprintf(filename, "ofdm_decoded_fft1272_%u", dci_decoded);
+    // write_record_to_file(ue_dl.sf_symbols[0], 1272 * 14, filename);
 
     /* Initialize pdsch result*/
     srsran_pdsch_res_nr_t pdsch_res = {};
@@ -336,7 +368,7 @@ int main(int argc, char* argv[])
   config.syncer_log_level = srslog::basic_levels::info;
   /* initialize logger */
   srslog::basic_logger& logger = srslog_init(&config);
-  logger.set_level(srslog::basic_levels::debug);
+  logger.set_level(srslog::basic_levels::info);
 
   /* initialize phy_cfg */
   srsran::phy_cfg_nr_t phy_cfg = {};
@@ -362,18 +394,25 @@ int main(int argc, char* argv[])
 
   /* Initialize source */
   create_source_t uhd_source = load_source(uhd_source_module_path);
-  config.nof_channels        = 1;
+  config.nof_channels        = 2;
   config.source_params       = source_param;
   config.sample_rate         = config.sample_rate;
   Source* source             = uhd_source(config);
 
   std::vector<cf_t> samples_to_inject(args.sf_len * 2);
-  if (generate_test_waveform(config, phy_cfg, args.slot_len, samples_to_inject.data()) != 0) {
+  if (generate_test_waveform(logger, config, phy_cfg, args.slot_len, samples_to_inject.data()) != 0) {
     logger.error("Failed to generate test waveform");
     return -1;
   }
+  // Shift the samples with a front-padding
+  uint32_t num_samples = args.slot_len + front_padding;
+  srsran_vec_cf_copy(samples_to_inject.data() + front_padding, samples_to_inject.data(), args.slot_len);
+  srsran_vec_cf_zero(samples_to_inject.data(), front_padding);
+  srsran_vec_cf_zero(samples_to_inject.data() + num_samples, end_padding);
+  num_samples += end_padding;
 
-  float scale = 20.0f;
+  // Scale the IQ samples
+  float scale = 1.0f;
   srsran_vec_sc_prod_cfc(samples_to_inject.data(), scale, samples_to_inject.data(), args.slot_len);
 
   int                max_priority = sched_get_priority_max(SCHED_FIFO) - 1;
@@ -396,7 +435,7 @@ int main(int argc, char* argv[])
   syncer->publish_subframe = std::bind(push_new_task, std::placeholders::_1);
   /* Sender thread keep sending waveform */
   std::thread sender(
-      sender_thread, std::ref(logger), std::ref(samples_to_inject), args.slot_len, source, syncer, std::ref(config));
+      sender_thread, std::ref(logger), std::ref(samples_to_inject), num_samples, source, syncer, std::ref(config));
   pthread_setschedparam(sender.native_handle(), SCHED_OTHER, &param);
 
   /* Receiver thread keep processing sent SSB blocks */
