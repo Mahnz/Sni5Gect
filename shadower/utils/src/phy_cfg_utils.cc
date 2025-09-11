@@ -9,7 +9,7 @@ void init_phy_cfg(srsran::phy_cfg_nr_t& phy_cfg, ShadowerConfig& config)
   phy_cfg.carrier.ul_center_frequency_hz = config.ul_freq;
   phy_cfg.carrier.ssb_center_freq_hz     = config.ssb_freq;
   phy_cfg.carrier.sample_rate_hz         = config.sample_rate;
-  phy_cfg.carrier.offset_to_carrier      = config.freq_offset;
+  phy_cfg.carrier.offset_to_carrier      = config.offset_to_carrier;
   phy_cfg.carrier.scs                    = config.scs_common;
   phy_cfg.carrier.nof_prb                = config.nof_prb;
   phy_cfg.carrier.max_mimo_layers        = 1;

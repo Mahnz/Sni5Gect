@@ -3,6 +3,8 @@
 #include "shadower/utils/phy_cfg_utils.h"
 #include "shadower/utils/utils.h"
 #include "srsran/support/srsran_test.h"
+#include <unistd.h>
+
 std::string    sample_file;
 std::string    mib_config_file;
 std::string    sib_config_file;

@@ -3,6 +3,8 @@
 #include "shadower/utils/phy_cfg_utils.h"
 #include "shadower/utils/utils.h"
 #include "srsran/support/srsran_test.h"
+#include <unistd.h>
+
 std::string    sample_file;
 std::string    mib_config_file;
 uint32_t       sib_slot_idx = 0;
@@ -97,7 +99,7 @@ int main(int argc, char* argv[])
   /* Show MIB information */
   std::array<char, 512> mib_info_str = {};
   srsran_pbch_msg_nr_mib_info(&mib, mib_info_str.data(), mib_info_str.size());
-logger.info("Applying MIB config: %s", mib_info_str.data());
+  logger.info("Applying MIB config: %s", mib_info_str.data());
 
   /* Initialize broadcast worker */
   bool            found_sib1 = false;

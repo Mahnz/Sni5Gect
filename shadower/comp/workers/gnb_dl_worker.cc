@@ -127,13 +127,13 @@ void GNBDLWorker::work_imp()
   }
 
   srsran_vec_apply_cfo(tx_buffer, -config.tx_cfo_correction / config.sample_rate, tx_buffer, tx_buffer_len);
-  uint32_t end_padding_size = config.end_padding;
-  if (tx_buffer_len + config.end_padding > 1.8 * sf_len) {
-    end_padding_size = 1.8 * sf_len - tx_buffer_len;
+  uint32_t back_padding_size = config.back_padding;
+  if (tx_buffer_len + config.back_padding > 1.8 * sf_len) {
+    back_padding_size = 1.8 * sf_len - tx_buffer_len;
   }
   srsran_vec_cf_zero(tx_buffer, config.front_padding);
-  srsran_vec_cf_zero(tx_buffer + tx_buffer_len, end_padding_size);
-  tx_buffer_len += end_padding_size;
+  srsran_vec_cf_zero(tx_buffer + tx_buffer_len, back_padding_size);
+  tx_buffer_len += back_padding_size;
 
   /* calculate the timestamp to send out the message */
   srsran_timestamp_add(&gnb_dl_task.rx_time,

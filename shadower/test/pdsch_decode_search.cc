@@ -4,6 +4,7 @@
 #include "srsran/phy/phch/pbch_msg_nr.h"
 #include "srsran/phy/ue/ue_dl_nr.h"
 #include "test_variables.h"
+#include <unistd.h>
 
 std::string sample_file;
 std::string last_sample_file;
