@@ -21,22 +21,22 @@ rf:
   uplink_cfo: 0 # Uplink Carrier Frequency Offset correction in Hz
   downlink_cfo: 0 # Downlink Carrier Frequency Offset (CFO) in Hz
   padding:
-    front_padding: 0 # Number of IQ samples to pad in front of each burst
-    back_padding: 0 # Number of IQ samples to pad at the end of each burst
+    front_padding: 1644 # Number of IQ samples to pad in front of each burst
+    back_padding: 1656 # Number of IQ samples to pad at the end of each burst
   channels:
     - rx_frequency: 1865e6
       tx_frequency: 1865e6
       rx_offset: 0
-      tx_offset: 0
+      tx_offset: 3000
       rx_gain: 24
-      tx_gain: 31
+      tx_gain: 30
       enable: true
     - rx_frequency: 1770e6
       tx_frequency: 1770e6
       rx_offset: 0
       tx_offset: 0
       rx_gain: 24
-      tx_gain: 31
+      tx_gain: 30
       enable: true
 
 workers:
@@ -56,9 +56,9 @@ downlink_injector:
   delay_n_slots: 3 # Number of slots to delay injecting the message
   duplications: 4 # Number of duplications to send in each inject
   tx_cfo_correction: 0 # Uplink CFO correction (Hz)
-  tx_advancement: 58 # Number of samples to send in advance
-  pdsch_mcs: 0 # PDSCH MCS
-  pdsch_prbs: 12 # PDSCH PRBs
+  tx_advancement: 40 # Number of samples to send in advance
+  pdsch_mcs: 3 # PDSCH MCS
+  pdsch_prbs: 48 # PDSCH PRBs
 
 
 log:
@@ -68,3 +68,13 @@ log:
   bc_worker: INFO
 
 exploit: build/modules/lib_dummy_exploit.so # exploit module to use
+# exploit:  build/modules/lib_identity_request.so
+# exploit:  build/modules/lib_dg_authentication_request_sniffer.so
+# exploit:  build/modules/lib_dg_authentication_replay.so
+# exploit:  build/modules/lib_dg_registration_reject.so
+# exploit:  build/modules/lib_mac_sch_mtk_rlc_crash.so
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_3.so
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_4.so
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_6.so
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_7.so
+# exploit:  build/modules/lib_plaintext_registration_accept.so

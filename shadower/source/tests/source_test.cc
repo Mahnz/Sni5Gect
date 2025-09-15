@@ -1,6 +1,7 @@
 #include "shadower/source/source.h"
 #include "shadower/utils/constants.h"
 #include "shadower/utils/utils.h"
+#include <algorithm>
 #include <getopt.h>
 
 ShadowerConfig config        = {};
@@ -10,42 +11,92 @@ std::string    source_type   = "uhd";
 std::string    source_params = "type=b200";
 std::string    sample_file   = "shadower/test/data/ssb.fc32";
 
+void usage(const char* prog)
+{
+  printf("Usage: %s [options]\n", prog);
+  printf("  -f <freq[,freq]>  DL,UL freq for channel 0 in MHz (if one value given, both RX/TX use it)\n");
+  printf("  -F <freq[,freq]>  DL,UL freq for channel 1 in MHz\n");
+  printf("  -g <rx,tx>        RX,TX gains for channel 0\n");
+  printf("  -G <rx,tx>        RX,TX gains for channel 1\n");
+  printf("  -s <MHz>          Sample rate in MHz\n");
+  printf("  -t <str>          Source type\n");
+  printf("  -d <str>          Source parameters\n");
+  printf("  -c <n>            Number of channels (max 2)\n");
+  printf("  -r <n>            Number of test rounds\n");
+}
+
+static void parse_freq(const char* arg, double& rx, double& tx)
+{
+  double f1 = 0, f2 = 0;
+  int    n = sscanf(arg, "%lf,%lf", &f1, &f2);
+  if (n == 1) {
+    rx = tx = f1 * 1e6;
+  } else if (n == 2) {
+    rx = f1 * 1e6;
+    tx = f2 * 1e6;
+  } else {
+    fprintf(stderr, "Invalid frequency format: %s\n", arg);
+    exit(EXIT_FAILURE);
+  }
+}
+
+static void parse_gain(const char* arg, double& rx, double& tx)
+{
+  double g1 = 0, g2 = 0;
+  if (sscanf(arg, "%lf,%lf", &g1, &g2) != 2) {
+    fprintf(stderr, "Invalid gain format (expected rx,tx): %s\n", arg);
+    exit(EXIT_FAILURE);
+  }
+  rx = g1;
+  tx = g2;
+}
+
 void parse_args(int argc, char** argv)
 {
   int opt;
-  while ((opt = getopt(argc, argv, "fgstdcr")) != -1) {
+  config.channels.resize(2);
+  while ((opt = getopt(argc, argv, "f:F:g:G:s:t:d:c:r:")) != -1) {
     switch (opt) {
       case 'f': {
-        double centerFreqMHz = atof(argv[optind]);
-        config.dl_freq       = centerFreqMHz * 1e6;
-        config.ul_freq       = centerFreqMHz * 1e6;
-        printf("Using center frequency %f\n", config.dl_freq);
+        parse_freq(optarg, config.channels[0].rx_frequency, config.channels[0].tx_frequency);
+        config.channels[0].enabled = true;
         break;
       }
-      case 'g':
-        config.tx_gain = atoi(argv[optind]) + 20;
-        config.rx_gain = atoi(argv[optind]);
-        break;
-      case 's': {
-        double sampleRateMHz = atof(argv[optind]);
-        config.sample_rate   = sampleRateMHz * 1e6;
+      case 'F': {
+        parse_freq(optarg, config.channels[1].rx_frequency, config.channels[1].tx_frequency);
+        config.channels[1].enabled = true;
         break;
       }
+      case 'g': {
+        parse_gain(optarg, config.channels[0].rx_gain, config.channels[0].tx_gain);
+        break;
+      }
+      case 'G': {
+        parse_gain(optarg, config.channels[1].rx_gain, config.channels[1].tx_gain);
+        break;
+      }
+      case 's':
+        config.sample_rate = strtod(optarg, nullptr) * 1e6;
+        break;
       case 't':
-        config.source_type = argv[optind];
+        config.source_type = optarg;
         break;
       case 'd':
-        config.source_params = argv[optind];
+        config.source_params = optarg;
         break;
-      case 'c':
-        config.nof_channels = atoi(argv[optind]);
-        break;
+
       case 'r':
-        rounds = atoi(argv[optind]);
+        rounds = atoi(optarg);
         break;
       default:
-        fprintf(stderr, "Unknown option %s\n", argv[optind]);
+        usage(argv[0]);
         exit(EXIT_FAILURE);
+    }
+  }
+  config.nof_channels = 0;
+  for (uint32_t i = 0; i < 2; i++) {
+    if (config.channels[i].enabled) {
+      config.nof_channels++;
     }
   }
 }
@@ -54,10 +105,9 @@ int main(int argc, char* argv[])
 {
   parse_args(argc, argv);
   /* initialize logger */
-  config.log_level               = srslog::basic_levels::debug;
-  srslog::basic_logger& logger   = srslog_init(&config);
-  uint32_t              sf_len   = config.sample_rate * SF_DURATION;
-  uint32_t              slot_len = sf_len / 2;
+  config.log_level             = srslog::basic_levels::debug;
+  srslog::basic_logger& logger = srslog_init(&config);
+  uint32_t              sf_len = config.sample_rate * SF_DURATION;
 
   if (config.source_type == "uhd") {
     config.source_module = uhd_source_module_path;
@@ -86,15 +136,17 @@ int main(int argc, char* argv[])
   }
 
   for (uint32_t i = 0; i < rounds; i++) {
-    sprintf(filename, "received_data_%u", i);
     /* Receive the samples again */
     source->recv(rx_buffers, sf_len, &ts);
     if (i % 5 == 0) {
       /* Send the samples out */
       srsran_timestamp_add(&ts, 0, send_delay);
-      source->send(tx_buffers, slot_len, ts);
+      source->send(tx_buffers, sf_len, ts);
     }
-    write_record_to_file(rx_buffers[0], sf_len, filename);
+    for (uint32_t ch = 0; ch < config.nof_channels; ch++) {
+      sprintf(filename, "received_data_%u_ch_%u", i, ch);
+      write_record_to_file(rx_buffers[ch], sf_len, filename);
+    }
     if (i % 10 == 0) {
       printf(".");
       fflush(stdout);
