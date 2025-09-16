@@ -1,11 +1,11 @@
 cell:
-  band: 78 # Band number
-  nof_prb: 51 # Number of Physical Resource Blocks
-  scs_common: 30 # Subcarrier Spacing for common (kHz)
-  scs_ssb: 30 # Subcarrier Spacing for SSB (kHz)
+  band: 1 # Band number
+  nof_prb: 106 # Number of Physical Resource Blocks
+  scs_common: 15 # Subcarrier Spacing for common (kHz)
+  scs_ssb: 15 # Subcarrier Spacing for SSB (kHz)
   ssb_period_ms: 10 # SSB periodicity in milliseconds
-  dl_arfcn: 628500 # Downlink ARFCN
-  ssb_arfcn: 628128 # SSB ARFCN
+  dl_arfcn: 430000 # Downlink ARFCN
+  ssb_arfcn: 428650 # SSB ARFCN
 
 
 source:
@@ -24,8 +24,8 @@ rf:
     front_padding: 0 # Number of IQ samples to pad in front of each burst
     back_padding: 0 # Number of IQ samples to pad at the end of each burst
   channels:
-    - rx_frequency: 3427.5e6
-      tx_frequency: 3427.5e6
+    - rx_frequency: 2150.0e6
+      tx_frequency: 2150.0e6
       rx_offset: 0
       tx_offset: 0
       rx_gain: 40

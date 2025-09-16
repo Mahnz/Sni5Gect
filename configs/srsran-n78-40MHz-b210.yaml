@@ -1,22 +1,22 @@
 cell:
   band: 78 # Band number
-  nof_prb: 51 # Number of Physical Resource Blocks
+  nof_prb: 106 # Number of Physical Resource Blocks
   scs_common: 30 # Subcarrier Spacing for common (kHz)
   scs_ssb: 30 # Subcarrier Spacing for SSB (kHz)
   ssb_period_ms: 10 # SSB periodicity in milliseconds
   dl_arfcn: 628500 # Downlink ARFCN
-  ssb_arfcn: 628128 # SSB ARFCN
+  ssb_arfcn: 627552 # SSB ARFCN
 
 
 source:
   source_type: uhd
-  source_params: type=b200,master_clock_rate=23.04e6,serial=3218CC4
+  source_params: type=b200,master_clock_rate=46.08e6,serial=3218CC4
 
 enable_recorder: false # record the IQ samples to file
 pcap_folder: logs/
 
 rf:
-  sample_rate: 23.04e6
+  sample_rate: 46.08e6
   num_channels: 1
   uplink_cfo: -0.00054 # Uplink Carrier Frequency Offset correction in Hz
   downlink_cfo: 0 # Downlink Carrier Frequency Offset (CFO) in Hz
@@ -43,7 +43,7 @@ uetracker:
   close_timeout: 5000 # ms: stop tracking if no messages received
   parse_messages: true # Parse messages
   num_ues: 5 # Number of UETrackers to pre-initialize
-  enable_gpu: false # GPU acceleration for decoding
+  enable_gpu: true # GPU acceleration for decoding
 
 downlink_injector:
   delay_n_slots: 5 # Number of slots to delay injecting the message
