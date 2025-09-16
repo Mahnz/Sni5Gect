@@ -8,6 +8,7 @@
 #include <fstream>
 #include <future>
 #include <mutex>
+#include <unistd.h>
 
 std::string source_type  = "file";
 std::string source_param = "shadower/test/data/srsran-n78-20MHz/sib.fc32";

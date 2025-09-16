@@ -4,11 +4,11 @@
 #include "srsran/phy/sync/ssb.h"
 #include <getopt.h>
 
-ShadowerConfig              config      = {};
-double                      sample_rate = 23.04e6;
-uint32_t                    sf_len      = 23.04e3;
+ShadowerConfig              config = {};
+uint32_t                    sf_len;
 double                      start_freq;
 double                      stop_freq;
+double                      sample_rate   = 23.04e6;
 uint32_t                    band          = 78;
 uint32_t                    rounds        = 100;
 uint32_t                    rx_gain       = 40;
@@ -29,7 +29,6 @@ void parse_args(int argc, char* argv[])
       case 'f': {
         double startFreqMHz = atof(argv[optind]);
         start_freq          = startFreqMHz * 1e6;
-        sf_len              = sample_rate * SF_DURATION;
         printf("Start frequency: %f MHz\n", startFreqMHz);
         break;
       }
@@ -65,6 +64,7 @@ void parse_args(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
   }
+  sf_len = sample_rate * SF_DURATION;
 }
 
 void scan_ssb(Source*                     source,
@@ -77,7 +77,10 @@ void scan_ssb(Source*                     source,
   srsran_ssb_t       ssb = {};
   srsran_timestamp_t ts  = {};
 
-  if (!init_ssb(ssb, srate, ssb_freq, ssb_freq, scs, SRSRAN_SSB_PATTERN_C, SRSRAN_DUPLEX_MODE_TDD)) {
+  srsran::srsran_band_helper band_helper;
+  srsran_ssb_pattern_t       ssb_pattern = band_helper.get_ssb_pattern(band, scs);
+  srsran_duplex_mode_t       duplex_mode = band_helper.get_duplex_mode(band);
+  if (!init_ssb(ssb, srate, ssb_freq, ssb_freq, scs, ssb_pattern, duplex_mode)) {
     logger.error("Error initializing SSB");
     srsran_ssb_free(&ssb);
     return;
@@ -92,7 +95,7 @@ void scan_ssb(Source*                     source,
   rx_buffer[0] = buffer;
   for (uint32_t i = 0; i < round; i++) {
     /* Receive samples */
-    source->recv(rx_buffer, sf_len * 0.1, &ts);
+    source->recv(rx_buffer, sf_len * SF_DURATION, &ts);
     source->recv(rx_buffer, sf_len, &ts);
     /* search for SSB */
     srsran_ssb_search_res_t res = {};
@@ -144,10 +147,13 @@ int main(int argc, char* argv[])
   config.source_module  = uhd_source_module_path;
   config.source_params  = source_params;
   config.sample_rate    = sample_rate;
-  config.dl_freq        = start_freq;
-  config.ul_freq        = start_freq;
-  config.rx_gain        = rx_gain;
-  config.tx_gain        = 0;
+  config.channels.resize(1);
+
+  ChannelConfig& cfg = config.channels[0];
+  cfg.rx_frequency   = start_freq;
+  cfg.tx_frequency   = start_freq;
+  cfg.rx_gain        = rx_gain;
+  cfg.tx_gain        = 0;
 
   create_source_t uhd_source_creator = load_source(uhd_source_module_path);
   Source*         source             = uhd_source_creator(config);

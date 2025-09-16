@@ -10,6 +10,7 @@
 #include <complex>
 #include <fstream>
 #include <iostream>
+#include <unistd.h>
 #include <vector>
 
 ShadowerConfig config = {};
