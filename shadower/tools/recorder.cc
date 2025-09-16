@@ -24,148 +24,148 @@ std::queue<std::shared_ptr<frame_t> > queue;
 std::condition_variable               cv;
 std::mutex                            mtx;
 
-bool           fdd           = false;
-bool           ul_freq_set   = false;
 double         dl_freq       = 3427.5e6;
-double         ul_freq       = 3427.5e6;
 double         sample_rate   = 23.04e6;
 double         gain          = 40;
 uint32_t       num_frames    = 20000;
-uint32_t       num_channels  = 1;
 std::string    output_file   = "output";
 std::string    output_folder = "/root/records/";
 std::string    source_type   = "uhd";
 std::string    device_args   = "type=b200";
-double         resample_rate = 1.0;
 ShadowerConfig config        = {};
 uint32_t       sf_len        = 0;
 
 void sigint_handler(int signum)
 {
-  if (signum == SIGINT) {
-    printf("Received SIGINT, stopping...\n");
-  } else if (signum == SIGTERM) {
-    printf("Received SIGTERM, stopping...\n");
+  if (stop_flag.load()) {
+    if (signum == SIGINT) {
+      printf("Received SIGINT, stopping...\n");
+    } else if (signum == SIGTERM) {
+      printf("Received SIGTERM, stopping...\n");
+    }
+  } else {
+    exit(EXIT_FAILURE);
   }
   stop_flag.store(true);
   printf("Received signal %d, stopping...\n", signum);
 }
 
+void usage(const char* prog)
+{
+  printf("Usage: %s [options]\n", prog);
+  printf("  -f <freq[,freq]>  DL,UL freq for channel 0 in MHz (if one value given, both RX/TX use it)\n");
+  printf("  -F <freq[,freq]>  DL,UL freq for channel 1 in MHz\n");
+  printf("  -g rx             RX,TX gains for channel 0\n");
+  printf("  -G rx             RX,TX gains for channel 1\n");
+  printf("  -s <MHz>          Sample rate in MHz\n");
+  printf("  -t <str>          Source type\n");
+  printf("  -d <str>          Source parameters\n");
+  printf("  -n <n>            Number of test rounds\n");
+  printf("  -o <file>         Output file name\n");
+  printf("  -O <folder>       Output folder name\n");
+}
+
+static void parse_freq(const char* arg, double& rx, double& tx)
+{
+  double f1 = 0, f2 = 0;
+  int    n = sscanf(arg, "%lf,%lf", &f1, &f2);
+  if (n == 1) {
+    rx = tx = f1 * 1e6;
+  } else if (n == 2) {
+    rx = f1 * 1e6;
+    tx = f2 * 1e6;
+  } else {
+    fprintf(stderr, "Invalid frequency format: %s\n", arg);
+    exit(EXIT_FAILURE);
+  }
+}
+
+std::string join_path(const std::string& folder, const std::string& file)
+{
+  if (folder.empty()) {
+    return file;
+  }
+  if (folder.back() == '/') {
+    return folder + file;
+  } else {
+    return folder + "/" + file;
+  }
+}
+
 void parse_args(int argc, char* argv[])
 {
   int opt;
-  int option_index = 0;
-
-  static struct option long_options[] = {
-
-      {"frequency", required_argument, 0, 'f'},
-      {"ul-freq", required_argument, 0, 'u'},
-      {"srate", required_argument, 0, 's'},
-      {"gain", required_argument, 0, 'g'},
-      {"frames", required_argument, 0, 'n'},
-      {"channels", required_argument, 0, 'c'},
-      {"output", required_argument, 0, 'o'},
-      {"folder", required_argument, 0, 'F'},
-      {"source-type", required_argument, 0, 't'},
-      {"device-args", required_argument, 0, 'd'},
-      {0, 0, 0, 0}
-
-  };
-
-  while ((opt = getopt_long(argc, argv, "f:u:s:g:n:c:o:F:t:d:h", long_options, &option_index)) != -1) {
+  config.channels.resize(2);
+  while ((opt = getopt(argc, argv, "f:F:g:G:s:t:d:n:o:O:")) != -1) {
     switch (opt) {
       case 'f': {
-        double dl_freq_MHz = atof(optarg);
-        dl_freq            = dl_freq_MHz * 1e6;
+        parse_freq(optarg, config.channels[0].rx_frequency, config.channels[0].tx_frequency);
+        config.channels[0].enabled = true;
         break;
       }
-      case 'u': {
-        double ul_freq_MHz = atof(optarg);
-        ul_freq            = ul_freq_MHz * 1e6;
-        ul_freq_set        = true;
+      case 'F': {
+        parse_freq(optarg, config.channels[1].rx_frequency, config.channels[1].tx_frequency);
+        config.channels[1].enabled = true;
         break;
       }
-      case 's': {
-        double sample_rate_MHz = atof(optarg);
-        sample_rate            = sample_rate_MHz * 1e6;
+      case 'g': {
+        // Configure RX and TX gains for channel from command line
+        config.channels[0].rx_gain = strtod(optarg, nullptr);
+        config.channels[0].tx_gain = 0;
         break;
       }
-      case 'g':
-        gain = atof(optarg);
+      case 'G': {
+        // Configure RX and TX gains for channel from command line
+        config.channels[1].rx_gain = strtod(optarg, nullptr);
+        config.channels[1].tx_gain = 0;
+        break;
+      }
+      case 's':
+        config.sample_rate = strtod(optarg, nullptr) * 1e6;
+        break;
+      case 't':
+        config.source_type = optarg;
+        break;
+      case 'd':
+        config.source_params = optarg;
         break;
       case 'n':
         num_frames = atoi(optarg);
         break;
-      case 'c':
-        num_channels = atoi(optarg);
-        break;
       case 'o':
         output_file = optarg;
         break;
-      case 'F':
+      case 'O':
         output_folder = optarg;
         break;
-      case 't':
-        source_type = optarg;
-        break;
-      case 'd':
-        device_args = optarg;
-        break;
-      case 'h': {
-        printf("Usage: %s [options]\n", argv[0]);
-        printf("Options:\n");
-        printf("  -f, --frequency <MHz>       Set the downlink frequency (MHz)\n");
-        printf("  -u, --ul-freq <MHz>         Set the uplink frequency (MHz)\n");
-        printf("  -s, --srate <MHz>           Set the sample rate (MHz)\n");
-        printf("  -g, --gain <dB>             Set the gain (dB)\n");
-        printf("  -n, --frames <count>        Set the number of frames to process\n");
-        printf("  -c, --channels <count>      Set the number of channels\n");
-        printf("  -o, --output <file>         Set the output file name\n");
-        printf("  -F, --folder <path>         Set the output folder path\n");
-        printf("  -t, --source-type <type>    Set the source type (e.g., uhd)\n");
-        printf("  -d, --device-args <args>    Set the device arguments for the source\n");
-        printf("  -h, --help                  Show this help message\n");
-        exit(EXIT_SUCCESS);
-      }
       default:
-        fprintf(stderr, "Unknown option or missing argument.\n");
+        usage(argv[0]);
         exit(EXIT_FAILURE);
     }
   }
-
-  /* if dl frequency is different from ul frequency, then fdd is set to true */
-  if (ul_freq_set && ul_freq != dl_freq) {
-    fdd = true;
-  } else {
-    ul_freq = dl_freq;
+  config.nof_channels = 0;
+  for (uint32_t i = 0; i < 2; i++) {
+    if (config.channels[i].enabled) {
+      config.nof_channels++;
+      printf("Channel %u enabled\n", i);
+      printf("  RX frequency: %f MHz\n", config.channels[i].rx_frequency / 1e6);
+      printf("  TX frequency: %f MHz\n", config.channels[i].tx_frequency / 1e6);
+      printf("  RX gain: %f dB\n", config.channels[i].rx_gain);
+      printf("  TX gain: %f dB\n", config.channels[i].tx_gain);
+    }
   }
 
-  printf("Using DL Center Frequency: %f MHz\n", dl_freq / 1e6);
-  printf("      UL Center Frequency: %f MHz\n", ul_freq / 1e6);
-  printf("      Sample Rate: %f MHz\n", sample_rate / 1e6);
-  printf("      Gain: %f db\n", gain);
-  printf("      Number of Channels: %d\n", num_channels);
-  printf("      Device Args: %s\n", device_args.c_str());
-  printf("      Is FDD: %s\n", fdd ? "true" : "false");
-  output_file = output_folder + output_file;
-  if (num_channels == 1) {
-    printf("      Output File: %s\n", output_file.c_str());
-  }
-  config.sample_rate   = sample_rate;
-  config.dl_freq       = dl_freq;
-  config.ul_freq       = ul_freq;
-  config.rx_gain       = gain;
-  config.tx_gain       = gain;
-  config.nof_channels  = num_channels;
-  config.source_params = device_args;
-  sf_len               = sample_rate * SF_DURATION;
+  printf("Sample Rate: %f MHz\n", config.sample_rate / 1e6);
+  printf("Number of Channels: %d\n", config.nof_channels);
+  printf("Device Args: %s\n", config.source_params.c_str());
+  output_file = join_path(output_folder, output_file);
+  sf_len      = config.sample_rate * SF_DURATION;
 }
 
 void receiver_worker()
 {
   /* Initialize Source */
   Source* source = nullptr;
-
   if (source_type == "uhd") {
     create_source_t create_source = load_source(uhd_source_module_path);
     source                        = create_source(config);
@@ -182,7 +182,7 @@ void receiver_worker()
     cf_t*                    rx_buffer[SRSRAN_MAX_CHANNELS];
     frame->frames_idx = count;
 
-    for (uint32_t i = 0; i < num_channels; i++) {
+    for (uint32_t i = 0; i < config.nof_channels; i++) {
       std::shared_ptr<std::vector<cf_t> > buf = buffer_pool->get_buffer();
       frame->buffer[i]                        = buf;
       rx_buffer[i]                            = buf->data();
@@ -208,10 +208,11 @@ void writer_worker()
 {
   // Create output files
   std::ofstream outfiles[SRSRAN_MAX_CHANNELS];
-  if (num_channels > 1) {
-    for (uint32_t i = 0; i < num_channels; i++) {
+  if (config.nof_channels > 1) {
+    for (uint32_t i = 0; i < config.nof_channels; i++) {
       outfiles[i].open(output_file + "_ch_" + std::to_string(i) + ".fc32", std::ios::binary);
       if (!outfiles[i].is_open()) {
+        stop_flag.store(true);
         fprintf(stderr, "Failed to open output file\n");
         exit(EXIT_FAILURE);
       }
@@ -219,6 +220,7 @@ void writer_worker()
   } else {
     outfiles[0].open(output_file + ".fc32", std::ios::binary);
     if (!outfiles[0].is_open()) {
+      stop_flag.store(true);
       fprintf(stderr, "Failed to open output file\n");
       exit(EXIT_FAILURE);
     }
@@ -235,7 +237,7 @@ void writer_worker()
       frame = queue.front();
       queue.pop();
     }
-    for (uint32_t i = 0; i < num_channels; i++) {
+    for (uint32_t i = 0; i < config.nof_channels; i++) {
       uint32_t num_output_samples = frame->buffer_size;
       outfiles[i].write((char*)frame->buffer[i]->data(), num_output_samples * sizeof(cf_t));
     }

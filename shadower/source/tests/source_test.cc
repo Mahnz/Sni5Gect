@@ -21,7 +21,6 @@ void usage(const char* prog)
   printf("  -s <MHz>          Sample rate in MHz\n");
   printf("  -t <str>          Source type\n");
   printf("  -d <str>          Source parameters\n");
-  printf("  -c <n>            Number of channels (max 2)\n");
   printf("  -r <n>            Number of test rounds\n");
 }
 
@@ -55,7 +54,7 @@ void parse_args(int argc, char** argv)
 {
   int opt;
   config.channels.resize(2);
-  while ((opt = getopt(argc, argv, "f:F:g:G:s:t:d:c:r:")) != -1) {
+  while ((opt = getopt(argc, argv, "f:F:g:G:s:t:d:r:")) != -1) {
     switch (opt) {
       case 'f': {
         parse_freq(optarg, config.channels[0].rx_frequency, config.channels[0].tx_frequency);

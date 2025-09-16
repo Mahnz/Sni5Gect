@@ -144,23 +144,22 @@ void handle_syncer_exit(Syncer* syncer, std::thread& sender, std::vector<std::th
 }
 
 void sender_thread(srslog::basic_logger& logger,
-                   std::vector<cf_t>     samples,
+                   std::vector<cf_t>&    samples,
                    uint32_t              num_samples,
                    Source*               source,
                    Syncer*               syncer,
                    ShadowerConfig&       config)
 {
-  cf_t* channels_ptr[SRSRAN_MAX_CHANNELS];
+  cf_t* channels_ptr[SRSRAN_MAX_CHANNELS] = {};
   for (int i = 0; i < SRSRAN_MAX_CHANNELS; i++) {
-    if (i < source->nof_channels) {
-      channels_ptr[i] = samples.data();
-    } else {
-      channels_ptr[i] = nullptr;
-    }
+    channels_ptr[i] = nullptr;
   }
+  channels_ptr[0] = samples.data();
 
-  uint32_t slot_per_sf      = 10 * (1 << config.scs_ssb);
-  uint32_t slot_advancement = 7;
+  uint32_t slot_per_sf      = 1 << config.scs_ssb;
+  uint32_t slot_per_frame   = 10 * slot_per_sf;
+  double   slot_duration    = SF_DURATION / slot_per_sf;
+  uint32_t slot_advancement = 6;
   uint32_t last_slot        = 0;
   auto     last_send_time   = std::chrono::steady_clock::now();
   uint32_t send_idx         = 0;
@@ -171,10 +170,10 @@ void sender_thread(srslog::basic_logger& logger,
       continue;
     }
     /* Get the timestamp from syncer */
-    uint32_t           slot_idx = 0;
-    srsran_timestamp_t ts       = {};
+    uint32_t           slot_idx;
+    srsran_timestamp_t ts;
     syncer->get_tti(&slot_idx, &ts);
-    if (slot_idx % slot_per_sf != 2) {
+    if (slot_idx % slot_per_frame != 2) {
       continue;
     }
     if (slot_idx == last_slot) {
@@ -182,8 +181,9 @@ void sender_thread(srslog::basic_logger& logger,
       continue;
     }
 
+    /* Send the samples */
     uint32_t target_slot_idx = slot_idx + slot_advancement;
-    srsran_timestamp_add(&ts, 0, 2e-3);
+    srsran_timestamp_add(&ts, 0, slot_duration * slot_advancement);
     source->send(channels_ptr, num_samples, ts, target_slot_idx);
     last_slot = slot_idx;
 
@@ -279,20 +279,60 @@ void receiver_thread(srslog::basic_logger& logger, ShadowerConfig& config, uint3
   srsran_ssb_free(&ssb);
 }
 
-void parse_args(int argc, char* argv[])
+void parse_args(int argc, char* argv[], ShadowerConfig& config)
 {
   int opt;
-  while ((opt = getopt(argc, argv, "pPsr")) != -1) {
+  config.channels.resize(1);
+  while ((opt = getopt(argc, argv, "dPtTsSfFHgGcrB")) != -1) {
     switch (opt) {
-      case 'p':
-        source_param = argv[optind];
+      case 'd':
+        config.source_params = argv[optind];
         break;
       case 'P':
-        ssb_period = atoi(argv[optind]);
+        config.ssb_period = atoi(argv[optind]);
         break;
-      case 's': {
+      case 't': {
+        config.ssb_freq = atof(argv[optind]) * 1e6;
+        break;
+      }
+      case 'T': {
         double test_ssb_freq_MHz = atof(argv[optind]);
         test_ssb_freq            = test_ssb_freq_MHz * 1e6;
+        break;
+      }
+      case 's':
+        config.sample_rate = atof(argv[optind]) * 1e6;
+        break;
+      case 'S': {
+        config.scs_ssb = srsran_subcarrier_spacing_from_str(argv[optind]);
+        break;
+      }
+      case 'f': {
+        double center_freq_MHz = atof(argv[optind]);
+        config.dl_freq         = center_freq_MHz * 1e6;
+        config.ul_freq         = center_freq_MHz * 1e6;
+        break;
+      }
+      case 'F': {
+        config.channels[0].rx_frequency = atof(argv[optind]) * 1e6;
+        break;
+      }
+      case 'H': {
+        config.channels[0].tx_frequency = atof(argv[optind]) * 1e6;
+        break;
+      }
+      case 'g': {
+        config.channels[0].rx_gain = atof(argv[optind]);
+        break;
+      }
+      case 'G':
+        config.channels[0].tx_gain = atof(argv[optind]);
+        break;
+      case 'B':
+        config.band = atoi(argv[optind]);
+        break;
+      case 'c': {
+        config.nof_channels = atoi(argv[optind]);
         break;
       }
       case 'r':
@@ -303,6 +343,11 @@ void parse_args(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
   }
+  config.channels[0].enabled = true;
+  if (config.channels[0].rx_frequency == 0 || config.channels[0].tx_frequency == 0) {
+    config.channels[0].rx_frequency = config.dl_freq;
+    config.channels[0].tx_frequency = config.ul_freq;
+  }
 }
 
 int main(int argc, char* argv[])
@@ -311,11 +356,10 @@ int main(int argc, char* argv[])
   if (argc > 1) {
     test_number = atoi(argv[1]);
   }
-  parse_args(argc, argv);
-  test_args_t     args    = init_test_args(test_number);
-  ShadowerConfig& config  = args.config;
-  config.tx_gain          = 89;
-  config.syncer_log_level = srslog::basic_levels::info;
+  test_args_t     args   = init_test_args(test_number);
+  ShadowerConfig& config = args.config;
+  parse_args(argc, argv, config);
+  config.syncer_log_level = srslog::basic_levels::debug;
   /* initialize logger */
   srslog::basic_logger& logger = srslog_init(&config);
   logger.set_level(srslog::basic_levels::debug);
@@ -341,13 +385,21 @@ int main(int argc, char* argv[])
     logger.error("Failed to configure phy cfg from rrc setup");
     return -1;
   }
+  config.enable_recorder = true;
+  config.channels.resize(config.nof_channels);
+  if (config.nof_channels > 1) {
+    for (uint32_t i = 1; i < config.nof_channels; i++) {
+      config.channels[i] = config.channels[0];
+    }
+  }
+
+  uint32_t sf_len          = config.sample_rate * SF_DURATION;
+  config.slot_per_subframe = 1 << config.scs_ssb;
+  args.slot_len            = sf_len / config.slot_per_subframe;
 
   /* Initialize source */
-  create_source_t uhd_source = load_source(uhd_source_module_path);
-  config.nof_channels        = 1;
-  config.source_params       = source_param;
-  config.sample_rate         = config.sample_rate;
-  Source* source             = uhd_source(config);
+  create_source_t creator = load_source(uhd_source_module_path);
+  Source*         source  = creator(config);
   logger.info("Selected target test SSB frequency %.3f MHz", test_ssb_freq / 1e6);
 
   std::vector<cf_t> test_ssb_samples(args.sf_len * 2);
@@ -355,9 +407,6 @@ int main(int argc, char* argv[])
     logger.error("Failed to generate SSB block");
     return -1;
   }
-
-  // float scale = 20.0f;
-  // srsran_vec_sc_prod_cfc(test_ssb_samples.data(), scale, test_ssb_samples.data(), args.sf_len);
 
   char filename[64];
   sprintf(filename, "generated_ssb");
