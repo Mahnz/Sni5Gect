@@ -20,7 +20,7 @@
  */
 
 #include "backend_worker.h"
-#include "shadower/hdr/trace_samples.h"
+#include "shadower/comp/trace_samples/trace_samples.h"
 #include "srsran/srslog/sink.h"
 #include <iostream>
 

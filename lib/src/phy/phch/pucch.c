@@ -391,7 +391,7 @@ static int encode_signal_format12(srsran_pucch_t*     q,
   }
   uint32_t N_sf_0 = get_N_sf(cfg->format, 0, sf->shortened);
   uint32_t sf_idx = sf->tti % SRSRAN_NOF_SF_X_FRAME;
-  for (uint32_t ns = SRSRAN_NOF_SLOTS_PER_SF * sf_idx; ns < SRSRAN_NOF_SLOTS_PER_SF * (sf_idx + 1); ns++) {
+  for (uint32_t ns = SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz) * sf_idx; ns < SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz) * (sf_idx + 1); ns++) {
     uint32_t N_sf = get_N_sf(cfg->format, ns % 2, sf->shortened);
     DEBUG("ns=%d, N_sf=%d", ns, N_sf);
     // Get group hopping number u
@@ -473,7 +473,7 @@ static int encode_signal_format3(srsran_pucch_t*     q,
 
   for (uint32_t n = 0; n < N_sf_0 + N_sf_1; n++) {
     uint32_t l         = get_pucch_symbol(n, cfg->format, q->cell.cp);
-    uint32_t n_cs_cell = q->n_cs_cell[(2 * (sf->tti % 10) + ((n < N_sf_0) ? 0 : 1)) % SRSRAN_NSLOTS_X_FRAME][l];
+    uint32_t n_cs_cell = q->n_cs_cell[(2 * (sf->tti % 10) + ((n < N_sf_0) ? 0 : 1)) % SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz)][l];
 
     cf_t y_n[SRSRAN_NRE];
     srsran_vec_cf_zero(y_n, SRSRAN_NRE);
@@ -527,7 +527,7 @@ static int decode_signal_format3(srsran_pucch_t*     q,
 
   for (uint32_t n = 0; n < N_sf_0 + N_sf_1; n++) {
     uint32_t l         = get_pucch_symbol(n, cfg->format, q->cell.cp);
-    uint32_t n_cs_cell = q->n_cs_cell[(2 * (sf->tti % 10) + ((n < N_sf_0) ? 0 : 1)) % SRSRAN_NSLOTS_X_FRAME][l];
+    uint32_t n_cs_cell = q->n_cs_cell[(2 * (sf->tti % 10) + ((n < N_sf_0) ? 0 : 1)) % SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz)][l];
 
     cf_t y_n[SRSRAN_NRE] = {};
 
@@ -696,7 +696,7 @@ static bool decode_signal(srsran_pucch_t*     q,
       }
       encode_signal_format12(q, sf, cfg, NULL, ref, true);
       srsran_vec_prod_conj_ccc(q->z, ref, q->z_tmp, SRSRAN_PUCCH_MAX_SYMBOLS);
-      for (int i = 0; i < (SRSRAN_PUCCH2_N_SF * SRSRAN_NOF_SLOTS_PER_SF); i++) {
+      for (int i = 0; i < (SRSRAN_PUCCH2_N_SF * SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz)); i++) {
         q->z[i] = srsran_vec_acc_cc(&q->z_tmp[i * SRSRAN_NRE], SRSRAN_NRE) / SRSRAN_NRE;
       }
       srsran_demod_soft_demodulate_s(SRSRAN_MOD_QPSK, q->z, llr_pucch2, SRSRAN_PUCCH2_NOF_BITS / 2);
@@ -1015,14 +1015,14 @@ uint32_t srsran_pucch_m(const srsran_pucch_cfg_t* cfg, srsran_cp_t cp)
 }
 
 /* Generates n_cs_cell according to Sec 5.4 of 36.211 */
-int srsran_pucch_n_cs_cell(srsran_cell_t cell, uint32_t n_cs_cell[SRSRAN_NSLOTS_X_FRAME][SRSRAN_CP_NORM_NSYMB])
+int srsran_pucch_n_cs_cell(srsran_cell_t cell, uint32_t n_cs_cell[SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz)][SRSRAN_CP_NORM_NSYMB])
 {
   srsran_sequence_t seq;
   bzero(&seq, sizeof(srsran_sequence_t));
 
-  srsran_sequence_LTE_pr(&seq, 8 * SRSRAN_CP_NSYMB(cell.cp) * SRSRAN_NSLOTS_X_FRAME, cell.id);
+  srsran_sequence_LTE_pr(&seq, 8 * SRSRAN_CP_NSYMB(cell.cp) * SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz), cell.id);
 
-  for (uint32_t ns = 0; ns < SRSRAN_NSLOTS_X_FRAME; ns++) {
+  for (uint32_t ns = 0; ns < SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz); ns++) {
     for (uint32_t l = 0; l < SRSRAN_CP_NSYMB(cell.cp); l++) {
       n_cs_cell[ns][l] = 0;
       for (uint32_t i = 0; i < 8; i++) {
@@ -1060,7 +1060,7 @@ int srsran_pucch_collision(const srsran_cell_t* cell, const srsran_pucch_cfg_t* 
     return SRSRAN_SUCCESS;
   }
 
-  uint32_t n_cs_cell[SRSRAN_NSLOTS_X_FRAME][SRSRAN_CP_NORM_NSYMB] = {};
+  uint32_t n_cs_cell[SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz)][SRSRAN_CP_NORM_NSYMB] = {};
   srsran_pucch_n_cs_cell(*cell, n_cs_cell);
 
   float    alpha1, alpha2;
@@ -1147,7 +1147,7 @@ int srsran_pucch_cfg_assert(const srsran_cell_t* cell, const srsran_pucch_cfg_t*
 }
 
 /* Calculates alpha for format 1/a/b according to 5.5.2.2.2 (is_dmrs=true) or 5.4.1 (is_dmrs=false) of 36.211 */
-float srsran_pucch_alpha_format1(const uint32_t            n_cs_cell[SRSRAN_NSLOTS_X_FRAME][SRSRAN_CP_NORM_NSYMB],
+float srsran_pucch_alpha_format1(const uint32_t            n_cs_cell[SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz)][SRSRAN_CP_NORM_NSYMB],
                                  const srsran_pucch_cfg_t* cfg,
                                  srsran_cp_t               cp,
                                  bool                      is_dmrs,
@@ -1207,7 +1207,7 @@ float srsran_pucch_alpha_format1(const uint32_t            n_cs_cell[SRSRAN_NSLO
 }
 
 /* Calculates alpha for format 2/a/b according to 5.4.2 of 36.211 */
-float srsran_pucch_alpha_format2(const uint32_t            n_cs_cell[SRSRAN_NSLOTS_X_FRAME][SRSRAN_CP_NORM_NSYMB],
+float srsran_pucch_alpha_format2(const uint32_t            n_cs_cell[SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz)][SRSRAN_CP_NORM_NSYMB],
                                  const srsran_pucch_cfg_t* cfg,
                                  uint32_t                  ns,
                                  uint32_t                  l)

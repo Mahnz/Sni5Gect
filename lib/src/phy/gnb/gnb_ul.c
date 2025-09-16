@@ -40,12 +40,12 @@ static int gnb_ul_alloc_prb(srsran_gnb_ul_t* q, uint32_t new_nof_prb)
     q->max_prb = new_nof_prb;
 
     srsran_chest_dl_res_free(&q->chest_pusch);
-    if (srsran_chest_dl_res_init(&q->chest_pusch, q->max_prb) < SRSRAN_SUCCESS) {
+    if (srsran_chest_dl_res_init(&q->chest_pusch, q->max_prb, q->carrier.scs) < SRSRAN_SUCCESS) {
       return SRSRAN_ERROR;
     }
 
     srsran_chest_ul_res_free(&q->chest_pucch);
-    if (srsran_chest_ul_res_init(&q->chest_pucch, q->max_prb) < SRSRAN_SUCCESS) {
+    if (srsran_chest_ul_res_init(&q->chest_pucch, q->max_prb, q->carrier.scs) < SRSRAN_SUCCESS) {
       return SRSRAN_ERROR;
     }
 
@@ -53,7 +53,7 @@ static int gnb_ul_alloc_prb(srsran_gnb_ul_t* q, uint32_t new_nof_prb)
       free(q->sf_symbols[0]);
     }
 
-    q->sf_symbols[0] = srsran_vec_cf_malloc(SRSRAN_SF_LEN_RE_NR(q->max_prb));
+    q->sf_symbols[0] = srsran_vec_cf_malloc(SRSRAN_SF_LEN_RE_NR(q->max_prb, q->carrier.scs));
     if (q->sf_symbols[0] == NULL) {
       ERROR("Malloc");
       return SRSRAN_ERROR;
@@ -92,6 +92,7 @@ int srsran_gnb_ul_init(srsran_gnb_ul_t* q, cf_t* input, const srsran_gnb_ul_args
   ofdm_cfg.rx_window_offset  = GNB_UL_NR_FFT_WINDOW_OFFSET;
   ofdm_cfg.symbol_sz         = srsran_min_symbol_sz_rb(args->nof_max_prb);
   ofdm_cfg.keep_dc           = true;
+  ofdm_cfg.scs               = args->scs;
 
   if (srsran_ofdm_rx_init_cfg(&q->fft, &ofdm_cfg) < SRSRAN_SUCCESS) {
     return SRSRAN_ERROR;
@@ -156,6 +157,7 @@ int srsran_gnb_ul_set_carrier(srsran_gnb_ul_t* q, const srsran_carrier_nr_t* car
   ofdm_cfg.symbol_sz             = srsran_min_symbol_sz_rb(carrier->nof_prb);
   ofdm_cfg.keep_dc               = true;
   ofdm_cfg.phase_compensation_hz = carrier->ul_center_frequency_hz;
+  ofdm_cfg.scs                   = carrier->scs;
 
   if (srsran_ofdm_rx_init_cfg(&q->fft, &ofdm_cfg) < SRSRAN_SUCCESS) {
     return SRSRAN_ERROR;

@@ -205,7 +205,7 @@ int worker_pool::set_rar_grant(uint32_t                                       ra
 bool worker_pool::set_config(const srsran::phy_cfg_nr_t& new_cfg)
 {
   uint32_t dl_arfcn = srsran::srsran_band_helper().freq_to_nr_arfcn(new_cfg.carrier.dl_center_frequency_hz);
-  sf_sz             = SRSRAN_SF_LEN_PRB_NR(new_cfg.carrier.nof_prb);
+  sf_sz             = SRSRAN_SF_LEN_PRB_NR(new_cfg.carrier.nof_prb, new_cfg.carrier.scs);
 
   bool carrier_equal;
   {

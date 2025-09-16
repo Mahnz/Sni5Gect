@@ -1,33 +1,60 @@
-#include "shadower/hdr/utils.h"
+#include "shadower/utils/phy_cfg_utils.h"
+#include "shadower/utils/ue_dl_utils.h"
+#include "shadower/utils/utils.h"
 #include "srsran/common/phy_cfg_nr.h"
 #include "srsran/phy/phch/pbch_msg_nr.h"
 #include "srsran/phy/ue/ue_dl_nr.h"
 #include "srsran/srslog/srslog.h"
+#include "srsue/hdr/phy/nr/state.h"
 #include "test_variables.h"
 #include <fstream>
 #if ENABLE_CUDA
-#include "shadower/hdr/fft_processor.cuh"
+#include "shadower/comp/fft/fft_processor.cuh"
 #endif // ENABLE_CUDA
 
-uint16_t           rnti      = si_rnti;
-srsran_rnti_type_t rnti_type = srsran_rnti_type_si;
-
-#if TEST_TYPE == 1
-std::string sample_file = "shadower/test/data/srsran-n78-20MHz/sib.fc32";
-uint32_t    slot_number = 1;
-#elif TEST_TYPE == 2
-std::string sample_file = "shadower/test/data/sib1.fc32";
-uint32_t    slot_number = 11604;
-float       cfo         = 0;
-#elif TEST_TYPE == 3
-std::string sample_file = "shadower/test/data/srsran-n78-40MHz/sib.fc32";
-uint32_t    slot_number = 1;
-#endif // TEST_TYPE
-int main()
+int main(int argc, char* argv[])
 {
+  int test_number = 0;
+  if (argc > 1) {
+    test_number = atoi(argv[1]);
+  }
+  test_args_t     args   = init_test_args(test_number);
+  ShadowerConfig& config = args.config;
   /* initialize logger */
-  srslog::basic_logger& logger = srslog_init();
-  logger.set_level(srslog::basic_levels::debug);
+  srslog::basic_logger& logger = srslog_init(&config);
+  std::string           sample_file;
+  uint32_t              slot_number;
+  uint32_t              half = 1;
+  switch (test_number) {
+    case 0:
+      sample_file = "shadower/test/data/srsran-n78-20MHz/sib.fc32";
+      slot_number = 0;
+      half        = 1;
+      break;
+    case 1:
+      sample_file = "shadower/test/data/srsran-n78-40MHz/sib.fc32";
+      slot_number = 0;
+      half        = 1;
+      break;
+    case 2:
+      sample_file = "shadower/test/data/effnet/sib.fc32";
+      slot_number = 11604;
+      half        = 0;
+      break;
+    case 4:
+      sample_file = "shadower/test/data/srsran-n3-20MHz/sib.fc32";
+      slot_number = 1;
+      half        = 0;
+      break;
+    case 5:
+      sample_file = "shadower/test/data/singtel-n1-20MHz/sib.fc32";
+      slot_number = 5402;
+      half        = 0;
+      break;
+    default:
+      fprintf(stderr, "Unknown test number: %d\n", test_number);
+      exit(EXIT_FAILURE);
+  }
 
   /* initialize phy cfg */
   srsran::phy_cfg_nr_t phy_cfg = {};
@@ -38,45 +65,51 @@ int main()
   init_phy_state(phy_state, config.nof_prb);
 
   /* load mib configuration and update phy_cfg */
-  if (!configure_phy_cfg_from_mib(phy_cfg, mib_config_raw, ncellid)) {
+  if (!configure_phy_cfg_from_mib(phy_cfg, args.mib_config_raw, args.ncellid)) {
     logger.error("Failed to configure phy cfg from mib");
     return -1;
   }
 
   /* UE DL init with configuration from phy_cfg */
   srsran_ue_dl_nr_t ue_dl  = {};
-  cf_t*             buffer = srsran_vec_cf_malloc(sf_len);
+  cf_t*             buffer = srsran_vec_cf_malloc(args.sf_len);
   if (!init_ue_dl(ue_dl, buffer, phy_cfg)) {
     logger.error("Failed to init UE DL");
     return -1;
   }
 
   /* load test samples */
-  std::vector<cf_t> samples(sf_len);
-  if (!load_samples(sample_file, samples.data(), sf_len)) {
+  std::vector<cf_t> samples(args.sf_len);
+  if (!load_samples(sample_file, samples.data(), args.sf_len)) {
     logger.error("Failed to load data from %s", sample_file.c_str());
     return -1;
   }
-#if TEST_TYPE == 1 || TEST_TYPE == 3
-  /* copy samples to ue_dl processing buffer */
-  srsran_vec_cf_copy(buffer, samples.data() + slot_len, slot_len);
-#elif TEST_TYPE == 2
-  /* copy samples to ue_dl processing buffer */
-  srsran_vec_cf_copy(buffer, samples.data(), slot_len);
-#endif // TEST_TYPE
+  srsran_vec_cf_copy(buffer, samples.data() + args.slot_len * half, args.slot_len);
   /* Initialize slot cfg */
-  srsran_slot_cfg_t slot_cfg = {.idx = slot_number};
+  srsran_slot_cfg_t slot_cfg = {.idx = slot_number + half};
   /* run ue_dl estimate fft */
   srsran_ue_dl_nr_estimate_fft(&ue_dl, &slot_cfg);
 
+  std::vector<cf_t> ofdm_from_srsran(args.nof_re);
+  srsran_vec_cf_copy(ofdm_from_srsran.data(), ue_dl.sf_symbols[0], args.nof_re);
+  config.enable_gpu = true;
 #if ENABLE_CUDA
-  FFTProcessor fft_processor(
-      config.sample_rate, ue_dl.carrier.dl_center_frequency_hz, ue_dl.carrier.scs, &ue_dl.fft[0]);
-  fft_processor.to_ofdm(buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
+  if (config.enable_gpu) {
+    FFTProcessor fft_processor(
+        config.sample_rate, ue_dl.carrier.dl_center_frequency_hz, ue_dl.carrier.scs, &ue_dl.fft[0]);
+    fft_processor.to_ofdm(buffer, ue_dl.sf_symbols[0], slot_cfg.idx);
+  }
 #endif // ENABLE_CUDA
 
+  std::vector<cf_t> ofdm_from_gpu(args.nof_re);
+  srsran_vec_cf_copy(ofdm_from_gpu.data(), ue_dl.sf_symbols[0], args.nof_re);
+
+  char filename[256];
+  sprintf(filename, "ofdm_fft%u_sib", args.nof_sc);
+  write_record_to_file(ue_dl.sf_symbols[0], args.nof_re, filename);
+
   /* search for dci */
-  ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, rnti, rnti_type, phy_state, logger);
+  ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, SRSRAN_SIRNTI, srsran_rnti_type_si, phy_state, logger, 0);
 
   /* get grant from dci search */
   uint32_t                   pid          = 0;
@@ -131,7 +164,7 @@ int main()
   sib1_json << json_writer.to_string() << std::endl;
 
   /* write SIB1 to file */
-  std::ofstream received_sib1{sib1_config_raw, std::ios::binary};
+  std::ofstream received_sib1{args.sib_config_raw, std::ios::binary};
   received_sib1.write(reinterpret_cast<char*>(data->msg), data->N_bytes);
   logger.info("SIB1 number of bytes: %u", data->N_bytes);
 

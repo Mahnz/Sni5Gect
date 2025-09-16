@@ -1,8 +1,8 @@
-#include "shadower/hdr/arg_parser.h"
-#include "shadower/hdr/exploit.h"
-#include "shadower/hdr/scheduler.h"
-#include "shadower/hdr/source.h"
-#include "shadower/hdr/syncer.h"
+#include "shadower/comp/scheduler.h"
+#include "shadower/comp/sync/syncer.h"
+#include "shadower/modules/exploit.h"
+#include "shadower/source/source.h"
+#include "shadower/utils/arg_parser.h"
 #include "srsran/srslog/srslog.h"
 
 int main(int argc, char* argv[])
@@ -21,25 +21,25 @@ int main(int argc, char* argv[])
   usleep(100000);
 
   // Source pointer
-  Source* source = nullptr;
+  Source*         source        = nullptr;
+  create_source_t create_source = nullptr;
   // Initialize the source based on the configuration
   if (config.source_type == "file") {
-    std::string     module_path         = config.source_module.empty() ? config.source_module : file_source_module_path;
-    create_source_t file_source_creator = load_source(module_path);
-    source                              = file_source_creator(config);
+    std::string module_path = config.source_module.empty() ? config.source_module : file_source_module_path;
+    create_source           = load_source(module_path);
   } else if (config.source_type == "uhd") {
-    std::string     module_path        = config.source_module.empty() ? config.source_module : uhd_source_module_path;
-    create_source_t uhd_source_creator = load_source(module_path);
-    source                             = uhd_source_creator(config);
+    std::string module_path = config.source_module.empty() ? config.source_module : uhd_source_module_path;
+    create_source           = load_source(module_path);
   } else if (config.source_type == "limesdr") {
-    std::string     module_path = config.source_module.empty() ? config.source_module : limesdr_source_module_path;
-    create_source_t limesdr_source_creator = load_source(module_path);
-    source                                 = limesdr_source_creator(config);
+    std::string module_path = config.source_module.empty() ? config.source_module : limesdr_source_module_path;
+    create_source           = load_source(module_path);
   } else {
     logger.error("Invalid source type: %s", config.source_type.c_str());
     return -1;
   }
 
+  /* Create the actual source */
+  source = create_source(config);
   // load exploit module
   create_exploit_t exploit_creator = load_exploit(config.exploit_module);
   logger.info(YELLOW "Loaded exploit module: %s" RESET, config.exploit_module.c_str());

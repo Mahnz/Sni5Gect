@@ -41,7 +41,7 @@ set(SOURCES
 
 find_package(Threads REQUIRED)
 
-add_library(srslog STATIC ${SOURCES} ${PROJECT_SOURCE_DIR}/shadower/src/trace_samples.cc)
+add_library(srslog STATIC ${SOURCES} ${PROJECT_SOURCE_DIR}/shadower/comp/trace_samples/trace_samples.cc)
 target_include_directories(srslog PUBLIC ${PROJECT_SOURCE_DIR})
 target_link_libraries(srslog ${CMAKE_THREAD_LIBS_INIT} zmq)
 install(TARGETS srslog DESTINATION ${LIBRARY_DIR} OPTIONAL)

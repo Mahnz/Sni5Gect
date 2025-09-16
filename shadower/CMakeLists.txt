@@ -95,86 +95,21 @@ set_property(
   "${PROJECT_SOURCE_DIR}/bin/libwdissector.so")
 target_include_directories(wdissector INTERFACE ${WDISSECTOR_INCLUDES})
 
-add_executable(cutter tools/cutter.cc)
-
-add_executable(small_cutter tools/small_cutter.cc)
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_definitions(-DDBG)
 endif()
 
-# File source 
-add_library(file_source SHARED src/file_source.cc src/utils.cc)
-target_link_libraries(file_source liquid)
+set(SHADOWER_DIR ${CMAKE_HOME_DIRECTORY}/shadower)
 
-# UHD source
-if (ENABLE_UHD)
-  add_library(uhd_source SHARED src/uhd_source.cc src/utils.cc)
-  target_link_libraries(uhd_source ${UHD_LIBRARIES} ${Boost_LIBRARIES} liquid)
-endif(ENABLE_UHD)
-
-# Lime SDR source
-if (ENABLE_LIMESUITENG)
-  add_library(limesdr_source SHARED src/limesdr_source.cc src/utils.cc)
-  target_link_libraries(limesdr_source limesuiteng::limesuiteng srslog)
-
-  add_executable(lime_recorder tools/lime_sdr_recorder.cc)
-  target_link_libraries(lime_recorder limesuiteng::limesuiteng srslog)
-endif(ENABLE_LIMESUITENG)
-
-add_executable(recorder tools/recorder.cc)
-target_link_libraries(recorder ${UHD_LIBRARIES} ${Boost_LIBRARIES} pthread liquid)
-
-add_executable(scanner tools/scanner.cc src/utils.cc)
-target_link_libraries(scanner uhd_source ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
-
-add_executable(scan_single tools/scan_single.cc src/utils.cc)
-target_link_libraries(scan_single uhd_source ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
-
-add_executable(resampler tools/resampler.cc)
-target_link_libraries(resampler ${SRSUE_SOURCES} ${SRSRAN_SOURCES} liquid)
-
-if (USE_CUDA)
-  set_source_files_properties(hdr/fft_processor.cuh PROPERTIES LANGUAGE CUDA)
-  set_source_files_properties(src/fft_processor.cu PROPERTIES LANGUAGE CUDA)
-  add_library(fft_processor src/fft_processor.cu hdr/fft_processor.cuh)
-  target_link_libraries(fft_processor CUDA::cufft CUDA::cudart)
-
-  set_source_files_properties(src/ssb_cuda.cu PROPERTIES LANGUAGE CUDA)
-  set_source_files_properties(hdr/ssb_cuda.cuh PROPERTIES LANGUAGE CUDA)
-  add_library(ssb_cuda src/ssb_cuda.cu hdr/ssb_cuda.cuh)
-  target_link_libraries(ssb_cuda CUDA::cufft CUDA::cudart srsran_sync)
-endif(USE_CUDA)
-
-add_executable(srsran_recorder tools/srsran_recorder.cc)
-target_link_libraries(srsran_recorder ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
-
-add_executable(source_recorder tools/source_recorder.cc src/utils.cc)
-target_link_libraries(source_recorder ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
-
-add_executable(shadower 
-  main.cc 
-  src/syncer.cc
-  src/scheduler.cc
-  src/utils.cc
-  src/thread_pool.cc
-  src/broadcast_worker.cc
-  src/ue_tracker.cc
-  src/wd_worker.cc
-  src/gnb_dl_worker.cc
-  src/ue_dl_worker.cc
-  src/gnb_ul_worker.cc
-  src/msg_helper.cc
-  src/ring_buffer.cc
-  src/trace_samples.cc
-)
-target_include_directories(shadower PRIVATE ${WDISSECTOR_PATH}/src)
-target_link_libraries(shadower ${SRSUE_SOURCES} ${SRSRAN_SOURCES} ${Boost_LIBRARIES} wdissector)
-include_directories(shadower PRIVATE ${WDISSECTOR_PATH}/src ${WDISSECTOR_INCLUDES})
-if (USE_CUDA)
-  target_link_libraries(shadower fft_processor ssb_cuda)
-endif(USE_CUDA)
-
-set(SHADOWER_DIR ${CMAKE_HOME_DIRECTORY}/shadower/src)
+add_subdirectory(source)
+add_subdirectory(tools)
+add_subdirectory(comp)
+add_subdirectory(utils)
 add_subdirectory(test)
 add_subdirectory(modules)
+
+add_executable(shadower main.cc comp/scheduler.cc comp/ue_tracker.cc modules/exploit_loader.cc)
+target_link_libraries(shadower source syncer exploit_loader thread_pool broadcast_worker ue_dl_worker gnb_ul_worker gnb_dl_worker ${Boost_LIBRARIES})
+if(ENABLE_CUDA)
+  target_link_libraries(shadower fft_processor ssb_cuda)
+endif(ENABLE_CUDA)

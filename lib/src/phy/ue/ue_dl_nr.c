@@ -38,7 +38,7 @@ static int ue_dl_nr_alloc_prb(srsran_ue_dl_nr_t* q, uint32_t new_nof_prb)
     q->max_prb = new_nof_prb;
 
     srsran_chest_dl_res_free(&q->chest);
-    if (srsran_chest_dl_res_init(&q->chest, q->max_prb) < SRSRAN_SUCCESS) {
+    if (srsran_chest_dl_res_init(&q->chest, q->max_prb, q->carrier.scs) < SRSRAN_SUCCESS) {
       return SRSRAN_ERROR;
     }
 
@@ -96,9 +96,12 @@ int srsran_ue_dl_nr_init(srsran_ue_dl_nr_t* q, cf_t* input[SRSRAN_MAX_PORTS], co
 
   srsran_ofdm_cfg_t fft_cfg = {};
   fft_cfg.nof_prb           = args->nof_max_prb;
-  fft_cfg.symbol_sz         = srsran_min_symbol_sz_rb(args->nof_max_prb);
-  fft_cfg.keep_dc           = true;
-  fft_cfg.rx_window_offset  = UE_DL_NR_FFT_WINDOW_OFFSET;
+  // fft_cfg.symbol_sz         = srsran_min_symbol_sz_rb(args->nof_max_prb);
+  // x310 SDR cannot directly set the sample rate to 122.88, here we have to get the symbol size from srate
+  fft_cfg.symbol_sz        = srsran_symbol_sz_from_srate(args->sample_rate_hz, args->scs);
+  fft_cfg.keep_dc          = true;
+  fft_cfg.rx_window_offset = UE_DL_NR_FFT_WINDOW_OFFSET;
+  fft_cfg.scs              = args->scs;
 
   for (uint32_t i = 0; i < q->nof_rx_antennas; i++) {
     fft_cfg.in_buffer  = input[i];
@@ -170,12 +173,12 @@ int srsran_ue_dl_nr_set_carrier(srsran_ue_dl_nr_t* q, const srsran_carrier_nr_t*
     for (uint32_t i = 0; i < q->nof_rx_antennas; i++) {
       srsran_ofdm_cfg_t cfg     = {};
       cfg.nof_prb               = carrier->nof_prb;
-      cfg.symbol_sz             = srsran_min_symbol_sz_rb(carrier->nof_prb);
+      cfg.symbol_sz             = srsran_symbol_sz_from_srate(carrier->sample_rate_hz, carrier->scs);
       cfg.cp                    = SRSRAN_CP_NORM;
       cfg.keep_dc               = true;
       cfg.rx_window_offset      = UE_DL_NR_FFT_WINDOW_OFFSET;
       cfg.phase_compensation_hz = carrier->dl_center_frequency_hz;
-
+      cfg.scs                   = carrier->scs;
       srsran_ofdm_rx_init_cfg(&q->fft[i], &cfg);
     }
   }

@@ -38,11 +38,11 @@ extern "C" {
  * @brief Defines the resource grid size in physical resource elements (frequency and time domain)
  */
 #define SRSRAN_SLOT_LEN_RE_NR(nof_prb) (nof_prb * SRSRAN_NRE * SRSRAN_NSYMB_PER_SLOT_NR)
-#define SRSRAN_SF_LEN_RE_NR(nof_prb) (SRSRAN_SLOT_LEN_RE_NR(nof_prb) * (1 << (SUBCARRIER_SPACING_KHZ / 15 - 1)))
+#define SRSRAN_SF_LEN_RE_NR(nof_prb, scs) (SRSRAN_SLOT_LEN_RE_NR(nof_prb) * (1 << scs))
 /**
  * @brief Minimum subframe length in samples for a given number of PRB
  */
-#define SRSRAN_SF_LEN_PRB_NR(nof_prb) (srsran_min_symbol_sz_rb(nof_prb) * SUBCARRIER_SPACING_KHZ)
+#define SRSRAN_SF_LEN_PRB_NR(nof_prb, scs) (srsran_min_symbol_sz_rb(nof_prb) * 15 * (1 << scs))
 
 #define SRSRAN_SLOT_MAX_LEN_RE_NR (SRSRAN_SLOT_LEN_RE_NR(SRSRAN_MAX_PRB_NR))
 #define SRSRAN_MAX_LAYERS_NR 8
@@ -384,6 +384,7 @@ typedef struct SRSRAN_API {
   double                      dl_center_frequency_hz; ///< Absolute baseband center frequency in Hz for DL grid
   double                      ul_center_frequency_hz; ///< Absolute baseband center frequency in Hz for UL grid
   double                      ssb_center_freq_hz;     ///< SS/PBCH Block center frequency in Hz. Set to 0 if not present
+  double                      sample_rate_hz;         ///< Sample rate in Hz. Set to 0 if not present
   uint32_t                    offset_to_carrier; ///< Offset between point A and the lowest subcarrier of the lowest RB
   srsran_subcarrier_spacing_t scs;
   uint32_t                    nof_prb; ///< @brief See TS 38.101-1 Table 5.3.2-1 for more details

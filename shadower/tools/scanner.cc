@@ -1,53 +1,102 @@
-#include "shadower/hdr/source.h"
-#include "shadower/hdr/utils.h"
+#include "shadower/source/source.h"
+#include "shadower/utils/utils.h"
 #include "srsran/common/band_helper.h"
 #include "srsran/phy/sync/ssb.h"
+#include <getopt.h>
+
+ShadowerConfig              config = {};
+uint32_t                    sf_len;
+double                      start_freq;
+double                      stop_freq;
+double                      sample_rate   = 23.04e6;
+uint32_t                    band          = 78;
+uint32_t                    rounds        = 100;
+uint32_t                    rx_gain       = 40;
+std::string                 source_params = "type=b200";
+srsran_subcarrier_spacing_t scs           = srsran_subcarrier_spacing_30kHz;
+
+void parse_args(int argc, char* argv[])
+{
+  int opt;
+  while ((opt = getopt(argc, argv, "sfedbSrg")) != -1) {
+    switch (opt) {
+      case 's': {
+        double srateMHz = atof(argv[optind]);
+        sample_rate     = srateMHz * 1e6;
+        printf("Sample rate: %f MHz\n", srateMHz);
+        break;
+      }
+      case 'f': {
+        double startFreqMHz = atof(argv[optind]);
+        start_freq          = startFreqMHz * 1e6;
+        printf("Start frequency: %f MHz\n", startFreqMHz);
+        break;
+      }
+      case 'e': {
+        double stopFreqMHz = atof(argv[optind]);
+        stop_freq          = stopFreqMHz * 1e6;
+        printf("Stop frequency: %f MHz\n", stopFreqMHz);
+        break;
+      }
+      case 'd': {
+        source_params = argv[optind];
+        printf("Source params: %s\n", source_params.c_str());
+        break;
+      }
+      case 'b': {
+        band = atoi(argv[optind]);
+        break;
+      }
+      case 'S': {
+        scs = srsran_subcarrier_spacing_from_str(argv[optind]);
+        break;
+      }
+      case 'r': {
+        rounds = atoi(argv[optind]);
+        break;
+      }
+      case 'g': {
+        rx_gain = atoi(argv[optind]);
+        break;
+      }
+      default:
+        fprintf(stderr, "Unknown option: %c\n", opt);
+        exit(EXIT_FAILURE);
+    }
+  }
+  sf_len = sample_rate * SF_DURATION;
+}
 
 void scan_ssb(Source*                     source,
               double                      srate,
-              double                      center_freq,
               double                      ssb_freq,
               srslog::basic_logger&       logger,
               srsran_subcarrier_spacing_t scs,
               uint32_t                    round = 100)
 {
-  srsran_ssb_t         ssb         = {};
-  srsran_ssb_args_t    ssb_args    = {};
-  srsran_ssb_cfg_t     ssb_cfg     = {};
-  srsran_timestamp_t   ts          = {};
-  srsran_ssb_pattern_t pattern     = SRSRAN_SSB_PATTERN_C;
-  srsran_duplex_mode_t duplex_mode = SRSRAN_DUPLEX_MODE_TDD;
-  uint32_t             sf_len      = srate * SF_DURATION;
-  cf_t*                buffer      = srsran_vec_cf_malloc(sf_len);
+  srsran_ssb_t       ssb = {};
+  srsran_timestamp_t ts  = {};
 
-  /* Initialize ssb */
-  ssb_args.max_srate_hz   = srate;
-  ssb_args.min_scs        = scs;
-  ssb_args.enable_search  = true;
-  ssb_args.enable_measure = true;
-  ssb_args.enable_decode  = true;
-  if (srsran_ssb_init(&ssb, &ssb_args) != 0) {
-    logger.error("Failed to initialize SSB");
-    goto cleanup;
+  srsran::srsran_band_helper band_helper;
+  srsran_ssb_pattern_t       ssb_pattern = band_helper.get_ssb_pattern(band, scs);
+  srsran_duplex_mode_t       duplex_mode = band_helper.get_duplex_mode(band);
+  if (!init_ssb(ssb, srate, ssb_freq, ssb_freq, scs, ssb_pattern, duplex_mode)) {
+    logger.error("Error initializing SSB");
+    srsran_ssb_free(&ssb);
+    return;
   }
 
-  /* Initialize ssb */
-  ssb_cfg.srate_hz       = srate;
-  ssb_cfg.center_freq_hz = center_freq;
-  ssb_cfg.ssb_freq_hz    = ssb_freq;
-  ssb_cfg.scs            = scs;
-  ssb_cfg.pattern        = pattern;
-  ssb_cfg.duplex_mode    = duplex_mode;
-  ssb_cfg.periodicity_ms = 10;
-  if (srsran_ssb_set_cfg(&ssb, &ssb_cfg) < SRSRAN_SUCCESS) {
-    logger.error("Error setting SSB configuration");
-    goto cleanup;
+  source->set_rx_freq(ssb_freq);
+  cf_t* buffer = srsran_vec_cf_malloc(sf_len);
+  cf_t* rx_buffer[SRSRAN_MAX_CHANNELS];
+  for (uint32_t i = 0; i < SRSRAN_MAX_CHANNELS; i++) {
+    rx_buffer[i] = nullptr;
   }
-
+  rx_buffer[0] = buffer;
   for (uint32_t i = 0; i < round; i++) {
     /* Receive samples */
-    source->receive(buffer, sf_len * 0.1, &ts);
-    source->receive(buffer, sf_len, &ts);
+    source->recv(rx_buffer, sf_len * SF_DURATION, &ts);
+    source->recv(rx_buffer, sf_len, &ts);
     /* search for SSB */
     srsran_ssb_search_res_t res = {};
     if (srsran_ssb_search(&ssb, buffer, sf_len, &res) < SRSRAN_SUCCESS) {
@@ -67,17 +116,18 @@ void scan_ssb(Source*                     source,
     /* Print cell info */
     std::array<char, 512> mib_info_str = {};
     srsran_pbch_msg_nr_mib_info(&mib, mib_info_str.data(), mib_info_str.size());
-    logger.info("Found cell: cellid: %u %s", res.N_id, mib_info_str.data());
-
     srsran_csi_trs_measurements_t& measure = res.measurements;
-    logger.info("SNR: %f dB", measure.snr_dB);
-    logger.info("CFO: %f Hz", measure.cfo_hz);
-    logger.info("ssb idx: %u", res.pbch_msg.hrf);
+    logger.info("Found cell: id: %u %s SNR: %f dB CFO: %f Hz RSRP: %f",
+                res.N_id,
+                mib_info_str.data(),
+                measure.snr_dB,
+                measure.cfo_hz,
+                measure.rsrp_dB);
 
     char filename[64];
     sprintf(filename, "ssb_%u_%f", res.t_offset, ssb_freq);
-    std::string output_folder = "/root/records/";
-    write_record_to_file(buffer, sf_len, filename, output_folder);
+    write_record_to_file(buffer, sf_len, filename);
+    break;
   }
 cleanup:
   srsran_ssb_free(&ssb);
@@ -86,75 +136,46 @@ cleanup:
 
 int main(int argc, char* argv[])
 {
+  parse_args(argc, argv);
   /* Initialize logger */
-  srslog::basic_logger& logger = srslog_init();
-  logger.set_level(srslog::basic_levels::info);
-
-  /* Retrieve parameters from command line */
-  if (argc < 2) {
-    printf("Usage: %s <band> <center frequency> <sample rate>\n", argv[0]);
-    return 1;
-  }
-  band             = atoi(argv[1]);
-
-  /* If center frequency config is provided */
-  if (argc > 2) {
-    double centerFreqMHz = atof(argv[2]);
-    center_frequency     = centerFreqMHz * 1e6;
-  }
-
-  if (argc > 3) {
-    double srateMHz = atof(argv[3]);
-    srate           = srateMHz * 1e6;
-  }
+  config.log_level             = srslog::basic_levels::info;
+  srslog::basic_logger& logger = srslog_init(&config);
 
   /* Initialize source */
   ShadowerConfig config = {};
-  config.sample_rate    = srate;
-  config.dl_freq        = center_frequency;
-  config.ul_freq        = center_frequency;
-  config.rx_gain        = 40;
-  config.tx_gain        = 80;
+  config.source_type    = "uhd";
+  config.source_module  = uhd_source_module_path;
+  config.source_params  = source_params;
+  config.sample_rate    = sample_rate;
+  config.channels.resize(1);
 
-  config.source_params               = "type=b200";
+  ChannelConfig& cfg = config.channels[0];
+  cfg.rx_frequency   = start_freq;
+  cfg.tx_frequency   = start_freq;
+  cfg.rx_gain        = rx_gain;
+  cfg.tx_gain        = 0;
+
   create_source_t uhd_source_creator = load_source(uhd_source_module_path);
   Source*         source             = uhd_source_creator(config);
 
-  // create_source_t limesdr_source = load_source(limesdr_source_module_path);
-  // config.source_params =
-  //     "logLevel:3,port0:\"dev0\",dev0:\"XTRX\",dev0_chipIndex:0,"
-  //     "dev0_linkFormat:\"I12\",dev0_rx_path:\"LNAH\",dev0_tx_path:\"Band1\","
-  //     "dev0_max_channels_to_use:1,dev0_calibration:\"none\",dev0_rx_gfir_enable:0,dev0_tx_gfir_enable:0";
-  // config.rx_gain = 50;
-  // source         = limesdr_source(config);
-
-  /* If sample rate config is provided */
-  if (argc > 4) {
-    double srateMHz = atof(argv[4]);
-    srate           = srateMHz * 1e6;
-    sf_len          = srate / 1000;
-  }
-
-  /* Retrieve the sync raster config */
   srsran::srsran_band_helper                band_helper;
   srsran::srsran_band_helper::sync_raster_t sync_raster = band_helper.get_sync_raster(band, scs);
   if (!sync_raster.valid()) {
-    printf("Can not get the sync raster for band %u\n", band);
-    return 1;
+    logger.error("Invalid band %d or SCS %d kHz\n", band, scs);
+    exit(1);
   }
 
   while (!sync_raster.end()) {
     double ssb_freq = sync_raster.get_frequency();
-    if (ssb_freq < center_freq - 10e6) {
+    if (ssb_freq < start_freq) {
       sync_raster.next();
       continue;
     }
-    if (ssb_freq > center_freq + 10e6) {
+    if (ssb_freq > stop_freq) {
       break;
     }
-
-    logger.info("Scanning SSB at %.2f MHz", ssb_freq / 1e6);
-    scan_ssb(source, srate, center_freq, ssb_freq, logger, scs, 1000);
+    logger.info("Scanning SSB at %f MHz", ssb_freq / 1e6);
+    scan_ssb(source, sample_rate, ssb_freq, logger, scs, rounds);
     sync_raster.next();
   }
   source->close();

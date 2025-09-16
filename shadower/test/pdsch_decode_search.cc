@@ -1,35 +1,93 @@
-#include "shadower/hdr/utils.h"
-#include "shadower/hdr/wd_worker.h"
-#include "shadower/test/dummy_exploit.h"
+#include "shadower/utils/utils.h"
+#include "srsran/asn1/rrc_nr.h"
 #include "srsran/mac/mac_sch_pdu_nr.h"
 #include "srsran/phy/phch/pbch_msg_nr.h"
 #include "srsran/phy/ue/ue_dl_nr.h"
 #include "test_variables.h"
-#include <iomanip>
-#include <sstream>
+#include <unistd.h>
 
-uint16_t           rnti      = c_rnti;
-srsran_rnti_type_t rnti_type = srsran_rnti_type_c;
+std::string sample_file;
+std::string last_sample_file;
+std::string next_sample_file;
+uint32_t    slot_number;
+uint32_t    half  = 0;
+int         begin = -100;
+int         end   = 100;
 
-#if TEST_TYPE == 1
-std::string sample_file = "shadower/test/data/srsran-n78-20MHz/pdsch_3684.fc32";
-std::string last_file   = sample_file;
-uint8_t     half        = 1;
-float       cfo         = 0;
-#elif TEST_TYPE == 2
-std::string sample_file = "/root/overshadow/effnet/sf_152_11864.fc32";
-uint8_t     half        = 1;
-#elif TEST_TYPE == 3
-std::string sample_file = "shadower/test/data/srsran-n78-40MHz/pdsch_13726.fc32";
-std::string last_file   = sample_file;
-uint8_t     half        = 0;
-#endif // TEST_TYPE
+void parse_args(int argc, char* argv[])
+{
+  int opt;
+  while ((opt = getopt(argc, argv, "f:s:h:l:n:b:e:")) != -1) {
+    switch (opt) {
+      case 'f':
+        sample_file = optarg;
+        break;
+      case 's':
+        slot_number = atoi(optarg);
+        break;
+      case 'h':
+        half = atoi(optarg);
+        break;
+      case 'l':
+        last_sample_file = optarg;
+        break;
+      case 'n':
+        next_sample_file = optarg;
+        break;
+      case 'b':
+        begin = atoi(optarg);
+        break;
+      case 'e':
+        end = atoi(optarg);
+        break;
+      default:
+        fprintf(stderr, "Unknown option: %c\n", opt);
+        exit(EXIT_FAILURE);
+    }
+  }
+}
 
 int main(int argc, char* argv[])
 {
+  int test_number = 0;
+  if (argc > 1) {
+    test_number = atoi(argv[1]);
+  }
+  test_args_t     args   = init_test_args(test_number);
+  ShadowerConfig& config = args.config;
   /* initialize logger */
-  srslog::basic_logger& logger = srslog_init();
-  logger.set_level(srslog::basic_levels::debug);
+  srslog::basic_logger& logger = srslog_init(&config);
+  switch (test_number) {
+    case 0:
+      sample_file = "shadower/test/data/srsran-n78-20MHz/pdsch_3440.fc32";
+      slot_number = 0;
+      half        = 0;
+      break;
+    case 1:
+      sample_file = "shadower/test/data/srsran-n78-40MHz/pdsch_13640.fc32";
+      slot_number = 0;
+      half        = 0;
+      break;
+    case 2:
+      sample_file = "/root/overshadow/effnet/sf_152_11864.fc32";
+      slot_number = 4;
+      half        = 1;
+      break;
+    case 4:
+      sample_file = "shadower/test/data/srsran-n3-20MHz/pdsch_4615.fc32";
+      slot_number = 4615;
+      half        = 0;
+      break;
+    default:
+      fprintf(stderr, "Unknown test number: %d\n", test_number);
+      exit(EXIT_FAILURE);
+  }
+  /* parse command line arguments */
+  parse_args(argc, argv);
+
+  logger.info("Sample file: %s", sample_file.c_str());
+  logger.info("Slot number: %u", slot_number);
+  logger.info("Half: %u", half);
 
   /* initialize phy cfg */
   srsran::phy_cfg_nr_t phy_cfg = {};
@@ -40,138 +98,120 @@ int main(int argc, char* argv[])
   init_phy_state(phy_state, config.nof_prb);
 
   /* load mib configuration and update phy_cfg */
-  if (!configure_phy_cfg_from_mib(phy_cfg, mib_config_raw, ncellid)) {
-    printf("Failed to configure phy cfg from mib\n");
+  if (!configure_phy_cfg_from_mib(phy_cfg, args.mib_config_raw, args.ncellid)) {
+    logger.error("Failed to configure phy cfg from mib");
     return -1;
   }
 
   /* load sib1 configuration and apply to phy_cfg */
-  if (!configure_phy_cfg_from_sib1(phy_cfg, sib1_config_raw, sib1_size)) {
+  if (!configure_phy_cfg_from_sib1(phy_cfg, args.sib_config_raw, args.sib_size)) {
     logger.error("Failed to configure phy cfg from sib1");
     return -1;
   }
 
-  /* load rrc_setup cell configuration and apply to phy_cfg */
-  if (!configure_phy_cfg_from_rrc_setup(phy_cfg, rrc_setup_raw, rrc_setup_size, logger)) {
+  /* load rrc setup configuration and apply to phy_cfg */
+  if (!configure_phy_cfg_from_rrc_setup(phy_cfg, args.rrc_setup_raw, args.rrc_setup_size, logger)) {
     logger.error("Failed to configure phy cfg from rrc setup");
     return -1;
   }
 
   /* UE DL init with configuration from phy_cfg */
-  srsran_ue_dl_nr_t ue_dl        = {};
-  cf_t*             ue_dl_buffer = srsran_vec_cf_malloc(sf_len);
-  if (!init_ue_dl(ue_dl, ue_dl_buffer, phy_cfg)) {
+  srsran_ue_dl_nr_t ue_dl  = {};
+  cf_t*             buffer = srsran_vec_cf_malloc(args.sf_len);
+  if (!init_ue_dl(ue_dl, buffer, phy_cfg)) {
     logger.error("Failed to init UE DL");
     return -1;
   }
 
-  /* Parse command line arguments as test arguments */
-  test_args_t args = parse_test_args(argc, argv);
-  if (args.rnti != 0) {
-    rnti = args.rnti;
-  }
-
   /* load test samples */
-  std::vector<cf_t> samples(sf_len);
-  if (!args.sample_filename.empty()) {
-    sample_file = args.sample_filename;
-  }
-  if (!load_samples(sample_file, samples.data(), sf_len)) {
+  std::vector<cf_t> samples(args.sf_len);
+  if (!load_samples(sample_file, samples.data(), args.sf_len)) {
     logger.error("Failed to load data from %s", sample_file.c_str());
     return -1;
   }
 
-  std::vector<cf_t> last_samples(sf_len);
-  if (!load_samples(last_file, last_samples.data(), sf_len)) {
-    logger.error("Failed to load data from %s", last_file.c_str());
+  std::vector<cf_t> last_samples(args.sf_len);
+  if (!last_sample_file.empty() && !load_samples(last_sample_file, last_samples.data(), args.sf_len)) {
+    logger.error("Failed to load data from %s", last_sample_file.c_str());
     return -1;
   }
 
-  /* Retrieve the slot index from file name */
-  uint32_t slot_number = parse_slot_idx_from_filename(sample_file);
-  if (!args.sample_filename.empty()) {
-    half        = args.half;
-    slot_number = args.slot_idx;
-  }
-
-  /* Pre-initialize softbuffer rx */
-  srsran_softbuffer_rx_t softbuffer_rx = {};
-  if (srsran_softbuffer_rx_init_guru(&softbuffer_rx, SRSRAN_SCH_NR_MAX_NOF_CB_LDPC, SRSRAN_LDPC_MAX_LEN_ENCODED_CB) !=
-      0) {
-    logger.error("Couldn't allocate and/or initialize softbuffer");
+  std::vector<cf_t> next_samples(args.sf_len);
+  if (!next_sample_file.empty() && !load_samples(next_sample_file, next_samples.data(), args.sf_len)) {
+    logger.error("Failed to load data from %s", next_sample_file.c_str());
     return -1;
   }
-  /* Run wdissector for packet summary */
-  WDWorker*                        wd_worker = new WDWorker(config.duplex_mode, config.bc_worker_log_level);
-  SafeQueue<std::vector<uint8_t> > dl_msg_queue;
-  SafeQueue<std::vector<uint8_t> > ul_msg_queue;
-  DummyExploit*                    exploit = new DummyExploit(dl_msg_queue, ul_msg_queue);
 
-  /* Assume the slot number is wrong, brute force search 20 possible slot numbers to search */
-  for (uint32_t i = 0; i < 20; i++) {
-    /* For each slot number try different delays from -100 to 500 */
-    for (int32_t delay = -100; delay < 500; delay += 1) {
-      /* Initialize slot cfg */
-      srsran_slot_cfg_t slot_cfg = {.idx = slot_number + half + i};
-
-      if (half == 0 && delay < 0) {
-        /* copy samples to ue_dl processing buffer */
-        srsran_vec_cf_copy(ue_dl_buffer, last_samples.data() + sf_len + delay, -delay);
-        srsran_vec_cf_copy(ue_dl_buffer - delay, samples.data(), slot_len + delay);
+  for (int offset = begin; offset < end; offset++) {
+    if (half == 0 && offset < 0) {
+      /* Copy the last section of the samples to the buffer */
+      if (!last_sample_file.empty()) {
+        srsran_vec_cf_copy(buffer, last_samples.data() + args.sf_len + offset, -offset);
       } else {
-        /* copy samples to ue_dl processing buffer */
-        srsran_vec_cf_copy(ue_dl_buffer, samples.data() + half * slot_len + delay, slot_len);
+        srsran_vec_cf_zero(buffer, -offset); // Zero fill if no last sample file
       }
-#if TEST_TYPE == 1
-      srsran_vec_apply_cfo(ue_dl_buffer, -cfo / srate, ue_dl_buffer, slot_len);
-#endif // TEST_TYPE
-      /* run ue_dl estimate fft */
-      srsran_ue_dl_nr_estimate_fft(&ue_dl, &slot_cfg);
-      /* search for dci */
-      ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, rnti, rnti_type, phy_state, logger);
-
-      /* get grant from dci search */
-      uint32_t                   pid          = 0;
-      srsran_sch_cfg_nr_t        pdsch_cfg    = {};
-      srsran_harq_ack_resource_t ack_resource = {};
-      if (!phy_state.get_dl_pending_grant(slot_cfg.idx, pdsch_cfg, ack_resource, pid)) {
-        continue;
+      /* Copy the current section to the offset */
+      srsran_vec_cf_copy(buffer - offset, samples.data(), args.slot_len + offset);
+    } else if (half > 0 && offset > 0) {
+      srsran_vec_cf_copy(buffer, samples.data() + args.slot_len * half + offset, args.slot_len - offset);
+      if (!next_sample_file.empty()) {
+        srsran_vec_cf_copy(buffer + args.slot_len * half - offset, next_samples.data(), offset);
+      } else {
+        srsran_vec_cf_zero(buffer + args.slot_len * half - offset, offset); // Zero fill if no next sample file
       }
-      /* Initialize the buffer for output*/
-      srsran::unique_byte_buffer_t data = srsran::make_byte_buffer();
-      if (data == nullptr) {
-        logger.error("Error creating byte buffer");
-        return -1;
-      }
-      data->N_bytes = pdsch_cfg.grant.tb[0].tbs / 8U;
-
-      /* Initialize pdsch result*/
-      srsran_pdsch_res_nr_t pdsch_res = {};
-      pdsch_res.tb[0].payload         = data->msg;
-      srsran_softbuffer_rx_reset(&softbuffer_rx);
-
-      /* Decode PDSCH */
-      if (!ue_dl_pdsch_decode(ue_dl, pdsch_cfg, slot_cfg, pdsch_res, softbuffer_rx, logger)) {
-        logger.error("Failed to decode PDSCH");
-        continue;
-      }
-
-      /* if the message is not decoded correctly, then try another settings */
-      if (!pdsch_res.tb[0].crc) {
-        logger.debug("Error PDSCH got wrong CRC %d", delay);
-        continue;
-      }
-      logger.info("Successfully decoded at delay %d slot %u", delay, slot_cfg.idx);
-
-      /* Print received messages bytes in hex */
-      std::ostringstream oss;
-      for (uint32_t i = 0; i < data->N_bytes; i++) {
-        oss << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(data->msg[i]) << ", ";
-      }
-      logger.info("Decoded message: %s", oss.str().c_str());
-
-      wd_worker->process(data->msg, data->N_bytes, rnti, 0, 0, slot_cfg.idx, DL, exploit);
+    } else {
+      srsran_vec_cf_copy(buffer, samples.data() + args.slot_len * half + offset, args.slot_len);
     }
+
+    /* Initialize slot cfg */
+    srsran_slot_cfg_t slot_cfg = {.idx = slot_number + half};
+    /* run ue_dl estimate fft */
+    srsran_ue_dl_nr_estimate_fft(&ue_dl, &slot_cfg);
+
+    /* Write OFDM symbols to file for debug purpose */
+    char filename[64];
+    sprintf(filename, "ofdm_pdsch_fft%u", args.nof_sc);
+    write_record_to_file(ue_dl.sf_symbols[0], args.nof_re, filename);
+
+    /* search for dci */
+    ue_dl_dci_search(ue_dl, phy_cfg, slot_cfg, args.c_rnti, srsran_rnti_type_c, phy_state, logger, 0);
+
+    /* get grant from dci search */
+    uint32_t                   pid          = 0;
+    srsran_sch_cfg_nr_t        pdsch_cfg    = {};
+    srsran_harq_ack_resource_t ack_resource = {};
+    if (!phy_state.get_dl_pending_grant(slot_cfg.idx, pdsch_cfg, ack_resource, pid)) {
+      logger.error("Offset: %d Failed to get grant from dci search", offset);
+      continue;
+    }
+    /* Initialize the buffer for output*/
+    srsran::unique_byte_buffer_t data = srsran::make_byte_buffer();
+    if (data == nullptr) {
+      logger.error("Error creating byte buffer");
+      continue;
+    }
+    data->N_bytes = pdsch_cfg.grant.tb[0].tbs / 8U;
+
+    /* Initialize pdsch result*/
+    srsran_pdsch_res_nr_t pdsch_res      = {};
+    pdsch_res.tb[0].payload              = data->msg;
+    srsran_softbuffer_rx_t softbuffer_rx = {};
+    if (srsran_softbuffer_rx_init_guru(&softbuffer_rx, SRSRAN_SCH_NR_MAX_NOF_CB_LDPC, SRSRAN_LDPC_MAX_LEN_ENCODED_CB) !=
+        0) {
+      logger.error("Couldn't allocate and/or initialize softbuffer");
+      continue;
+    }
+
+    /* Decode PDSCH */
+    if (!ue_dl_pdsch_decode(ue_dl, pdsch_cfg, slot_cfg, pdsch_res, softbuffer_rx, logger, 0)) {
+      continue;
+    }
+    /* if the message is not decoded correctly, then return */
+    if (!pdsch_res.tb[0].crc) {
+      logger.debug("Offset: %d Error PDSCH got wrong CRC", offset);
+      continue;
+    }
+    logger.info("Offset: %d PDSCH decoded successfully", offset);
   }
   return 0;
 }

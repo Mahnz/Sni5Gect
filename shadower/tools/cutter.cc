@@ -1,98 +1,104 @@
 #include <complex>
 #include <fstream>
+#include <getopt.h>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <vector>
 
-using namespace std;
-long sampleRate = 23040000;
-long frameSize  = sampleRate * 10e-3;
+std::string inputFile;
+std::string outputFile;
+float       skip;
+float       subframes;
+float       srate         = 23.04e6;
+size_t      subframe_size = 23040;
+
+void parse_args(int argc, char* argv[])
+{
+  int opt;
+
+  while ((opt = getopt(argc, argv, "ioknsh")) != -1) {
+    switch (opt) {
+      case 'i':
+        inputFile = argv[optind];
+        break;
+      case 'o':
+        outputFile = argv[optind];
+        break;
+      case 'k':
+        skip = atof(argv[optind]);
+        break;
+      case 'n':
+        subframes = atof(argv[optind]);
+        break;
+      case 's': {
+        printf("Sample rate: %s\n", argv[optind]);
+        double sampleRateMHz = atof(argv[optind]);
+        srate                = sampleRateMHz * 1e6;
+        subframe_size        = srate * 0.001; // 1ms
+        break;
+      }
+      case 'h':
+        printf("Usage: %s -i <input_file> -o <output_file> -k <skip> -n <subframes> -s <sample_rate>\n", argv[0]);
+        exit(EXIT_SUCCESS);
+      default:
+        fprintf(stderr, "Unknown option or missing argument.\n");
+        exit(EXIT_FAILURE);
+    }
+  }
+}
+
+void copy(std::ifstream& in, std::ofstream& out, long count)
+{
+  std::complex<float> buffer[count];
+  in.read(reinterpret_cast<char*>(buffer), count * sizeof(std::complex<float>));
+  if (in.gcount() < static_cast<std::streamsize>(count * sizeof(std::complex<float>))) {
+    printf("[ERROR] Reached end of file, copy failed\n");
+    exit(1);
+  }
+  out.write(reinterpret_cast<char*>(buffer), count * sizeof(std::complex<float>));
+}
 
 int main(int argc, char* argv[])
 {
-  // parse command line arguments
-  if (argc < 5) {
-    cout << "Usage: cutter <input file> <output file> <skip> <# frames to copy>" << endl;
-    return 1;
-  }
-  string inputFile  = argv[1];
-  string outputFile = argv[2];
-  float  skip       = atof(argv[3]);
-  if (skip < 0) {
-    cout << "[ERROR] Skip should be greater than or equal to 0!" << endl;
-    return 1;
-  }
-  long framesToCopy = atol(argv[4]);
-  if (framesToCopy <= 0) {
-    cout << "[ERROR] Frames to copy should be greater than 0!" << endl;
-    return 1;
-  }
-
-  if (argc > 4) {
-    float sampleRateMHz = atof(argv[5]);
-    sampleRate          = sampleRateMHz * 1e6;
-    frameSize           = sampleRate * 10e-3;
-  }
-
   // prepare the input stream object
-  ifstream in(inputFile, ios::binary);
+  parse_args(argc, argv);
+
+  std::ifstream in(inputFile, std::ios::binary);
+  printf("Input file: %s\n", inputFile.c_str());
   if (!in.is_open()) {
-    cout << "[ERROR] Failed to open input file" << endl;
-    return 1;
+    printf("[ERROR] Failed to open input file: %s\n", inputFile.c_str());
+    exit(1);
   } else {
-    cout << "Input file opened successfully!" << endl;
+    printf("[INFO] Input file: %s\n", inputFile.c_str());
   }
   // prepare the output stream object
-  ofstream out(outputFile, ios::binary);
+  std::ofstream out(outputFile, std::ios::binary);
   if (!out.is_open()) {
-    cout << "[ERROR] Failed to open output file" << endl;
-    return 1;
+    printf("[ERROR] Failed to open output file: %s\n", outputFile.c_str());
+    exit(1);
   }
 
   // Print the copy information
-  long samplesToSkip = frameSize * skip;
-  printf(" * * *  Skiped Frames: %.3f \tSamples: %ld\n", skip, samplesToSkip);
-  long samplesToCopy = frameSize * framesToCopy;
-  printf(" * * *  Copied Frames: %ld \tSamples: %ld\n", framesToCopy, samplesToCopy);
+  long samplesToSkip = subframe_size * skip;
+  printf(" * * *  Skiped Sub-Frames: %.3f \tSamples: %ld\n", skip, samplesToSkip);
+  long samplesToCopy = subframe_size * subframes;
+  printf(" * * *  Copied Sub-Frames: %.3f \tSamples: %ld\n", subframes, samplesToCopy);
 
-  // initialize offset to 0
-  long                    offset = 0;
-  long                    round  = samplesToSkip / 4096;
-  vector<complex<float> > skipBuffer(4096);
-  for (long i = 0; i < round; i++) {
-    in.read(reinterpret_cast<char*>(skipBuffer.data()), skipBuffer.size() * sizeof(complex<float>));
-    offset += skipBuffer.size();
-    streamsize read = in.gcount();
-    if (read < static_cast<std::streamsize>(skipBuffer.size())) {
-      cout << "[ERROR] Reached end of file, skip failed, read: " << read << "Skipped: " << offset << endl;
-      return 1;
-    }
-  }
-  long remaining = samplesToSkip % 4096;
-  if (remaining > 0) {
-    in.read(reinterpret_cast<char*>(skipBuffer.data()), remaining * sizeof(complex<float>));
-    offset += remaining;
-    streamsize read = in.gcount();
-    if (read < static_cast<std::streamsize>(skipBuffer.size())) {
-      cout << "[ERROR] Reached end of file, skip remaining failed, read " << read << endl;
-      return 1;
-    }
-  }
+  // Skip the samples
+  long offset = samplesToSkip * sizeof(std::complex<float>);
+  in.seekg(offset);
 
-  vector<complex<float> > buffer(frameSize);
-  for (long i = 0; i < framesToCopy; i++) {
-    in.read(reinterpret_cast<char*>(buffer.data()), buffer.size() * sizeof(complex<float>));
-    streamsize read = in.gcount();
-    if (read < static_cast<std::streamsize>(skipBuffer.size())) {
-      cout << "[ERROR] Reached end of file, copy failed, read " << read << endl;
-      return 1;
-    }
-    out.write(reinterpret_cast<char*>(buffer.data()), buffer.size() * sizeof(complex<float>));
-    offset += buffer.size();
+  long step_size = 4096;
+  // Copy the samples
+  while (in.good() && samplesToCopy > 0) {
+    step_size = std::min(step_size, samplesToCopy);
+    copy(in, out, step_size);
+    samplesToCopy -= step_size;
   }
   in.close();
   out.close();
-  printf("Expected output file size: %zd MB\n", samplesToCopy * sizeof(complex<float>) / 1024 / 1024);
+  printf("Expected output file size: %f MB\n",
+         static_cast<float>(samplesToCopy * sizeof(std::complex<float>) / 1024 / 1024));
   return 0;
 }

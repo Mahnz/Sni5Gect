@@ -33,6 +33,7 @@
 #include "srsran/phy/dft/dft_precoding.h"
 #include "srsran/phy/utils/convolution.h"
 #include "srsran/phy/utils/vector.h"
+#include "srsran/phy/common/phy_common_nr.h"
 #include "srsran/srsran.h"
 
 #define NOF_REFS_SYM (q->cell.nof_prb * SRSRAN_NRE)
@@ -142,10 +143,10 @@ void srsran_chest_ul_free(srsran_chest_ul_t* q)
   bzero(q, sizeof(srsran_chest_ul_t));
 }
 
-int srsran_chest_ul_res_init(srsran_chest_ul_res_t* q, uint32_t max_prb)
+int srsran_chest_ul_res_init(srsran_chest_ul_res_t* q, uint32_t max_prb, srsran_subcarrier_spacing_t scs)
 {
   bzero(q, sizeof(srsran_chest_ul_res_t));
-  q->nof_re = SRSRAN_SF_LEN_RE_NR(max_prb);
+  q->nof_re = SRSRAN_SF_LEN_RE_NR(max_prb, scs);
   q->ce     = srsran_vec_cf_malloc(q->nof_re);
   if (!q->ce) {
     perror("malloc");
@@ -302,7 +303,7 @@ static void chest_ul_estimate(srsran_chest_ul_t*     q,
                               bool                   meas_ta_en,
                               bool                   use_cedron_alg,
                               bool                   write_estimates,
-                              uint32_t               n_prb[SRSRAN_NOF_SLOTS_PER_SF],
+                              uint32_t               n_prb[SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz)],
                               srsran_chest_ul_res_t* res)
 {
   // Calculate CFO
@@ -414,7 +415,7 @@ int srsran_chest_ul_estimate_pusch(srsran_chest_ul_t*     q,
   }
 
   int nrefs_sym = nof_prb * SRSRAN_NRE;
-  int nrefs_sf  = nrefs_sym * SRSRAN_NOF_SLOTS_PER_SF;
+  int nrefs_sf  = nrefs_sym * SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz);
 
   /* Get references from the input signal */
   srsran_refsignal_dmrs_pusch_get(&q->dmrs_signal, cfg, input, q->pilot_recv_signal);
@@ -427,16 +428,16 @@ int srsran_chest_ul_estimate_pusch(srsran_chest_ul_t*     q,
 
   // Estimate
   chest_ul_estimate(
-      q, SRSRAN_NOF_SLOTS_PER_SF, nrefs_sym, 1, cfg->meas_ta_en, cfg->use_cedron_alg, true, cfg->grant.n_prb, res);
+      q, SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz), nrefs_sym, 1, cfg->meas_ta_en, cfg->use_cedron_alg, true, cfg->grant.n_prb, res);
 
   return 0;
 }
 
 static float
-estimate_noise_pilots_pucch(srsran_chest_ul_t* q, cf_t* ce, uint32_t n_rs, uint32_t n_prb[SRSRAN_NOF_SLOTS_PER_SF])
+estimate_noise_pilots_pucch(srsran_chest_ul_t* q, cf_t* ce, uint32_t n_rs, uint32_t n_prb[SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_240kHz)])
 {
   float power = 0;
-  for (int ns = 0; ns < SRSRAN_NOF_SLOTS_PER_SF; ns++) {
+  for (int ns = 0; ns < SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz); ns++) {
     for (int i = 0; i < n_rs; i++) {
       // All CE are the same, so pick the first symbol of the first slot always and compare with the noisy estimates
       power += srsran_chest_estimate_noise_pilots(
@@ -447,7 +448,7 @@ estimate_noise_pilots_pucch(srsran_chest_ul_t* q, cf_t* ce, uint32_t n_rs, uint3
     }
   }
 
-  power /= (SRSRAN_NOF_SLOTS_PER_SF * n_rs);
+  power /= (SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz) * n_rs);
 
   if (q->smooth_filter_len == 3) {
     // Calibrated for filter length 3
@@ -470,7 +471,7 @@ int srsran_chest_ul_estimate_pucch(srsran_chest_ul_t*     q,
     ERROR("Error computing N_rs");
     return SRSRAN_ERROR;
   }
-  int nrefs_sf = SRSRAN_NRE * n_rs * SRSRAN_NOF_SLOTS_PER_SF;
+  int nrefs_sf = SRSRAN_NRE * n_rs * SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz);
 
   /* Get references from the input signal */
   srsran_refsignal_dmrs_pucch_get(&q->dmrs_signal, cfg, input, q->pilot_recv_signal);
@@ -509,12 +510,12 @@ int srsran_chest_ul_estimate_pucch(srsran_chest_ul_t*     q,
   }
 
   // Measure reference signal RE average power
-  cf_t corr = srsran_vec_acc_cc(q->pilot_estimates, SRSRAN_NOF_SLOTS_PER_SF * SRSRAN_NRE * n_rs) /
-              (SRSRAN_NOF_SLOTS_PER_SF * SRSRAN_NRE * n_rs);
+  cf_t corr = srsran_vec_acc_cc(q->pilot_estimates, SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz) * SRSRAN_NRE * n_rs) /
+              (SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz) * SRSRAN_NRE * n_rs);
   float rsrp_avg = __real__ corr * __real__ corr + __imag__ corr * __imag__ corr;
 
   // Measure EPRE
-  float epre = srsran_vec_avg_power_cf(q->pilot_estimates, SRSRAN_NOF_SLOTS_PER_SF * SRSRAN_NRE * n_rs);
+  float epre = srsran_vec_avg_power_cf(q->pilot_estimates, SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz) * SRSRAN_NRE * n_rs);
 
   // RSRP shall not be greater than EPRE
   rsrp_avg = SRSRAN_MIN(rsrp_avg, epre);
@@ -528,15 +529,15 @@ int srsran_chest_ul_estimate_pucch(srsran_chest_ul_t*     q,
   // Estimate time alignment
   if (cfg->meas_ta_en) {
     float ta_err = 0.0f;
-    for (int ns = 0; ns < SRSRAN_NOF_SLOTS_PER_SF; ns++) {
+    for (int ns = 0; ns < SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz); ns++) {
       for (int i = 0; i < n_rs; i++) {
         if (cfg->use_cedron_alg) {
           ta_err += srsran_cedron_freq_estimate(
                         &q->srsran_cedron_freq_est, &q->pilot_estimates[(i + ns * n_rs) * SRSRAN_NRE], SRSRAN_NRE) /
-                    (float)(SRSRAN_NOF_SLOTS_PER_SF * n_rs);
+                    (float)(SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz) * n_rs);
         } else {
           ta_err += srsran_vec_estimate_frequency(&q->pilot_estimates[(i + ns * n_rs) * SRSRAN_NRE], SRSRAN_NRE) /
-                    (float)(SRSRAN_NOF_SLOTS_PER_SF * n_rs);
+                    (float)(SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz) * n_rs);
         }
       }
     }

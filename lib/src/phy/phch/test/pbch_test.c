@@ -88,7 +88,7 @@ int main(int argc, char** argv)
   nof_re = SRSRAN_SF_LEN_RE(cell.nof_prb, SRSRAN_CP_NORM);
 
   /* init memory */
-  srsran_chest_dl_res_init(&chest_dl_res, cell.nof_prb);
+  srsran_chest_dl_res_init(&chest_dl_res, cell.nof_prb, srsran_subcarrier_spacing_15kHz);
   for (i = 0; i < cell.nof_ports; i++) {
     for (j = 0; j < cell.nof_ports; j++) {
       for (k = 0; k < nof_re; k++) {

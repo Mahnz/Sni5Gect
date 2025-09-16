@@ -177,7 +177,7 @@ sched_cell_params_t::dl_nof_re_table generate_nof_re_table(const srsran_cell_t& 
     dl_sf.cfi = cfi + 1;
     for (uint32_t sf_idx = 0; sf_idx < SRSRAN_NOF_SF_X_FRAME; ++sf_idx) {
       dl_sf.tti = sf_idx;
-      for (uint32_t s = 0; s < SRSRAN_NOF_SLOTS_PER_SF; ++s) {
+      for (uint32_t s = 0; s < SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz); ++s) {
         for (uint32_t n = 0; n < cell.nof_prb; ++n) {
           table[n][sf_idx][s][cfi] = ra_re_x_prb(&cell, &dl_sf, s, n);
         }
@@ -194,7 +194,7 @@ sched_cell_params_t::dl_lb_nof_re_table get_lb_nof_re_x_prb(const sched_cell_par
     ret[sf_idx].resize(table.size());
     srsran::bounded_vector<uint32_t, SRSRAN_MAX_PRB> re_prb_vec(table.size());
     for (uint32_t p = 0; p < table.size(); ++p) {
-      for (uint32_t s = 0; s < SRSRAN_NOF_SLOTS_PER_SF; ++s) {
+      for (uint32_t s = 0; s < SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz); ++s) {
         // assume max CFI to compute lower bound
         re_prb_vec[p] += table[p][sf_idx][s][SRSRAN_NOF_CFI - 1];
       }
@@ -342,7 +342,7 @@ sched_cell_params_t::get_dl_nof_res(srsran::tti_point tti_tx_dl, const srsran_dc
 
   uint32_t nof_re = 0;
   for (uint32_t p = 0; p < nof_prb(); ++p) {
-    for (uint32_t s = 0; s < SRSRAN_NOF_SLOTS_PER_SF; ++s) {
+    for (uint32_t s = 0; s < SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz); ++s) {
       if (grant.prb_idx[s][p]) {
         nof_re += nof_re_table[p][tti_tx_dl.sf_idx()][s][cfi - 1];
       }

@@ -91,7 +91,7 @@ option(ENABLE_TIDY           "Enable clang tidy"                        OFF)
 
 option(USE_LTE_RATES         "Use standard LTE sampling rates"          OFF)
 option(USE_MKL               "Use MKL instead of fftw"                  OFF)
-option(USE_CUDA              "Use CUDA for acceleration"                OFF) 
+option(USE_CUDA              "Use CUDA for acceleration"                ON) 
 
 option(ENABLE_TIMEPROF       "Enable time profiling"                    ON)
 
@@ -338,11 +338,12 @@ if(Backward_FOUND)
 endif()
 
 if (USE_CUDA)
-  find_package(CUDAToolkit REQUIRED)
+  find_package(CUDAToolkit QUIET)
   if(CUDAToolkit_FOUND)
     message(STATUS "CUDA found")
     enable_language(CUDA)
     add_definitions(-DENABLE_CUDA)
+    set(ENABLE_CUDA true)
     set(CMAKE_CUDA_ARCHITECTURES 60 70 75 80 86 90)
     include_directories(${CUDAToolkit_INCLUDE_DIRS})
     link_directories(${CUDAToolkit_LIBRARY_DIR})

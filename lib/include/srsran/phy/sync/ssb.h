@@ -35,7 +35,7 @@ extern "C" {
 /**
  * @brief Default SSB maximum sampling rate
  */
-#define SRSRAN_SSB_DEFAULT_MAX_SRATE_HZ 61.44e6
+#define SRSRAN_SSB_DEFAULT_MAX_SRATE_HZ 184.32e6
 
 /**
  * @brief Default SSB minimum subcarrier spacing

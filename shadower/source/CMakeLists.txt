@@ -1,0 +1,12 @@
+add_library(source ${SHADOWER_DIR}/source/source.cc ${SHADOWER_DIR}/source/source.h)
+
+# File source to read directly from the files
+add_library(file_source SHARED ${SHADOWER_DIR}/source/file_source.cc)
+target_link_libraries(file_source srsran_phy_common utils)
+
+# UHD source to use the USRP device
+add_library(uhd_source SHARED ${SHADOWER_DIR}/source/uhd_source.cc)
+target_link_libraries(uhd_source srsran_phy srsran_rf)
+
+add_executable(source_test ${SHADOWER_DIR}/source/tests/source_test.cc)
+target_link_libraries(source_test source utils)

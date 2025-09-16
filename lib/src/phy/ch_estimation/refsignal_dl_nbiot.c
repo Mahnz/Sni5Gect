@@ -31,6 +31,7 @@
 #include "srsran/phy/common/sequence.h"
 #include "srsran/phy/utils/debug.h"
 #include "srsran/phy/utils/vector.h"
+#include "srsran/phy/common/phy_common_nr.h"
 
 #define EXTRA_DEBUG 0
 
@@ -131,11 +132,11 @@ int srsran_refsignal_dl_nbiot_set_cell(srsran_refsignal_dl_nbiot_t* q, srsran_nb
 
     srsran_sequence_t seq;
     bzero(&seq, sizeof(srsran_sequence_t));
-    if (srsran_sequence_init(&seq, SRSRAN_NOF_SLOTS_PER_SF * SRSRAN_NBIOT_MAX_PORTS * SRSRAN_MAX_PRB)) {
+    if (srsran_sequence_init(&seq, SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz) * SRSRAN_NBIOT_MAX_PORTS * SRSRAN_MAX_PRB)) {
       goto free_and_exit;
     }
 
-    for (uint32_t ns = 0; ns < SRSRAN_NSLOTS_X_FRAME; ns++) {
+    for (uint32_t ns = 0; ns < SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz); ns++) {
       for (uint32_t p = 0; p < 2; p++) {
         uint32_t nsymbols = srsran_refsignal_dl_nbiot_nof_symbols(p) / 2;
         for (uint32_t l = 0; l < nsymbols; l++) {
@@ -145,7 +146,7 @@ int srsran_refsignal_dl_nbiot_set_cell(srsran_refsignal_dl_nbiot_t* q, srsran_nb
           uint32_t c_init = 1024 * (7 * (ns + 1) + lp + 1) * (2 * cell.n_id_ncell + 1) + 2 * cell.n_id_ncell + N_cp;
 
           /* generate sequence for this symbol and slot */
-          srsran_sequence_set_LTE_pr(&seq, SRSRAN_NOF_SLOTS_PER_SF + SRSRAN_NBIOT_MAX_PORTS * SRSRAN_MAX_PRB, c_init);
+          srsran_sequence_set_LTE_pr(&seq, SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz) + SRSRAN_NBIOT_MAX_PORTS * SRSRAN_MAX_PRB, c_init);
 
           /* Compute signal */
           for (uint32_t i = 0; i < 2; i++) {

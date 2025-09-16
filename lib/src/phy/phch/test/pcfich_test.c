@@ -88,7 +88,7 @@ int main(int argc, char** argv)
   nof_re = SRSRAN_CP_NORM_NSYMB * cell.nof_prb * SRSRAN_NRE;
 
   /* init memory */
-  srsran_chest_dl_res_init(&chest_res, cell.nof_prb);
+  srsran_chest_dl_res_init(&chest_res, cell.nof_prb, srsran_subcarrier_spacing_15kHz);
   srsran_chest_dl_res_set_identity(&chest_res);
   srsran_chest_dl_res_set_identity(&chest_res);
 

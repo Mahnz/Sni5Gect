@@ -22,7 +22,7 @@
 #ifndef SRSLOG_BACKEND_WORKER_H
 #define SRSLOG_BACKEND_WORKER_H
 
-#include "shadower/hdr/trace_samples.h"
+#include "shadower/comp/trace_samples/trace_samples.h"
 #include "srsran/srslog/detail/log_entry.h"
 #include "srsran/srslog/detail/support/dyn_arg_store_pool.h"
 #include "srsran/srslog/detail/support/work_queue.h"

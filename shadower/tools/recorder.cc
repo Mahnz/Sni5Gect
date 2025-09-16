@@ -1,45 +1,17 @@
-#include "shadower/hdr/arg_parser.h"
-#include "shadower/hdr/buffer_pool.h"
-#include "shadower/hdr/constants.h"
-#include "shadower/hdr/source.h"
-#include "srsran/phy/rf/rf.h"
+#include "shadower/source/source.h"
+#include "shadower/utils/arg_parser.h"
+#include "shadower/utils/buffer_pool.h"
+#include "shadower/utils/constants.h"
 #include "srsran/phy/utils/vector.h"
-#include "srsran/radio/rf_buffer.h"
-#include "srsran/srsran.h"
 #include <atomic>
 #include <complex>
 #include <condition_variable>
 #include <csignal>
-#include <fstream>
-#include <iostream>
+#include <getopt.h>
 #include <liquid/liquid.h>
-#include <mutex>
-#include <pthread.h>
 #include <queue>
-#include <sched.h>
-#include <string>
-#include <uhd/usrp/multi_usrp.hpp>
-#include <vector>
-using namespace std;
-atomic<bool> stop_flag(false);
-typedef struct {
-  double                                        freq;
-  double                                        srate;
-  uint32_t                                      frames;
-  queue<shared_ptr<vector<complex<float> > > >* buffer_queue;
-  mutex*                                        mtx;
-  condition_variable*                           cv;
-  msresamp_crcf                                 resampler;
-  string                                        outputFileName;
-} sdr_params_t;
 
-const double gain         = 40;   // dB
-const double subframeTime = 1e-3; // 1 ms
-string       device_args  = "type=b200";
-// const string device_args =
-//     "type=x300,addr=192.168.40.2,sampling_rate=200e6,send_frame_size=8000,recv_frame_size=8000,clock=internal";
-bool   enable_resampler = false;
-double sdr_srate        = 23.04e6;
+std::atomic<bool> stop_flag(false);
 
 struct frame_t {
   uint32_t                            frames_idx;
@@ -52,109 +24,224 @@ std::queue<std::shared_ptr<frame_t> > queue;
 std::condition_variable               cv;
 std::mutex                            mtx;
 
-double         center_freq      = 3427.5e6;
-double         sample_rate      = 23.04e6;
-double         sdr_sample_rate  = 23.04e6;
-double         gain             = 40;
-uint32_t       num_frames       = 20000;
-uint32_t       num_channels     = 1;
-std::string    output_file      = "output";
-std::string    output_folder    = "/root/records/";
-std::string    source_type      = "uhd";
-std::string    device_args      = "type=b200";
-bool           enable_resampler = false;
-double         resample_rate    = 1.0;
-ShadowerConfig config           = {};
-uint32_t       sf_len           = 0;
-uint32_t       sf_len_sdr       = 0;
+double         dl_freq       = 3427.5e6;
+double         sample_rate   = 23.04e6;
+double         gain          = 40;
+uint32_t       num_frames    = 20000;
+std::string    output_file   = "output";
+std::string    output_folder = "/root/records/";
+std::string    source_type   = "uhd";
+std::string    device_args   = "type=b200";
+ShadowerConfig config        = {};
+uint32_t       sf_len        = 0;
 
 void sigint_handler(int signum)
 {
-  auto* sdr_params = (sdr_params_t*)args;
-
-  queue<shared_ptr<vector<complex<float> > > >* queue  = sdr_params->buffer_queue;
-  double                                        freq   = sdr_params->freq;
-  double                                        srate  = sdr_params->srate;
-  uint32_t                                      frames = sdr_params->frames;
-  mutex*                                        mtx    = sdr_params->mtx;
-  condition_variable*                           cv     = sdr_params->cv;
-
-  // create a USRP device
-  uhd::usrp::multi_usrp::sptr usrp = uhd::usrp::multi_usrp::make(device_args);
-  usrp->set_rx_rate(sdr_srate);
-  usrp->set_rx_freq(freq);
-  usrp->set_rx_gain(gain);
-  usrp->set_clock_source("internal");
-  const size_t buffer_size = srate * subframeTime;
-  // Create a receiver streamer
-  uhd::rx_streamer::sptr stream = usrp->get_rx_stream(uhd::stream_args_t("fc32", "sc16"));
-  // Create a receive metadata structure
-  uhd::rx_metadata_t metadata;
-  // Start streaming
-  uhd::stream_cmd_t stream_cmd(uhd::stream_cmd_t::STREAM_MODE_START_CONTINUOUS);
-  stream_cmd.num_samps  = 0;
-  stream_cmd.stream_now = true;
-  stream->issue_stream_cmd(stream_cmd);
-
-  long subFrameCount = 0;
-
-  while (subFrameCount < frames && !stop_flag.load()) {
-    try {
-      shared_ptr<vector<complex<float> > > buffer = make_shared<vector<complex<float> > >(buffer_size);
-      stream->recv(buffer->data(), buffer_size, metadata, 3.0);
-      subFrameCount++;
-      {
-        lock_guard<mutex> lock(*mtx);
-        queue->push(buffer);
-      }
-      cv->notify_one();
-    } catch (const exception& e) {
-      break;
+  if (stop_flag.load()) {
+    if (signum == SIGINT) {
+      printf("Received SIGINT, stopping...\n");
+    } else if (signum == SIGTERM) {
+      printf("Received SIGTERM, stopping...\n");
     }
+  } else {
+    exit(EXIT_FAILURE);
   }
   stop_flag.store(true);
   printf("Received signal %d, stopping...\n", signum);
 }
 
+void usage(const char* prog)
+{
+  printf("Usage: %s [options]\n", prog);
+  printf("  -f <freq[,freq]>  DL,UL freq for channel 0 in MHz (if one value given, both RX/TX use it)\n");
+  printf("  -F <freq[,freq]>  DL,UL freq for channel 1 in MHz\n");
+  printf("  -g rx             RX,TX gains for channel 0\n");
+  printf("  -G rx             RX,TX gains for channel 1\n");
+  printf("  -s <MHz>          Sample rate in MHz\n");
+  printf("  -t <str>          Source type\n");
+  printf("  -d <str>          Source parameters\n");
+  printf("  -n <n>            Number of test rounds\n");
+  printf("  -o <file>         Output file name\n");
+  printf("  -O <folder>       Output folder name\n");
+}
+
+static void parse_freq(const char* arg, double& rx, double& tx)
+{
+  double f1 = 0, f2 = 0;
+  int    n = sscanf(arg, "%lf,%lf", &f1, &f2);
+  if (n == 1) {
+    rx = tx = f1 * 1e6;
+  } else if (n == 2) {
+    rx = f1 * 1e6;
+    tx = f2 * 1e6;
+  } else {
+    fprintf(stderr, "Invalid frequency format: %s\n", arg);
+    exit(EXIT_FAILURE);
+  }
+}
+
+std::string join_path(const std::string& folder, const std::string& file)
+{
+  if (folder.empty()) {
+    return file;
+  }
+  if (folder.back() == '/') {
+    return folder + file;
+  } else {
+    return folder + "/" + file;
+  }
+}
+
 void parse_args(int argc, char* argv[])
 {
   int opt;
-  int option_index = 0;
-
-  ofstream outfile(sdr_params->outputFileName, ios::binary);
-  if (!outfile.is_open()) {
-    cerr << "Failed to open output file" << endl;
-    stop_flag.store(true);
-    return;
+  config.channels.resize(2);
+  while ((opt = getopt(argc, argv, "f:F:g:G:s:t:d:n:o:O:")) != -1) {
+    switch (opt) {
+      case 'f': {
+        parse_freq(optarg, config.channels[0].rx_frequency, config.channels[0].tx_frequency);
+        config.channels[0].enabled = true;
+        break;
+      }
+      case 'F': {
+        parse_freq(optarg, config.channels[1].rx_frequency, config.channels[1].tx_frequency);
+        config.channels[1].enabled = true;
+        break;
+      }
+      case 'g': {
+        // Configure RX and TX gains for channel from command line
+        config.channels[0].rx_gain = strtod(optarg, nullptr);
+        config.channels[0].tx_gain = 0;
+        break;
+      }
+      case 'G': {
+        // Configure RX and TX gains for channel from command line
+        config.channels[1].rx_gain = strtod(optarg, nullptr);
+        config.channels[1].tx_gain = 0;
+        break;
+      }
+      case 's':
+        config.sample_rate = strtod(optarg, nullptr) * 1e6;
+        break;
+      case 't':
+        config.source_type = optarg;
+        break;
+      case 'd':
+        config.source_params = optarg;
+        break;
+      case 'n':
+        num_frames = atoi(optarg);
+        break;
+      case 'o':
+        output_file = optarg;
+        break;
+      case 'O':
+        output_folder = optarg;
+        break;
+      default:
+        usage(argv[0]);
+        exit(EXIT_FAILURE);
+    }
   }
-  long                              numSubframes = 0;
-  std::vector<std::complex<float> > output_buffer(sdr_params->srate * subframeTime);
-  while (!stop_flag.load()) {
-    shared_ptr<vector<complex<float> > > buffer;
-    {
-      unique_lock<mutex> lock(*mtx);
-      cv->wait(lock, [queue] { return !queue->empty(); });
-      buffer = queue->front();
-      queue->pop();
+  config.nof_channels = 0;
+  for (uint32_t i = 0; i < 2; i++) {
+    if (config.channels[i].enabled) {
+      config.nof_channels++;
+      printf("Channel %u enabled\n", i);
+      printf("  RX frequency: %f MHz\n", config.channels[i].rx_frequency / 1e6);
+      printf("  TX frequency: %f MHz\n", config.channels[i].tx_frequency / 1e6);
+      printf("  RX gain: %f dB\n", config.channels[i].rx_gain);
+      printf("  TX gain: %f dB\n", config.channels[i].tx_gain);
+    }
+  }
+
+  printf("Sample Rate: %f MHz\n", config.sample_rate / 1e6);
+  printf("Number of Channels: %d\n", config.nof_channels);
+  printf("Device Args: %s\n", config.source_params.c_str());
+  output_file = join_path(output_folder, output_file);
+  sf_len      = config.sample_rate * SF_DURATION;
+}
+
+void receiver_worker()
+{
+  /* Initialize Source */
+  Source* source = nullptr;
+  if (source_type == "uhd") {
+    create_source_t create_source = load_source(uhd_source_module_path);
+    source                        = create_source(config);
+  } else {
+    fprintf(stderr, "Unknown source type: %s\n", source_type.c_str());
+    exit(EXIT_FAILURE);
+  }
+
+  buffer_pool              = new SharedBufferPool(sf_len, 2048);
+  srsran_timestamp_t ts    = {};
+  uint32_t           count = 0;
+  while (count++ < num_frames) {
+    std::shared_ptr<frame_t> frame = std::make_shared<frame_t>();
+    cf_t*                    rx_buffer[SRSRAN_MAX_CHANNELS];
+    frame->frames_idx = count;
+
+    for (uint32_t i = 0; i < config.nof_channels; i++) {
+      std::shared_ptr<std::vector<cf_t> > buf = buffer_pool->get_buffer();
+      frame->buffer[i]                        = buf;
+      rx_buffer[i]                            = buf->data();
     }
 
-    if (buffer == nullptr) {
+    int result = source->recv(rx_buffer, sf_len, &ts);
+    if (result == -1) {
+      fprintf(stderr, "Failed to receive samples\n");
       break;
     }
-
-    if (enable_resampler) {
-      uint32_t num_output_samples;
-      msresamp_crcf_execute(sdr_params->resampler,
-                            (liquid_float_complex*)buffer->data(),
-                            buffer->size(),
-                            (liquid_float_complex*)output_buffer.data(),
-                            &num_output_samples);
-      outfile.write(reinterpret_cast<char*>(output_buffer.data()), num_output_samples * sizeof(complex<float>));
-    } else {
-      outfile.write(reinterpret_cast<char*>(buffer->data()), buffer->size() * sizeof(complex<float>));
+    frame->buffer_size = result;
+    {
+      std::lock_guard<std::mutex> lock(mtx);
+      queue.push(frame);
+      cv.notify_one();
     }
+  }
+  stop_flag.store(true);
+  source->close();
+}
 
-    if (numSubframes++ % 50 == 0) {
+void writer_worker()
+{
+  // Create output files
+  std::ofstream outfiles[SRSRAN_MAX_CHANNELS];
+  if (config.nof_channels > 1) {
+    for (uint32_t i = 0; i < config.nof_channels; i++) {
+      outfiles[i].open(output_file + "_ch_" + std::to_string(i) + ".fc32", std::ios::binary);
+      if (!outfiles[i].is_open()) {
+        stop_flag.store(true);
+        fprintf(stderr, "Failed to open output file\n");
+        exit(EXIT_FAILURE);
+      }
+    }
+  } else {
+    outfiles[0].open(output_file + ".fc32", std::ios::binary);
+    if (!outfiles[0].is_open()) {
+      stop_flag.store(true);
+      fprintf(stderr, "Failed to open output file\n");
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  while (!stop_flag.load()) {
+    std::shared_ptr<frame_t> frame = nullptr;
+    {
+      std::unique_lock<std::mutex> lock(mtx);
+      cv.wait(lock, [] { return !queue.empty() || stop_flag.load(); });
+      if (stop_flag.load()) {
+        break;
+      }
+      frame = queue.front();
+      queue.pop();
+    }
+    for (uint32_t i = 0; i < config.nof_channels; i++) {
+      uint32_t num_output_samples = frame->buffer_size;
+      outfiles[i].write((char*)frame->buffer[i]->data(), num_output_samples * sizeof(cf_t));
+    }
+    if (frame->frames_idx % 100 == 0) {
       printf(".");
       fflush(stdout);
     }
@@ -163,66 +250,15 @@ void parse_args(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
-  double   centerFrequency = 3424.5e6; // 3424.5 MHz
-  double   sampleRate      = 46.08e6;  // 46.08 MHz
-  string   outputFile      = "output.fc32";
-  uint32_t num_frames      = 1200000;
-
-  if (argc > 1) {
-    double centerFrequencyMHz = atof(argv[1]);
-    centerFrequency           = centerFrequencyMHz * 1e6;
-  }
-
-  if (argc > 2) {
-    num_frames = atoi(argv[2]);
-  }
-
-  if (argc > 3) {
-    outputFile = argv[3];
-  }
-
-  if (argc > 4) {
-    double sampleRateMHz = atof(argv[4]);
-    sampleRate           = sampleRateMHz * 1e6;
-  }
-
-  if (argc > 5) {
-    double sdr_srateMHz = atof(argv[5]);
-    sdr_srate           = sdr_srateMHz * 1e6;
-    if (sdr_srate < sampleRate) {
-      cerr << "SDR sample rate must be greater than or equal to the sample rate" << endl;
-      return -1;
-    }
-    if (sdr_srate != sampleRate) {
-      enable_resampler = true;
-    }
-  } else {
-    sdr_srate = sampleRate;
-  }
-
-  if (argc > 6) {
-    device_args = argv[6];
-  }
-
-  queue<shared_ptr<vector<complex<float> > > > buffer_queue;
-  mutex                                        mtx;
-  condition_variable                           cv;
-
-  float         resample_rate = sampleRate / sdr_srate;
-  msresamp_crcf resampler     = msresamp_crcf_create(resample_rate, TARGET_STOPBAND_SUPPRESSION);
-  printf("Using sample rate: %f\n", sdr_srate);
-  if (enable_resampler) {
-    printf("Using resampling rate: %f\n", resample_rate);
-  }
-
-  pthread_t    receiver_thread, writer_thread;
-  sdr_params_t params = {centerFrequency, sampleRate, num_frames * 10, &buffer_queue, &mtx, &cv, resampler, outputFile};
-  // create receiver thread
-  if (pthread_create(&receiver_thread, nullptr, read_from_sdr, (void*)&params)) {
-    cerr << "Error creating receiver thread" << endl;
+  parse_args(argc, argv);
+  std::signal(SIGINT, sigint_handler);
+  pthread_t receiver_thread, writer_thread;
+  // Create receiver thread
+  if (pthread_create(&receiver_thread, nullptr, (void* (*)(void*))receiver_worker, nullptr) != 0) {
+    fprintf(stderr, "Failed to create receiver thread\n");
     return -1;
   }
-  // set the receiver thread to the highest priority
+  // Set thread to the highest priority
   struct sched_param sp{};
   sp.sched_priority = sched_get_priority_max(SCHED_RR);
   if (pthread_setschedparam(receiver_thread, SCHED_RR, &sp) != 0) {
@@ -235,12 +271,6 @@ int main(int argc, char* argv[])
   if (pthread_setaffinity_np(receiver_thread, sizeof(cpuset), &cpuset) != 0) {
     fprintf(stderr, "Failed to set receiver thread affinity\n");
     return -1;
-  }
-  // set the writer thread to the lowest priority
-  struct sched_param sp2{};
-  sp2.sched_priority = sched_get_priority_min(SCHED_IDLE);
-  if (pthread_setschedparam(writer_thread, SCHED_IDLE, &sp2) != 0) {
-    cerr << "Failed to set thread priority" << endl;
   }
 
   int nproc = sysconf(_SC_NPROCESSORS_ONLN);
@@ -255,6 +285,5 @@ int main(int argc, char* argv[])
   }
   pthread_join(receiver_thread, nullptr);
   pthread_join(writer_thread, nullptr);
-  msresamp_crcf_destroy(resampler);
   return 0;
 }

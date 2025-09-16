@@ -41,7 +41,7 @@ sf_worker::sf_worker(srsran::phy_common_interface& common_,
                      state&                        phy_state_,
                      const srsran::phy_cfg_nr_t&   cfg,
                      srslog::basic_logger&         log) :
-  phy_state(phy_state_), common(common_), logger(log), sf_len(SRSRAN_SF_LEN_PRB_NR(cfg.carrier.nof_prb))
+  phy_state(phy_state_), common(common_), logger(log), sf_len(SRSRAN_SF_LEN_PRB_NR(cfg.carrier.nof_prb, cfg.carrier.scs))
 {
   for (uint32_t i = 0; i < phy_state.args.nof_carriers; i++) {
     cc_worker* w = new cc_worker(i, log, phy_state, cfg);

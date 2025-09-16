@@ -32,6 +32,7 @@
 #include "srsran/phy/ch_estimation/chest_dl.h"
 #include "srsran/phy/utils/convolution.h"
 #include "srsran/phy/utils/vector.h"
+#include "srsran/phy/common/phy_common_nr.h"
 
 //#define DEFAULT_FILTER_LEN 3
 
@@ -205,9 +206,9 @@ void srsran_chest_dl_free(srsran_chest_dl_t* q)
   bzero(q, sizeof(srsran_chest_dl_t));
 }
 
-int srsran_chest_dl_res_init(srsran_chest_dl_res_t* q, uint32_t max_prb)
+int srsran_chest_dl_res_init(srsran_chest_dl_res_t* q, uint32_t max_prb, srsran_subcarrier_spacing_t scs)
 {
-  return srsran_chest_dl_res_init_re(q, SRSRAN_SF_LEN_RE_NR(max_prb));
+  return srsran_chest_dl_res_init_re(q, SRSRAN_SF_LEN_RE_NR(max_prb, scs));
 }
 
 int srsran_chest_dl_res_init_re(srsran_chest_dl_res_t* q, uint32_t nof_re)
@@ -792,7 +793,7 @@ chest_dl_estimate_correct_sync_error(srsran_chest_dl_t* q, srsran_dl_sf_cfg_t* s
     // Compute required frequency shift, convert from sample error to normalised sine
     float    cfo   = sync_err / (float)srsran_symbol_sz(q->cell.nof_prb);
     uint32_t nre   = SRSRAN_NRE * q->cell.nof_prb;
-    uint32_t nsymb = SRSRAN_CP_NSYMB(q->cell.cp) * SRSRAN_NOF_SLOTS_PER_SF;
+    uint32_t nsymb = SRSRAN_CP_NSYMB(q->cell.cp) * SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz);
 
     // For each symbol...
     for (uint32_t i = 0; i < nsymb; i++) {

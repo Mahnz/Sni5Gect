@@ -25,6 +25,7 @@
 #include "sched_interface.h"
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/common/tti_point.h"
+#include "srsran/phy/common/phy_common_nr.h"
 
 namespace srsenb {
 
@@ -80,7 +81,7 @@ public:
   uint32_t                                     nof_rbgs         = 0;
 
   using dl_nof_re_table = srsran::bounded_vector<
-      std::array<std::array<std::array<uint32_t, SRSRAN_NOF_CFI>, SRSRAN_NOF_SLOTS_PER_SF>, SRSRAN_NOF_SF_X_FRAME>,
+      std::array<std::array<std::array<uint32_t, SRSRAN_NOF_CFI>, SRSRAN_NOF_SLOTS_PER_SF(srsran_subcarrier_spacing_15kHz)>, SRSRAN_NOF_SF_X_FRAME>,
       SRSRAN_MAX_PRB>;
   using dl_lb_nof_re_table = std::array<srsran::bounded_vector<uint32_t, SRSRAN_MAX_PRB>, SRSRAN_NOF_SF_X_FRAME>;
 

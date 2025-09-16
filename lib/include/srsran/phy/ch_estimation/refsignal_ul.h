@@ -39,7 +39,6 @@
 #define SRSRAN_NOF_SEQUENCES_U 2
 #define SRSRAN_NOF_DELTA_SS 30
 #define SRSRAN_NOF_CSHIFT 8
-
 #define SRSRAN_REFSIGNAL_UL_L(ns_idx, cp) ((ns_idx + 1) * SRSRAN_CP_NSYMB(cp) - 4)
 
 /* PUSCH DMRS common configuration (received in SIB2) */
@@ -73,12 +72,12 @@ typedef struct SRSRAN_API {
 typedef struct SRSRAN_API {
   srsran_cell_t cell;
 
-  uint32_t n_cs_cell[SRSRAN_NSLOTS_X_FRAME][SRSRAN_CP_NORM_NSYMB];
-  uint32_t n_prs_pusch[SRSRAN_NOF_DELTA_SS][SRSRAN_NSLOTS_X_FRAME]; // We precompute n_prs needed for cyclic shift alpha
+  uint32_t n_cs_cell[SRSRAN_NSLOTS_X_FRAME(0)][SRSRAN_CP_NORM_NSYMB];
+  uint32_t n_prs_pusch[SRSRAN_NOF_DELTA_SS][SRSRAN_NSLOTS_X_FRAME(0)]; // We precompute n_prs needed for cyclic shift alpha
                                                                     // at srsran_refsignal_dl_init()
-  uint32_t f_gh[SRSRAN_NSLOTS_X_FRAME];
-  uint32_t u_pucch[SRSRAN_NSLOTS_X_FRAME];
-  uint32_t v_pusch[SRSRAN_NSLOTS_X_FRAME][SRSRAN_NOF_DELTA_SS];
+  uint32_t f_gh[SRSRAN_NSLOTS_X_FRAME(0)];
+  uint32_t u_pucch[SRSRAN_NSLOTS_X_FRAME(0)];
+  uint32_t v_pusch[SRSRAN_NSLOTS_X_FRAME(0)][SRSRAN_NOF_DELTA_SS];
 } srsran_refsignal_ul_t;
 
 typedef struct {

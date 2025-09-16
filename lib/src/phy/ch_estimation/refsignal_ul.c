@@ -105,7 +105,7 @@ static int generate_n_prs(srsran_refsignal_ul_t* q)
     if (srsran_sequence_LTE_pr(&seq, 8 * SRSRAN_CP_NSYMB(q->cell.cp) * 20, c_init)) {
       return SRSRAN_ERROR;
     }
-    for (uint32_t ns = 0; ns < SRSRAN_NSLOTS_X_FRAME; ns++) {
+    for (uint32_t ns = 0; ns < SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz); ns++) {
       uint32_t n_prs = 0;
       for (int i = 0; i < 8; i++) {
         n_prs += (seq.c[8 * SRSRAN_CP_NSYMB(q->cell.cp) * ns + i] << i);
@@ -123,7 +123,7 @@ static int generate_srsran_sequence_hopping_v(srsran_refsignal_ul_t* q)
   srsran_sequence_t seq;
   bzero(&seq, sizeof(srsran_sequence_t));
 
-  for (uint32_t ns = 0; ns < SRSRAN_NSLOTS_X_FRAME; ns++) {
+  for (uint32_t ns = 0; ns < SRSRAN_NSLOTS_X_FRAME(srsran_subcarrier_spacing_15kHz); ns++) {
     for (uint32_t delta_ss = 0; delta_ss < SRSRAN_NOF_DELTA_SS; delta_ss++) {
       if (srsran_sequence_LTE_pr(&seq, 20, ((q->cell.id / 30) << 5) + ((q->cell.id % 30) + delta_ss) % 30)) {
         return SRSRAN_ERROR;
