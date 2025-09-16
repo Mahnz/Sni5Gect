@@ -15,6 +15,12 @@ if (USE_CUDA)
   target_link_libraries(search_ssb_freq_test ssb_cuda)
 endif(USE_CUDA)
 
+add_executable(ssb_frequency_correction ssb_frequency_correction.cc ${TestCommonSources})
+target_link_libraries(ssb_frequency_correction ${SRSUE_SOURCES} ${SRSRAN_SOURCES} Threads::Threads)
+if (USE_CUDA)
+  target_link_libraries(search_ssb_freq_test ssb_cuda)
+endif(USE_CUDA)
+
 add_executable(syncer_test syncer_test.cc ${TestCommonSources} ${SHADOWER_DIR}/syncer.cc)
 target_link_libraries(syncer_test ${SRSUE_SOURCES} ${SRSRAN_SOURCES} zmq)
 if (USE_CUDA)
@@ -115,5 +121,10 @@ endif()
 add_executable(pcap_writer pcap_writer.cc)
 target_link_libraries(pcap_writer ${SRSUE_SOURCES} ${SRSRAN_SOURCES})
 
+<<<<<<< HEAD
 add_executable(resampler resampler_test.cc)
 target_link_libraries(resampler ${SRSUE_SOURCES} ${SRSRAN_SOURCES} liquid)
+=======
+add_executable(resampler_compare resampler_compare.cc)
+target_link_libraries(resampler_compare ${SRSUE_SOURCES} ${SRSRAN_SOURCES} liquid)
+>>>>>>> 98c31033ed8bcf6d3d9782acadb05df5aae3336b

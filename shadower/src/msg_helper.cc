@@ -68,8 +68,8 @@ void pack_rlc_nr_to_mac_nr(uint8_t*               rlc_nr_msg,
     /* add an ack to the message */
     uint8_t rlc_ack_pdu[3] = {0};
     rlc_ack_pdu[0]         = 0x0;
-    rlc_ack_pdu[1]         = (ack_sn >> 8) & 0xf;
-    rlc_ack_pdu[2]         = ack_sn & 0xff;
+    rlc_ack_pdu[1]         = ack_sn & 0xff;
+    rlc_ack_pdu[2]         = 0;
     mac_pdu.add_sdu(1, rlc_ack_pdu, 3);
   }
 

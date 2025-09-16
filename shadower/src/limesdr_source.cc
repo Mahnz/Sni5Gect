@@ -54,8 +54,12 @@ public:
     device->Init();
 
     /* Specify the chip descriptor */
+    for (size_t i = 0; i < device->GetDescriptor().rfSOC.size(); i++) {
+      printf(GREEN "[LimeSDR]" RESET "Chip %zu: %s\n", i, device->GetDescriptor().rfSOC[i].name.c_str());
+    }
+
     const lime::RFSOCDescriptor& chipDescriptor = device->GetDescriptor().rfSOC[chipIndex];
-    printf(GREEN "[LimeSDR]" RESET "Chip Descriptor: %s\n", chipDescriptor.name.c_str());
+    printf(GREEN "[LimeSDR]" RESET "Using Chip Descriptor: %s\n", chipDescriptor.name.c_str());
 
     /* Specify RX antenna path */
     if (!rx_antenna_name.empty()) {
@@ -82,7 +86,10 @@ public:
         if (tx_antenna_name == path_name) {
           tx_path = j;
           printf(GREEN "[LimeSDR]" RESET "Using TX Path: %s\n", path_name.c_str());
+<<<<<<< HEAD
           break;
+=======
+>>>>>>> 98c31033ed8bcf6d3d9782acadb05df5aae3336b
         }
       }
     }
@@ -101,6 +108,7 @@ public:
     printf(GREEN "[LimeSDR]" RESET "Sample Rate Range: %f - %f\n",
            chipDescriptor.samplingRateRange.min,
            chipDescriptor.samplingRateRange.max);
+<<<<<<< HEAD
 
     /* Specify the configuration */
     config.channel[0].rx.enabled            = true;
@@ -122,16 +130,58 @@ public:
     config.channel[0].tx.calibrate          = calibration_flag;
     config.channel[0].tx.testSignal.enabled = false;
     config.channel[0].tx.gain.emplace(lime::eGainTypes::GENERIC, tx_gain);
+=======
+    printf(GREEN "[LimeSDR]" RESET "Number of channels: %u\n", chipDescriptor.channelCount);
+
+    /* Specify the configuration */
+    for (uint8_t ch = 0; ch < channelCount; ch++) {
+      config.channel[ch].rx.enabled            = true;
+      config.channel[ch].rx.centerFrequency    = rx_freq + frequency_correction;
+      config.channel[ch].rx.sampleRate         = srate;
+      config.channel[ch].rx.oversample         = 2;
+      config.channel[ch].rx.lpf                = 0;
+      config.channel[ch].rx.path               = rx_path;
+      config.channel[ch].rx.calibrate          = calibration_flag;
+      config.channel[ch].rx.testSignal.enabled = false;
+      config.channel[ch].rx.gain.emplace(lime::eGainTypes::GENERIC, rx_gain);
+
+      if (tx_enabled) {
+        config.channel[ch].tx.enabled            = true;
+        config.channel[ch].tx.centerFrequency    = tx_freq + frequency_correction;
+        config.channel[ch].tx.sampleRate         = srate;
+        config.channel[ch].tx.oversample         = 2;
+        config.channel[ch].tx.lpf                = 0;
+        config.channel[ch].tx.path               = tx_path;
+        config.channel[ch].tx.calibrate          = calibration_flag;
+        config.channel[ch].tx.testSignal.enabled = false;
+        config.channel[ch].tx.gain.emplace(lime::eGainTypes::GENERIC, tx_gain);
+      }
+    }
+>>>>>>> 98c31033ed8bcf6d3d9782acadb05df5aae3336b
 
     if (device->Configure(config, chipIndex) != lime::OpStatus::Success) {
       throw std::runtime_error("Failed to configure device");
     }
 
     /* Stream configuration */
+<<<<<<< HEAD
     streamCfg.channels[lime::TRXDir::Rx] = {0};
     streamCfg.channels[lime::TRXDir::Tx] = {0};
     streamCfg.format                     = lime::DataFormat::F32;
     streamCfg.linkFormat                 = lime::DataFormat::I12;
+=======
+    streamCfg.channels.at(lime::TRXDir::Rx).clear();
+    streamCfg.channels.at(lime::TRXDir::Tx).clear();
+    for (uint8_t ch = 0; ch < channelCount; ch++) {
+      streamCfg.channels[lime::TRXDir::Rx].push_back(ch);
+      if (tx_enabled) {
+        streamCfg.channels[lime::TRXDir::Tx].push_back(ch);
+      }
+    }
+
+    streamCfg.format     = lime::DataFormat::F32;
+    streamCfg.linkFormat = lime::DataFormat::I12;
+>>>>>>> 98c31033ed8bcf6d3d9782acadb05df5aae3336b
   }
 
   bool is_sdr() const override { return true; }
@@ -225,8 +275,15 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("LimeSDR");
   lime::LogLevel        log_level;
   std::string           port;
+<<<<<<< HEAD
   int                   chipIndex = 0;
   int                   rx_path   = -1;
+=======
+  int                   chipIndex    = 0;
+  uint8_t               channelCount = 0;
+  bool                  tx_enabled   = true;
+  int                   rx_path      = -1;
+>>>>>>> 98c31033ed8bcf6d3d9782acadb05df5aae3336b
   std::string           rx_antenna_name;
   int                   tx_path = -1;
   std::string           tx_antenna_name;
@@ -269,6 +326,7 @@ private:
       }
     }
 
+<<<<<<< HEAD
     if (params.find("dev0_chipIndex") != params.end()) {
       chipIndex = std::stoi(params["dev0_chipIndex"]);
     }
@@ -283,6 +341,30 @@ private:
 
     if (params.find("dev0_calibration") != params.end()) {
       std::string calibration = params["dev0_calibration"];
+=======
+    if (params.find("chipIndex") != params.end()) {
+      chipIndex = std::stoi(params["chipIndex"]);
+    }
+
+    if (params.find("channels") != params.end()) {
+      channelCount = std::stoi(params["channels"]);
+    }
+
+    if (params.find("tx_enabled") != params.end()) {
+      tx_enabled = std::stoi(params["tx_enabled"]);
+    }
+
+    if (params.find("rx_path") != params.end()) {
+      rx_antenna_name = params["rx_path"];
+    }
+
+    if (params.find("tx_path") != params.end()) {
+      tx_antenna_name = params["tx_path"];
+    }
+
+    if (params.find("calibration") != params.end()) {
+      std::string calibration = params["calibration"];
+>>>>>>> 98c31033ed8bcf6d3d9782acadb05df5aae3336b
       if (calibration == "none") {
         calibration_flag = lime::CalibrationFlag::NONE;
       } else if (calibration == "dciq") {
@@ -302,8 +384,11 @@ private:
     }
   }
 
+<<<<<<< HEAD
   // void log_callback(lime::LogLevel level, const std::string& msg) { printf(GREEN "[LimeSDR]" RESET "%s",
   // msg.c_str()); }
+=======
+>>>>>>> 98c31033ed8bcf6d3d9782acadb05df5aae3336b
   void log_callback(lime::LogLevel level, const std::string& msg)
   {
     if (level <= log_level) {

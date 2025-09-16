@@ -1,5 +1,11 @@
+#include "shadower/hdr/arg_parser.h"
+#include "shadower/hdr/buffer_pool.h"
 #include "shadower/hdr/constants.h"
+#include "shadower/hdr/source.h"
+#include "srsran/phy/rf/rf.h"
 #include "srsran/phy/utils/vector.h"
+#include "srsran/radio/rf_buffer.h"
+#include "srsran/srsran.h"
 #include <atomic>
 #include <complex>
 #include <condition_variable>
@@ -35,7 +41,34 @@ string       device_args  = "type=b200";
 bool   enable_resampler = false;
 double sdr_srate        = 23.04e6;
 
-void* read_from_sdr(void* args)
+struct frame_t {
+  uint32_t                            frames_idx;
+  std::shared_ptr<std::vector<cf_t> > buffer[SRSRAN_MAX_CHANNELS];
+  size_t                              buffer_size;
+};
+
+SharedBufferPool*                     buffer_pool = nullptr;
+std::queue<std::shared_ptr<frame_t> > queue;
+std::condition_variable               cv;
+std::mutex                            mtx;
+
+double         center_freq      = 3427.5e6;
+double         sample_rate      = 23.04e6;
+double         sdr_sample_rate  = 23.04e6;
+double         gain             = 40;
+uint32_t       num_frames       = 20000;
+uint32_t       num_channels     = 1;
+std::string    output_file      = "output";
+std::string    output_folder    = "/root/records/";
+std::string    source_type      = "uhd";
+std::string    device_args      = "type=b200";
+bool           enable_resampler = false;
+double         resample_rate    = 1.0;
+ShadowerConfig config           = {};
+uint32_t       sf_len           = 0;
+uint32_t       sf_len_sdr       = 0;
+
+void sigint_handler(int signum)
 {
   auto* sdr_params = (sdr_params_t*)args;
 
@@ -79,19 +112,14 @@ void* read_from_sdr(void* args)
       break;
     }
   }
-  {
-    lock_guard<mutex> lock(*mtx);
-    queue->push(nullptr);
-  }
-  return nullptr;
+  stop_flag.store(true);
+  printf("Received signal %d, stopping...\n", signum);
 }
 
-void write_to_file(void* args)
+void parse_args(int argc, char* argv[])
 {
-  auto*                                         sdr_params = (sdr_params_t*)args;
-  queue<shared_ptr<vector<complex<float> > > >* queue      = sdr_params->buffer_queue;
-  mutex*                                        mtx        = sdr_params->mtx;
-  condition_variable*                           cv         = sdr_params->cv;
+  int opt;
+  int option_index = 0;
 
   ofstream outfile(sdr_params->outputFileName, ios::binary);
   if (!outfile.is_open()) {
@@ -131,7 +159,6 @@ void write_to_file(void* args)
       fflush(stdout);
     }
   }
-  outfile.close();
 }
 
 int main(int argc, char* argv[])
@@ -199,26 +226,14 @@ int main(int argc, char* argv[])
   struct sched_param sp{};
   sp.sched_priority = sched_get_priority_max(SCHED_RR);
   if (pthread_setschedparam(receiver_thread, SCHED_RR, &sp) != 0) {
-    cerr << "Failed to set thread priority" << endl;
+    fprintf(stderr, "Failed to set receiver thread priority\n");
+    return -1;
   }
-  // set the receiver thread affinity to CPU 2
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
   CPU_SET(3, &cpuset);
   if (pthread_setaffinity_np(receiver_thread, sizeof(cpuset), &cpuset) != 0) {
-    cerr << "Failed to set thread affinity" << endl;
-  }
-  if (pthread_getaffinity_np(receiver_thread, sizeof(cpuset), &cpuset) != 0) {
-    cerr << "Failed to get thread affinity" << endl;
-  }
-  int nproc = sysconf(_SC_NPROCESSORS_ONLN);
-  for (int i = 0; i < nproc; i++) {
-    cout << CPU_ISSET(i, &cpuset) << " ";
-  }
-  cout << endl;
-  // create writer thread
-  if (pthread_create(&writer_thread, nullptr, reinterpret_cast<void* (*)(void*)>(write_to_file), (void*)&params)) {
-    cerr << "Error creating writer thread" << endl;
+    fprintf(stderr, "Failed to set receiver thread affinity\n");
     return -1;
   }
   // set the writer thread to the lowest priority
@@ -228,6 +243,16 @@ int main(int argc, char* argv[])
     cerr << "Failed to set thread priority" << endl;
   }
 
+  int nproc = sysconf(_SC_NPROCESSORS_ONLN);
+  for (int i = 0; i < nproc; i++) {
+    printf("%d ", CPU_ISSET(i, &cpuset));
+  }
+  printf("\n");
+  // Create writer thread
+  if (pthread_create(&writer_thread, nullptr, (void* (*)(void*))writer_worker, nullptr) != 0) {
+    fprintf(stderr, "Failed to create writer thread\n");
+    return -1;
+  }
   pthread_join(receiver_thread, nullptr);
   pthread_join(writer_thread, nullptr);
   msresamp_crcf_destroy(resampler);
