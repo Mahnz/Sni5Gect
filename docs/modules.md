@@ -5,8 +5,12 @@ The exploit modules are designed to provide a flexible way to load different att
 All exploit modules are extensions from the `Exploit` class.
 
 ```cpp
-#include "shadower/hdr/exploit.h"
-
+#include "shadower/utils/constants.h"
+#include "shadower/utils/safe_queue.h"
+#include "srsran/srslog/srslog.h"
+#include "wdissector.h"
+#include <memory>
+#include <vector>
 class Exploit
 {
 public:
@@ -33,14 +37,7 @@ protected:
   SafeQueue<std::vector<uint8_t> >& ul_buffer_queue;
 };
 
-
-extern "C" {
-__attribute__((visibility("default"))) Exploit* create_exploit(SafeQueue<std::vector<uint8_t> >& dl_buffer_queue_,
-                                                               SafeQueue<std::vector<uint8_t> >& ul_buffer_queue_)
-{
-  return new DummyExploit(dl_buffer_queue_, ul_buffer_queue_);
-}
-}
+using create_exploit_t = Exploit* (*)(SafeQueue<std::vector<uint8_t> >&, SafeQueue<std::vector<uint8_t> >&);
 ```
 
 The `setup()` function is used to initialize the filters, these filters are similar to the filters in Wireshark, but have some simple differences, for instance `nas-5gs` has to be changed to `nas_5gs`. Following lines show how to initialize these filters.

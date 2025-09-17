@@ -9,8 +9,12 @@ Example output:
 
 ## DCI Sniffing
 If you want to monitor decoded DCI (Downlink Control Information) messages in real time, set the following logging configuration:
-```conf
-worker_log_level = DEBUG
+```yaml
+log:
+  log_level: INFO
+  syncer: INFO
+  worker: DEBUG
+  bc_worker: INFO
 ```
 With this setting, the sniffer logs detailed DCI-related information, including:
 - DCI UL (Uplink Scheduling)

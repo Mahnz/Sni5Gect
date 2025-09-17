@@ -41,7 +41,7 @@ Build and Start the Docker Container:
 docker compose build sni5gect # Build container
 docker compose up -d sni5gect # Start Container
 docker exec -it sni5gect bash # Access Container
-./build/shadower/shadower configs/config-srsran-n78-20MHz.conf # Run Sniffer for Band N78 with 20MHz Bandwidth
+./build/shadower/shadower configs/srsran-n78-20MHz-b210.yaml # Run Sniffer for Band N78 with 20MHz Bandwidth
 # See Running Sni5Gect in the README.md
 ```
 
@@ -69,14 +69,14 @@ docker exec -it sni5gect bash # Access Container
 
 We have tested with the following configurations:
 
-- Frequency Bands: n78, n41 (TDD)
-- Frequency: 3427.5 MHz, 2550.15 MHz
-- Subcarrier Spacing: 30 kHz
+- Frequency Bands: n78, n41 (TDD), n3 (FDD)
+- Frequency: 3427.5 MHz, 2550.15 MHz, 1865.0 MHz
+- Subcarrier Spacing: 30 kHz, 15 KHz
 - Bandwidth: 20–50 MHz
 - MIMO Configuration: Single-input single-output (SISO)
 - Distance: 0 meter to up to 20 meters (with amplifier)
 
-An example srsRAN base station configuration is available at `configs/srsran-n78.yml`.
+An example srsRAN base station configuration is available at `configs/base_station/srsran-n78-20MHz.yml`.
 
 ## Requirements
 
@@ -133,20 +133,24 @@ wget https://zenodo.org/records/15601773/files/example-connection-samsung-srsran
 unzip example-connection-samsung-srsran.zip
 ```
 
-2. Edit `configs/config-srsran-n78-20MHz.conf` and modify the `[source]` section as follows:
+2. Edit `configs/config-srsran-n78-20MHz.conf` and modify the `source` section as follows:
 
-```bash
-[source]
-source_type = file
-source_module = build/shadower/libfile_source.so
-# Replace with the absolute path to the extracted IQ sample file if needed
-source_params = /root/sni5gect/example_connection/example.fc32  
+```yaml
+source:
+  source_type: file
+  source_params: /root/sni5gect/example_connection/example.fc32
+
+rf:
+  sample_rate: 23.04e6
+  num_channels: 1
+  uplink_cfo: 0 # Uplink Carrier Frequency Offset correction in Hz
+  downlink_cfo: 0 # Downlink Carrier Frequency Offset (CFO) in Hz
 ```
 
 3. Finally launch the sniffer using:
 
 ```bash
-./build/shadower/shadower configs/config-srsran-n78-20MHz.conf
+./build/shadower/shadower configs/srsran-n78-20MHz-b210.yaml
 ```
 
 You should see output similar to the screenshot below:
@@ -156,19 +160,35 @@ You should see output similar to the screenshot below:
 
 To test Sni5Gect with a live over-the-air signal using a Software Defined Radio (SDR), update the configuration file to use the SDR as the source.
 
-Example `[source]` Section for UHD-compatible SDR (e.g., USRP B200)
+Example `source` and `rf` Section for UHD-compatible SDR (e.g., USRP B200)
 
-```bash
-[source]
-source_type = uhd
-source_module = build/shadower/libuhd_source.so
-source_params = type=b200
+```yaml
+source:
+  source_type: uhd
+  source_params: type=b200,master_clock_rate=23.04e6
+
+rf:
+  sample_rate: 23.04e6
+  num_channels: 1
+  uplink_cfo: -0.00054 # Uplink Carrier Frequency Offset correction in Hz
+  downlink_cfo: 0 # Downlink Carrier Frequency Offset (CFO) in Hz
+  padding:
+    front_padding: 0 # Number of IQ samples to pad in front of each burst
+    back_padding: 0 # Number of IQ samples to pad at the end of each burst
+  channels:
+    - rx_frequency: 3427.5e6
+      tx_frequency: 3427.5e6
+      rx_offset: 0
+      tx_offset: 0
+      rx_gain: 40
+      tx_gain: 80
+      enable: true
 ```
 
 Then start the sniffer with:
 
 ```bash
-./build/shadower/shadower configs/config-srsran-n78-20MHz.conf
+./build/shadower/shadower configs/srsran-n78-20MHz-b210.yaml
 ```
 
 Upon startup, Sni5Gect will do the following:
@@ -187,7 +207,7 @@ The exploit modules are designed to provide a flexible way to load different att
 This module performs passive sniffing. The wDissector framework dissects packets and provides summaries of received packets.
 
 ```conf
-module = modules/lib_dummy.so 
+exploit: modules/lib_dummy.so 
 ```
 
 Example output:
@@ -243,7 +263,7 @@ MDMKernelUeventObserver: sModemReason:fid:1567346682;cause:[ASSERT] file:mcu/l1/
 Utilizes the TC11 attack from the paper [Never Let Me Down Again: Bidding-Down Attacks and Mitigations in 5G and 4G](https://dl.acm.org/doi/10.1145/3558482.3581774).  Injects a `Registration Reject` message after receiving a `Registration Request` from the UE, causing it to disconnect from 5G and downgrade to 4G. Since the base station may not be aware of the disconnection, it may keep sending the messages such as `Security Mode Command`, `Identity Request`, `Authentication Request`, etc.
 
 ```conf
-module = modules/lib_dg_registration_reject.so 
+exploit: modules/lib_dg_registration_reject.so 
 ```
 
 Example Output:
@@ -254,7 +274,7 @@ Example Output:
 Demonstrates a fingerprinting attack by injecting an `Identity Request` message after receiving a `Registration Request`. If the UE accepts, it responds with an `Identity Response` containing its SUCI information.
 
 ```conf
-module = modules/lib_identity_request.so 
+exploit: modules/lib_identity_request.so 
 ```
 
 Example output:
@@ -267,7 +287,7 @@ This exploit corresponds to `CVD-2024-0096`. It is the most complex exploit we h
 1. Sniffing: Capture a legitimate Authentication Request from the base station to the UE.
 
 ```conf
-module = modules/lib_dg_authentication_request_sniffer.so 
+exploit: modules/lib_dg_authentication_request_sniffer.so 
 ```
 
 2. Replaying: Update `shadower/modules/dg_authentication_replay.cc` with the captured MAC-NR values. Rebuild the module:
@@ -279,7 +299,7 @@ ninja -C build
 Then load the module:
 
 ```conf
-module = modules/lib_dg_authentication_replay.so
+exploit: modules/lib_dg_authentication_replay.so
 ```
 
 Upon receiving `Registration Request` from the UE, Sni5Gect replays the captured `Authentication Request` message to the target UE. Upon receiving the replayed `Authentication Request` message, the UE replies with `Authentication Failure` message with cause `Synch Failure` and starts the timer T3520. Then Sni5Gect updates its RLC and PDCP sequence number accordingly and replays the `Authentication Request` message for a few more times. Eventually, after multiple attempts and timer T3520 expires, the UE deems that the network has failed the authentication check, locally releases the communication, and treats the active cell as barred. If no other 5G base station is available, then the UE will downgrade to 4G and persists in downgrade status up to 300 seconds according to the specification 3GPP TS 24.501 version 16.5.1 Release 16 `5.4.1.2.4.5 Abnormal cases in the UE`. (Some phones may stay in downgrade status for much longer time).
@@ -293,7 +313,7 @@ This exploit utilizes $I_8$ 5G AKA Bypass from paper [Logic Gone Astray: A Secur
 After receiving `Registration Request` from the UE, Sni5Gect injects the plaintext `Registration Accept` message with security header 4. The UE will ignore the wrong MAC, accept the `Registration Accept` message, and reply with `Registration Complete` and `PDU Session Establishment Requests`. Since the core network receives such unexpected messages, it instructs the gNB to release the connection by sending the `RRC Release` message to terminate the connection immediately.
 
 ```conf
-module = modules/lib_plaintext_registration_accept.so
+exploit: modules/lib_plaintext_registration_accept.so
 ```
 
 Example output:
@@ -301,64 +321,82 @@ Example output:
 
 ## Example Configuration
 
-An example configuration is provided in `configs/config-srsran-n78-20MHz.conf`
+An example configuration is provided in `configs/srsran-n78-20MHz-b210.yaml`
 
 ```conf
-[cell]
-band = 78       # 5G Band number used
-nof_prb = 51    # Number of Physical Resource Blocks, obtained from srsRAN base station
-scs_common = 30 # Subcarrier Spacing for common (kHz)
-scs_ssb = 30    # Subcarrier Spacing for SSB (kHz)
-
-[rf]
-freq_offset = 0        # Frequency offset (Hz)
-tx_gain = 80           # Transmit gain (dB)
-rx_gain = 40           # Receive gain (dB)
-dl_arfcn = 628500      # Downlink ARFCN
-ssb_arfcn = 628128     # SSB ARFCN
-sample_rate = 23.04e6  # Sample rate (Hz)
-uplink_cfo_correction = -0.00054  # Uplink CFO (Hz) correction
-
-[recorder]
-enable_recorder = false # Enable recording the IQ samples to a file
-recorder_file = /tmp/output.fc32 # Recording output file
-
-[task]
-slots_to_delay = 5         # Number of slots to delay injecting the message
-max_flooding_epoch = 4     # Number of duplications to send in each inject
-tx_cfo_correction = 0      # Uplink CFO correction (Hz)
-send_advance_samples = 160 # Number of samples to send in advance
-n_ue_dl_worker = 4         # Number of UE downlink workers
-n_ue_ul_worker = 4         # Number of UE uplink workers
-n_gnb_dl_worker = 4        # Number of gNB downlink workers
-n_gnb_ul_worker = 4        # Number of gNB uplink workers
-pdsch_mcs = 3              # PDSCH MCS for injection
-pdsch_prbs = 24            # PDSCH PRBs for injection
-close_timeout = 5000       # Close timeout, after how long haven't received a message should stop tracking the UE (ms)
+cell:
+  band: 78 # Band number
+  nof_prb: 51 # Number of Physical Resource Blocks
+  scs_common: 30 # Subcarrier Spacing for common (kHz)
+  scs_ssb: 30 # Subcarrier Spacing for SSB (kHz)
+  ssb_period_ms: 10 # SSB periodicity in milliseconds
+  dl_arfcn: 628500 # Downlink ARFCN
+  ssb_arfcn: 628128 # SSB ARFCN
 
 
-[source]
-source_type = uhd # Source type: file, uhd
-source_module = build/shadower/libuhd_source.so
-source_params = type=b200,serial=3218CC4  # Device arguments for SDR source
+source:
+  source_type: uhd
+  source_params: type=b200,master_clock_rate=23.04e6
 
-[log]
-log_level = INFO           # General log level
-syncer_log_level = INFO    # Syncer log level
-worker_log_level = INFO    # Worker log level: Set to DEBUG to observe the DCI information
-bc_worker_log_level = INFO # Broadcast worker log level
+enable_recorder: false # record the IQ samples to file
+pcap_folder: logs/
 
-[pcap]
-pcap_folder = logs/ # Pcap folder
+rf:
+  sample_rate: 23.04e6
+  num_channels: 1
+  uplink_cfo: -0.00054 # Uplink Carrier Frequency Offset correction in Hz
+  downlink_cfo: 0 # Downlink Carrier Frequency Offset (CFO) in Hz
+  padding:
+    front_padding: 0 # Number of IQ samples to pad in front of each burst
+    back_padding: 0 # Number of IQ samples to pad at the end of each burst
+  channels:
+    - rx_frequency: 3427.5e6  # Actual rx frequency for each channel
+      tx_frequency: 3427.5e6  # Actual tx frequency for each channel
+      rx_offset: 0            # rx frequency manual calibration
+      tx_offset: 0            # tx frequency manual calibration
+      rx_gain: 40             # rx gain to use for each channel
+      tx_gain: 80             # tx gain to use for each channel
+      enable: true            # Enable this channel or not
 
-[worker]
-pool_size = 20 # Worker pool size
-num_ues = 12   # Number of UETrackers to pre-initialize
-enable_gpu_acceleration = false
+workers:
+  pool_size: 24 # Worker pool size
+  n_ue_dl_worker: 4 # Number of UE downlink workers
+  n_ue_ul_worker: 4 # Number of UE uplink workers
+  n_gnb_dl_worker: 4 # Number of gNB downlink workers
+  n_gnb_ul_worker: 4 # Number of gNB uplink workers
+
+uetracker:
+  close_timeout: 5000 # ms: stop tracking if no messages received
+  parse_messages: true # Parse messages
+  num_ues: 5 # Number of UETrackers to pre-initialize
+  enable_gpu: false # GPU acceleration for decoding
+
+downlink_injector:
+  delay_n_slots: 5 # Number of slots to delay injecting the message
+  duplications: 2 # Number of duplications to send in each inject
+  tx_cfo_correction: 0 # Uplink CFO correction (Hz)
+  tx_advancement: 160 # Number of samples to send in advance
+  pdsch_mcs: 3 # PDSCH MCS
+  pdsch_prbs: 24 # PDSCH PRBs
 
 
-[exploit]
-module = modules/lib_dummy.so # Note only one exploit module can be loaded each time
+log:
+  log_level: INFO
+  syncer: INFO
+  worker: INFO
+  bc_worker: INFO
+
+exploit: build/modules/lib_dummy_exploit.so # exploit module to use
+# exploit:  build/modules/lib_identity_request.so
+# exploit:  build/modules/lib_dg_authentication_request_sniffer.so
+# exploit:  build/modules/lib_dg_authentication_replay.so
+# exploit:  build/modules/lib_dg_registration_reject.so
+# exploit:  build/modules/lib_mac_sch_mtk_rlc_crash.so
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_3.so
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_4.so
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_6.so
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_7.so
+# exploit:  build/modules/lib_plaintext_registration_accept.so
 ```
 
 ## Overview of Components
@@ -386,20 +424,30 @@ The project is organized as follows. The core Sni5Gect framework resides in the 
 ├── debian
 ├── images
 ├── lib
-├── shadower
-│   ├── hdr
-│   ├── modules
-│   ├── src
-│   │   ├── broadcast_worker.cc # Broadcast Worker implementation
-│   │   ├── gnb_dl_worker.cc    # GNB DL Injector implementation
-│   │   ├── gnb_ul_worker.cc    # GNB UL Worker implementation
-│   │   ├── scheduler.cc        # Distributes received subframes to components
-│   │   ├── syncer.cc           # Syncer implementation
-│   │   ├── ue_dl_worker.cc     # UE DL Worker implementation
-│   │   ├── ue_tracker.cc       # UE Tracker implementation
-│   │   └── wd_worker.cc        # wDissector wrapper
-│   ├── test
-│   └── tools
+|-- shadower
+|   |-- CMakeLists.txt
+|   |-- comp
+|   |   |-- CMakeLists.txt
+|   |   |-- fft
+|   |   |-- scheduler.cc  # Distributes received subframes to components
+|   |   |-- ssb
+|   |   |-- sync          # Syncer implementation
+|   |   |-- trace_samples
+|   |   |-- ue_tracker.cc # UE Tracker implementation
+|   |   |-- ue_tracker.h
+|   |   `-- workers
+|   |       |-- CMakeLists.txt
+|   |       |-- broadcast_worker.cc # Broadcast Worker implementation
+|   |       |-- gnb_dl_worker.cc    # GNB DL Injector implementation
+|   |       |-- gnb_ul_worker.cc    # GNB UL Worker implementation
+|   |       |-- ue_dl_worker.cc     # UE DL Worker implementation
+|   |       |-- wd_worker.cc        # wDissector wrapper
+|   |-- main.cc
+|   |-- modules   # Exploit modules
+|   |-- source
+|   |-- test
+|   |-- tools
+|   `-- utils
 ├── srsenb
 ├── srsepc
 ├── srsgnb

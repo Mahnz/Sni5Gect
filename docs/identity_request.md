@@ -2,7 +2,7 @@
 Demonstrates a fingerprinting attack by injecting an `Identity Request` message after receiving a `Registration Request`. If the UE accepts, it responds with an `Identity Response` containing its SUCI information.
 
 ```conf
-module = modules/lib_identity_request.so 
+exploit: modules/lib_identity_request.so 
 ```
 
 Example output:

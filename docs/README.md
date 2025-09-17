@@ -13,9 +13,9 @@ Sni5Gect (Sniffing 5G Inject) is a framework designed to sniff unencrypted messa
 
 ## Supported Features
 We have tested with the following configurations:
-- Frequency Bands: n78, n41 (TDD)
-- Frequency: 3427.5 MHz, 2550.15 MHz
-- Subcarrier Spacing: 30 kHz
+- Frequency Bands: n78, n41 (TDD), n3 (FDD)
+- Frequency: 3427.5 MHz, 2550.15 MHz, 1865.0 MHz
+- Subcarrier Spacing: 30 kHz, 15 KHz
 - Bandwidth: 20–50 MHz
 - MIMO Configuration: Single-input single-output (SISO)
 - Distance: 0 meter to up to 20 meters (with amplifier)
@@ -46,20 +46,30 @@ The project is organized as follows. The core Sni5Gect framework resides in the 
 ├── debian
 ├── images
 ├── lib
-├── shadower
-│   ├── hdr
-│   ├── modules
-│   ├── src
-│   │   ├── broadcast_worker.cc # Broadcast Worker implementation
-│   │   ├── gnb_dl_worker.cc    # GNB DL Injector implementation
-│   │   ├── gnb_ul_worker.cc    # GNB UL Worker implementation
-│   │   ├── scheduler.cc        # Distributes received subframes to components
-│   │   ├── syncer.cc           # Syncer implementation
-│   │   ├── ue_dl_worker.cc     # UE DL Worker implementation
-│   │   ├── ue_tracker.cc       # UE Tracker implementation
-│   │   └── wd_worker.cc        # wDissector wrapper
-│   ├── test
-│   └── tools
+|-- shadower
+|   |-- CMakeLists.txt
+|   |-- comp
+|   |   |-- CMakeLists.txt
+|   |   |-- fft
+|   |   |-- scheduler.cc  # Distributes received subframes to components
+|   |   |-- ssb
+|   |   |-- sync          # Syncer implementation
+|   |   |-- trace_samples
+|   |   |-- ue_tracker.cc # UE Tracker implementation
+|   |   |-- ue_tracker.h
+|   |   `-- workers
+|   |       |-- CMakeLists.txt
+|   |       |-- broadcast_worker.cc # Broadcast Worker implementation
+|   |       |-- gnb_dl_worker.cc    # GNB DL Injector implementation
+|   |       |-- gnb_ul_worker.cc    # GNB UL Worker implementation
+|   |       |-- ue_dl_worker.cc     # UE DL Worker implementation
+|   |       |-- wd_worker.cc        # wDissector wrapper
+|   |-- main.cc
+|   |-- modules   # Exploit modules
+|   |-- source
+|   |-- test
+|   |-- tools
+|   `-- utils
 ├── srsenb
 ├── srsepc
 ├── srsgnb

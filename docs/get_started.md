@@ -15,12 +15,12 @@ Sni5Gect is modified from [srsRAN](https://github.com/srsran/srsRAN_4G) for mess
 
 The simplest way to set up the framework is using docker. We have provided a Dockerfile to build the entire framework from scratch. You may use the following command to build the container from scratch.
 ```bash
-docker compose build
+docker compose build sni5gect
 ```
 
 Then start the framework using:
 ```bash
-docker compose up -d
+docker compose up -d sni5gect
 ```
 
 ## Run Sni5Gect
@@ -29,7 +29,7 @@ Please use the following command to run Sni5Gect:
 
 ```bash
 docker exec -it sni5gect bash
-./build/shadower/shadower configs/config-srsran-n78-20MHz.conf
+./build/shadower/shadower configs/srsran-n78-20MHz-b210.yaml
 ```
 
 ### Use file recording
@@ -41,20 +41,24 @@ wget https://zenodo.org/records/15601773/files/example-connection-samsung-srsran
 unzip example-connection-samsung-srsran.zip
 ```
 
-Edit configs/config-srsran-n78-20MHz.conf and modify the `[source]` section as follows:
+Edit configs/config-srsran-n78-20MHz.conf and modify the `source` and `rf` section as follows:
 
-```ini
-[source]
-source_type = file
-source_module = build/shadower/libfile_source.so
-# Replace with the absolute path to the extracted IQ sample file if needed
-source_params = /root/sni5gect/example_connection/example.fc32  
+```yaml
+source:
+  source_type: file
+  source_params: /root/sni5gect/example_connection/example.fc32
+
+rf:
+  sample_rate: 23.04e6
+  num_channels: 1
+  uplink_cfo: 0 # Uplink Carrier Frequency Offset correction in Hz
+  downlink_cfo: 0 # Downlink Carrier Frequency Offset (CFO) in Hz
 ```
 
 Finally launch the sniffer using:
 
 ```bash
-./build/shadower/shadower configs/config-srsran-n78-20MHz.conf
+./build/shadower/shadower configs/srsran-n78-20MHz-b210.yaml
 ```
 
 You should see output similar to the screenshot below:
@@ -65,17 +69,33 @@ You should see output similar to the screenshot below:
 
 To test Sni5Gect with a live over-the-air signal using a Software Defined Radio (SDR), update the configuration file to use the SDR as the source.
 
-Example `[source]` Section for UHD-compatible SDR (e.g., USRP B200)
-```bash
-[source]
-source_type = uhd
-source_module = build/shadower/libuhd_source.so
-source_params = type=b200
+Example `source` and `rf` Section for UHD-compatible SDR (e.g., USRP B200)
+```yaml
+source:
+  source_type: uhd
+  source_params: type=b200,master_clock_rate=23.04e6
+
+rf:
+  sample_rate: 23.04e6
+  num_channels: 1
+  uplink_cfo: -0.00054 # Uplink Carrier Frequency Offset correction in Hz
+  downlink_cfo: 0 # Downlink Carrier Frequency Offset (CFO) in Hz
+  padding:
+    front_padding: 0 # Number of IQ samples to pad in front of each burst
+    back_padding: 0 # Number of IQ samples to pad at the end of each burst
+  channels:
+    - rx_frequency: 3427.5e6
+      tx_frequency: 3427.5e6
+      rx_offset: 0
+      tx_offset: 0
+      rx_gain: 40
+      tx_gain: 80
+      enable: true
 ```
 
 Then start the sniffer with:
 ```bash
-./build/shadower/shadower configs/config-srsran-n78-20MHz.conf
+./build/shadower/shadower configs/srsran-n78-20MHz-b210.yaml
 ```
 Upon startup, Sni5Gect will do the following:
 

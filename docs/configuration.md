@@ -1,72 +1,89 @@
 # Configurations
 
-An example configuration for srsRAN is provided in `configs/config-srsran-n78-20MHz.conf`.
+An example configuration for srsRAN is provided in `configs/srsran-n78-20MHz-b210.yaml`.
 For a new cell, the user has to first specify the band number. Sni5Gect needs the user to specify the center frequency and SSB frequency instead of searching these frequencies by itself. This information can be obtained using tools such as Cellular PRO. The frequency can be converted to arfcn using this website [5G Tools](https://5g-tools.com/5g-nr-arfcn-calculator/). Then, based on the bandwidth, the `nof_prb` has to be changed, this can normally be obtained from SIB1 either using qcSuper or Cellular Pro.
 
 ## Example Configuration
-```ini
-[cell]
-band = 78       # 5G Band number used
-nof_prb = 51    # Number of Physical Resource Blocks, obtained from srsRAN base station
-scs_common = 30 # Subcarrier Spacing for common (kHz)
-scs_ssb = 30    # Subcarrier Spacing for SSB (kHz)
-
-[rf]
-freq_offset = 0        # Frequency offset (Hz)
-tx_gain = 80           # Transmit gain (dB)
-rx_gain = 40           # Receive gain (dB)
-dl_arfcn = 628500      # Downlink ARFCN
-ssb_arfcn = 628128     # SSB ARFCN
-sample_rate = 23.04e6  # Sample rate (Hz)
-uplink_cfo_correction = -0.00054  # Uplink CFO (Hz) correction
-
-[recorder]
-enable_recorder = false # Enable recording the IQ samples to a file
-recorder_file = /tmp/output.fc32 # Recording output file
-
-[task]
-slots_to_delay = 5         # Number of slots to delay injecting the message
-max_flooding_epoch = 4     # Number of duplications to send in each inject
-tx_cfo_correction = 0      # Uplink CFO correction (Hz)
-send_advance_samples = 160 # Number of samples to send in advance
-n_ue_dl_worker = 4         # Number of UE downlink workers
-n_ue_ul_worker = 4         # Number of UE uplink workers
-n_gnb_dl_worker = 4        # Number of gNB downlink workers
-n_gnb_ul_worker = 4        # Number of gNB uplink workers
-pdsch_mcs = 3              # PDSCH MCS for injection
-pdsch_prbs = 24            # PDSCH PRBs for injection
-close_timeout = 5000       # Close timeout, after how long haven't received a message should stop tracking the UE (ms)
+```yaml
+cell:
+  band: 78 # Band number
+  nof_prb: 51 # Number of Physical Resource Blocks
+  scs_common: 30 # Subcarrier Spacing for common (kHz)
+  scs_ssb: 30 # Subcarrier Spacing for SSB (kHz)
+  ssb_period_ms: 10 # SSB periodicity in milliseconds
+  dl_arfcn: 628500 # Downlink ARFCN
+  ssb_arfcn: 628128 # SSB ARFCN
 
 
-[source]
-source_type = uhd # Source type: file, uhd
-source_module = build/shadower/libuhd_source.so
-source_params = type=b200,serial=3218CC4  # Device arguments for SDR source
+source:
+  source_type: uhd
+  source_params: type=b200,master_clock_rate=23.04e6,serial=3218CC4
 
-[log]
-log_level = INFO           # General log level
-syncer_log_level = INFO    # Syncer log level
-worker_log_level = INFO    # Worker log level: Set to DEBUG to observe the DCI information
-bc_worker_log_level = INFO # Broadcast worker log level
+enable_recorder: false # record the IQ samples to file
+pcap_folder: logs/
 
-[pcap]
-pcap_folder = logs/ # Pcap folder
+rf:
+  sample_rate: 23.04e6
+  num_channels: 1
+  uplink_cfo: -0.00054 # Uplink Carrier Frequency Offset correction in Hz
+  downlink_cfo: 0 # Downlink Carrier Frequency Offset (CFO) in Hz
+  padding:
+    front_padding: 0 # Number of IQ samples to pad in front of each burst
+    back_padding: 0 # Number of IQ samples to pad at the end of each burst
+  channels:
+    - rx_frequency: 3427.5e6
+      tx_frequency: 3427.5e6
+      rx_offset: 0
+      tx_offset: 0
+      rx_gain: 40
+      tx_gain: 80
+      enable: true
 
-[worker]
-pool_size = 20 # Worker pool size
-num_ues = 12   # Number of UETrackers to pre-initialize
-enable_gpu_acceleration = false
+workers:
+  pool_size: 24 # Worker pool size
+  n_ue_dl_worker: 4 # Number of UE downlink workers
+  n_ue_ul_worker: 4 # Number of UE uplink workers
+  n_gnb_dl_worker: 4 # Number of gNB downlink workers
+  n_gnb_ul_worker: 4 # Number of gNB uplink workers
+
+uetracker:
+  close_timeout: 5000 # ms: stop tracking if no messages received
+  parse_messages: true # Parse messages
+  num_ues: 5 # Number of UETrackers to pre-initialize
+  enable_gpu: false # GPU acceleration for decoding
+
+downlink_injector:
+  delay_n_slots: 5 # Number of slots to delay injecting the message
+  duplications: 2 # Number of duplications to send in each inject
+  tx_cfo_correction: 0 # Uplink CFO correction (Hz)
+  tx_advancement: 160 # Number of samples to send in advance
+  pdsch_mcs: 3 # PDSCH MCS
+  pdsch_prbs: 24 # PDSCH PRBs
 
 
-[exploit]
-module = modules/lib_dummy.so # Note only one exploit module can be loaded each time
+log:
+  log_level: INFO
+  syncer: INFO
+  worker: INFO
+  bc_worker: INFO
+
+exploit: build/modules/lib_dummy_exploit.so # exploit module to use
+# exploit:  build/modules/lib_identity_request.so
+# exploit:  build/modules/lib_dg_authentication_request_sniffer.so
+# exploit:  build/modules/lib_dg_authentication_replay.so
+# exploit:  build/modules/lib_dg_registration_reject.so
+# exploit:  build/modules/lib_mac_sch_mtk_rlc_crash.so
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_3.so
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_4.so
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_6.so
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_7.so
+# exploit:  build/modules/lib_plaintext_registration_accept.so
 ```
 
 ## Special configurations
 The following two configurations may change due to hardware differences. You may follow the instructions below to find the correct values.
 
-The parameter `uplink_cfo_correction` is found by brute-force search using the code in `shadower\test\pusch_cfo_test.cc` to identify the best value that can decode the most number of uplink messages. 
+The parameter `uplink_cfo_correction` is found by brute-force search using the code in `shadower/test/pusch_cfo_test.cc` to identify the best value that can decode the most number of uplink messages. 
 
-The parameter `send_advance_samples` can also be found by brute-force search currently, it can be done by using the code `shadower\test\pdsch_decode_search.cc` to try to decode the injected message recordings.
+The parameter `send_advance_samples` can also be found by brute-force search currently, it can be done by using the code `shadower/test/pdsch_decode_search.cc` to try to decode the injected message recordings.
 
-```
