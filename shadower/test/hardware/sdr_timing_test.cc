@@ -347,6 +347,8 @@ void parse_args(int argc, char* argv[], ShadowerConfig& config)
   if (config.channels[0].rx_frequency == 0 || config.channels[0].tx_frequency == 0) {
     config.channels[0].rx_frequency = config.dl_freq;
     config.channels[0].tx_frequency = config.ul_freq;
+    config.channels[0].rx_gain      = 40;
+    config.channels[0].tx_gain      = 80;
   }
 }
 

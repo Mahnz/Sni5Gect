@@ -9,7 +9,7 @@
 #include <string>
 struct ChannelConfig {
   double rx_frequency = 3427.5e6;
-  double tx_frequency = 3527.5e6;
+  double tx_frequency = 3427.5e6;
   double rx_offset    = 0;
   double tx_offset    = 0;
   double rx_gain      = 40;

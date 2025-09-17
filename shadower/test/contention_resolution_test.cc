@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
   }
 
   /* copy samples to ue_dl processing buffer */
-  srsran_vec_cf_copy(buffer, samples.data() + args.sf_len * half, args.sf_len);
+  srsran_vec_cf_copy(buffer, samples.data() + args.slot_len * half, args.slot_len);
   /* Initialize slot cfg */
   srsran_slot_cfg_t slot_cfg = {.idx = slot_number + half};
   /* run ue_dl estimate fft */

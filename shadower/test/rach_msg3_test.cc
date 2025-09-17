@@ -98,9 +98,9 @@ int main(int argc, char* argv[])
   }
 
   std::vector<cf_t> last_samples(args.sf_len);
-  if (!last_samples.empty()) {
+  if (!last_samples.empty() && last_sample_file != "") {
     if (!load_samples(last_sample_file, last_samples.data(), args.sf_len)) {
-      logger.error("Failed to load data from %s", sample_file.c_str());
+      logger.error("Failed to load data from %s", last_sample_file.c_str());
       return -1;
     }
   }
@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
     logger.error("Last subframe is required");
     return -1;
   }
-  if (half > 1) {
+  if (half > 0) {
     srsran_vec_cf_copy(gnb_ul_buffer, samples.data() + half * args.slot_len - ul_sample_offset, args.slot_len);
   } else {
     srsran_vec_cf_copy(gnb_ul_buffer, last_samples.data() + args.slot_len - ul_sample_offset, ul_sample_offset);
