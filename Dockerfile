@@ -90,7 +90,7 @@ RUN sed -i 's/\blong[[:space:]]\+gettid()/__pid_t gettid()/g' /root/wdissector/s
 RUN cd /root/wdissector && ./build.sh all
 
 FROM wdissector AS sni5gect
-RUN apt install -y build-essential libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev libzmq3-dev libliquid-dev
+RUN apt install -y build-essential libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev libzmq3-dev libliquid-dev libyaml-cpp-dev
 RUN git clone https://github.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation.git /root/sni5gect
 WORKDIR /root/sni5gect
 
