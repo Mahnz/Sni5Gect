@@ -276,6 +276,10 @@ void UEDLWorker::handle_dlsch(uint8_t* sdu, uint32_t len)
   uint32_t rrc_len  = len;
   /* Decode the raw bytes into DL-SCH */
   if (*sdu & 0x80) {
+    if (*sdu & 0x30) {
+      logger.info("Skipping segmented DL-SCH");
+      return;
+    }
     /* AM data */
     rrc_data += 2; /* AM header */
     rrc_data += 2; /* PDCP header */
