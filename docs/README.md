@@ -5,10 +5,37 @@ Sni5Gect (Sniffing 5G Inject) is a framework designed to sniff unencrypted messa
 
 <img src="https://raw.githubusercontent.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation/main/images/sni5gect-overview.png">
 
-Demo: 5Ghoul Attack using Sni5Gect to crash UE modem
+## Updates
+
+### v2.0 – FDD Support <span aria-hidden="true" style="color:#CB0000;">(17th September 2025)</span>
+This release expands Sni5Gect with new capabilities:
+- Dual-channel FDD support: Receive and process IQ samples from two channels simultaneously using SDRs with dual RX chains.
+- Unified codebase for 15 kHz and 30 kHz subcarrier spacing without recompilation.
+- Expanded testing with the following setups:
+    - Frequency Bands: 
+        - TDD: n78, n41
+        - FDD: n3
+    - Frequency: 3427.5 MHz, 2550.15 MHz, 1865.0 MHz
+    - Subcarrier Spacing: 30 kHz, 15 KHz
+
+**Note:**
+Since FDD uses separate frequencies for downlink and uplink, an SDR with two RF front-ends (e.g., USRP X310) is required to capture IQ samples from both frequencies simultaneously (otherwise Sni5Gect is only capable of sniffing the downlink channel). A GPSDO is strongly recommended for frequency synchronization; without it, manual calibration may be necessary.
+
+### v1.0 – Initial Release <span aria-hidden="true" style="color:#CB0000;">(26th August 2025)</span>
+The first release of Sni5Gect, supports TDD bands with a 30 kHz subcarrier spacing.
+Tested configurations:
+- Frequency Bands: n78, n41 (TDD)
+- Frequency: 3427.5 MHz, 2550.15 MHz
+- Subcarrier Spacing: 30 kHz
+- Bandwidth: 20–50 MHz
+- MIMO Configuration: Single-input single-output (SISO)
+- Distance: 0 meter to up to 20 meters (with amplifier)
+
+## Demo
+### Demo: 5Ghoul Attack using Sni5Gect to crash UE modem
 <iframe width="560" height="315" src="https://www.youtube.com/embed/CE006JIHzDM?si=wm-kJye5DzXSURsw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
-Demo: Multi-stage downgrade attack
+### Demo: Multi-stage downgrade attack
 <iframe width="560" height="315" src="https://www.youtube.com/embed/uDnHd02NT38?si=hcr8ygny6HBHSR01" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ## Capability

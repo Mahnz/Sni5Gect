@@ -1,7 +1,6 @@
 <!-- docs/_sidebar.md -->
 
 - [Overview](README.md)
-- [Updates](updates.md)
 - [Get Started](get_started.md)
 - [Configuration](configuration.md)
 - [Sniffing](sniffing.md)
