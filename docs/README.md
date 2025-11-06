@@ -13,6 +13,7 @@ This release extends Sni5Gect with uplink injection capabilities:
 - Supported parameters
   - Subcarrier spacing: 15 kHz
   - Tested on: FDD band n5
+- Hardware requirement: same as v1.0. Tested and validated using a B210 SDR.
 
 **Notes:**
   - This feature enables spoofing of UE-originated uplink traffic by using observed grants; use responsibly and only in approved testbeds.
