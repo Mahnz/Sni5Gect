@@ -3,7 +3,7 @@
     width="110" align="left" />
 </a>
 
-# Sni5Gect - 5G NR Sniffing and Exploitation
+# 5G NR Sniffing and Exploitation
 
 <p align="left">
 <a href="http://sni5gect.com/">
