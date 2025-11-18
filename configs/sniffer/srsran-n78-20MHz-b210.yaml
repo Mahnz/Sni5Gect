@@ -10,7 +10,7 @@ cell:
 
 source:
   source_type: uhd
-  source_params: type=b200,master_clock_rate=23.04e6,serial=3218CC4
+  source_params: type=b200
 
 enable_recorder: false # record the IQ samples to file
 pcap_folder: logs/

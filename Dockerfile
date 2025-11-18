@@ -1,6 +1,6 @@
 FROM ubuntu:22.04 AS base
 ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ="Asia/Singapore"
+ENV TZ="Europe/Rome"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # General utilities
 RUN apt update && apt -y upgrade && apt -y install git nano vim wget curl iproute2 \
@@ -25,32 +25,37 @@ FROM uhd AS srsran_4g_base
 RUN apt -y install libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev
 
 # Add srsRAN project
-FROM uhd AS srsran5g
-RUN apt -y install gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev
-RUN git clone https://github.com/srsRAN/srsRAN_Project.git /root/srsran
-WORKDIR /root/srsran
-RUN git checkout release_24_10_1 && cmake -B build -G Ninja && ninja -C build
+# FROM uhd AS srsran5g
+# ARG BUILD_CORES=0
+# RUN apt -y install gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev
+# RUN git clone https://github.com/srsRAN/srsRAN_Project.git /root/srsran
+# WORKDIR /root/srsran
+# RUN CORES="${BUILD_CORES:-0}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
+#     git checkout release_24_10_1 && cmake -B build -G Ninja && ninja -C build -j "$CORES"
 
 # Add open5gs project
-FROM base AS open5gs
-RUN wget -qO- https://www.mongodb.org/static/pgp/server-8.0.asc | tee /etc/apt/trusted.gpg.d/server-8.0.asc && \
-    echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-8.0.list && \
-    apt update && apt install -y mongodb-mongosh
-RUN apt -y install python3-pip python3-setuptools python3-wheel flex bison \
-    libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libnghttp2-dev \
-    libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson && \
-    apt install -y --no-install-recommends libidn-dev
-RUN git clone https://github.com/open5gs/open5gs /root/open5gs
-WORKDIR /root/open5gs
-RUN meson build --prefix=`pwd`/install && ninja -C build
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh && \
-    bash nodesource_setup.sh && \
-    apt install nodejs -y && \
-    rm nodesource_setup.sh
-RUN cd webui && npm install
+# FROM base AS open5gs
+# ARG BUILD_CORES=0
+# RUN wget -qO- https://www.mongodb.org/static/pgp/server-8.0.asc | tee /etc/apt/trusted.gpg.d/server-8.0.asc && \
+#     echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-8.0.list && \
+#     apt update && apt install -y mongodb-mongosh
+# RUN apt -y install python3-pip python3-setuptools python3-wheel flex bison \
+#     libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libnghttp2-dev \
+#     libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson && \
+#     apt install -y --no-install-recommends libidn-dev
+# RUN git clone https://github.com/open5gs/open5gs /root/open5gs
+# WORKDIR /root/open5gs
+# RUN CORES="${BUILD_CORES:-0}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
+#     meson build --prefix=`pwd`/install && ninja -C build -j "$CORES"
+# RUN curl -fsSL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh && \
+#     bash nodesource_setup.sh && \
+#     apt install nodejs -y && \
+#     rm nodesource_setup.sh
+# RUN cd webui && npm install
 
 # Add wdissector
 FROM srsran_4g_base AS wdissector
+ARG BUILD_CORES=0
 # Install dependencies for 5Ghoul
 RUN apt -y install sudo init python3-pip python3-dev software-properties-common kmod bc gzip zstd flex bison \
         pkg-config swig graphviz libglib2.0-dev libgcrypt20-dev libnl-genl-3-200 libgraphviz-dev liblz4-dev \
@@ -68,33 +73,40 @@ RUN apt -y install sudo init python3-pip python3-dev software-properties-common 
         libzstd1 libunwind8 libcap2 libspeexdsp1 libxtst6 libatk-bridge2.0-0 libusb-1.0-0 meson
 # Install llvm 15
 RUN wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && ./llvm.sh 15 && rm llvm.sh
-RUN arch=$(dpkg --print-architecture) \
-    && wget https://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.1w-0+deb11u3_${arch}.deb \
-    && dpkg -i libssl1.1_1.1.1w-0+deb11u3_${arch}.deb \
-    && rm libssl1.1_1.1.1w-0+deb11u3_${arch}.deb
+# RUN arch=$(dpkg --print-architecture) \
+#     && wget https://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.1w-0+deb11u3_${arch}.deb \
+#     && dpkg -i libssl1.1_1.1.1w-0+deb11u3_${arch}.deb \
+#     && rm libssl1.1_1.1.1w-0+deb11u3_${arch}.deb
 
 # Clone and build wdissector
 RUN git clone https://github.com/asset-group/5ghoul-5g-nr-attacks /root/wdissector
 WORKDIR /root/wdissector
 RUN ./scripts/apply_patches.sh 3rd-party
 RUN cd 3rd-party/ && git clone https://github.com/zeromq/libzmq.git --depth=1 && cd libzmq && \
-    ./autogen.sh && ./configure && make -j && make install && ldconfig
+    ./autogen.sh && ./configure && CORES="${BUILD_CORES:-0}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
+    make -j "$CORES" && make install && ldconfig
 RUN cd 3rd-party/ && git clone https://github.com/zeromq/czmq.git --depth=1 && cd czmq && \
-        ./autogen.sh && ./configure && make -j && make install && ldconfig
+    ./autogen.sh && ./configure && CORES="${BUILD_CORES:-0}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
+    make -j "$CORES" && make install && ldconfig
 RUN cd 3rd-party/ && git clone https://github.com/json-c/json-c.git --depth=1 && cd json-c && \
-    mkdir -p build && cd build && cmake ../ && make -j && make install && ldconfig
+    mkdir -p build && cd build && cmake ../ && CORES="${BUILD_CORES:-0}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
+    make -j "$CORES" && make install && ldconfig
 RUN curl https://raw.githubusercontent.com/jckarter/tbb/refs/heads/master/include/tbb/tbb_stddef.h -o /usr/include/tbb/tbb_stddef.h
 RUN sed -i 's/\blong[[:space:]]\+gettid()/__pid_t gettid()/g' /root/wdissector/src/MiscUtils.hpp && \
     sed -i 's/\bif\s*(\s*SWIG_EXIST\s*)/if(NOT SWIG_EXIST)/g' /root/wdissector/CMakeLists.txt && \
     sed -i 's/exit 1/# exit 1/' /root/wdissector/build.sh 
-RUN cd /root/wdissector && ./build.sh all
+RUN CORES="${BUILD_CORES:-0}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
+    cd /root/wdissector && MAKEFLAGS="-j$CORES" CMAKE_BUILD_PARALLEL_LEVEL="$CORES" ./build.sh all
 
 FROM wdissector AS sni5gect
 RUN apt install -y build-essential libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev libzmq3-dev libliquid-dev libyaml-cpp-dev
-RUN git clone https://github.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation.git /root/sni5gect
+
+# RUN git clone https://github.com/asset-group/Sni5Gect-5GNR-sniffing-and-exploitation.git /root/sni5gect
+COPY . /root/sni5gect
 WORKDIR /root/sni5gect
 
 FROM sni5gect AS sni5gect-dev
+ARG BUILD_CORES=0
 # # Install cuda
 # RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb && \
 #     dpkg -i cuda-keyring_1.1-1_all.deb && \
@@ -117,9 +129,10 @@ RUN . "/root/.miniconda/etc/profile.d/conda.sh" && conda activate base && \
 RUN apt install -y cutecom tmux
 
 # build
-RUN cmake -DCMAKE_BUILD_TYPE=Debug \
+RUN CORES="${BUILD_CORES:-0}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
+    cmake -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
         -DCMAKE_C_COMPILER=/usr/bin/clang-15 \
         -DCMAKE_CXX_COMPILER=/usr/bin/clang++-15 \
         --no-warn-unused-cli -B build -G Ninja && \
-        ninja -C build
+    ninja -C build -j "$CORES"

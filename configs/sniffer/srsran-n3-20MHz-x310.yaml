@@ -10,7 +10,8 @@ cell:
 
 source:
   source_type: uhd
-  source_params: type=x300,master_clock_rate=184.32e6,clock=gpsdo,sync=gpsdo,sampling_rate=23.04e6
+  source_params: type=b200
+  # source_params: type=x300,master_clock_rate=184.32e6,clock=gpsdo,sync=gpsdo,sampling_rate=23.04e6
 
 enable_recorder: false # record the IQ samples to file
 pcap_folder: logs/
@@ -62,10 +63,10 @@ downlink_injector:
 
 
 log:
-  log_level: INFO
-  syncer: INFO
-  worker: INFO
-  bc_worker: INFO
+  log_level: DEBUG
+  syncer: DEBUG
+  worker: DEBUG
+  bc_worker: DEBUG
 
 exploit: build/modules/lib_dummy_exploit.so # exploit module to use
 # exploit:  build/modules/lib_identity_request.so
