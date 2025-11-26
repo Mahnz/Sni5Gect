@@ -9,7 +9,7 @@ cu_cp:
     port: 38412
     bind_addr: 127.0.0.1
     supported_tracking_areas:
-      - tac: 1
+      - tac: 7
         plmn_list:
           - plmn: "00101"
             tai_slice_support_list:
@@ -29,7 +29,7 @@ cell_cfg:
   channel_bandwidth_MHz: 20                                       # Bandwith in MHz. Number of PRBs will be automatically derived.
   common_scs: 30                                                  # Subcarrier spacing in kHz used for data.
   plmn: "00101"                                                   # PLMN broadcasted by the gNB.
-  tac: 1                                                          # Tracking area code (needs to match the core configuration).
+  tac: 7                                                          # Tracking area code (needs to match the core configuration).
   pci: 1                                                          # Physical cell ID.
 
 log:

@@ -9,10 +9,11 @@ services:
     container_name: sni5gect
     privileged: true
     restart: unless-stopped
-    entrypoint: /sbin/init
+    # entrypoint: /sbin/init
+    entrypoint: ["sleep", "infinity"]
     network_mode: host
     volumes:
-      - "/dev/:/dev/"
+      - "/dev/bus/usb:/dev/bus/usb"
       - type: bind
         source: "./configs/sniffer"
         target: /root/sni5gect/configs
@@ -64,6 +65,5 @@ services:
   #     timeout: 5s
   #     retries: 3
   #     start_period: 5s
-
-volumes:
-  dbdata:
+# volumes:
+#   dbdata:

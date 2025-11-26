@@ -76,7 +76,7 @@ mme:
     - plmn_id:
         mcc: 001
         mnc: 01
-      tac: 1
+      tac: 7
   security:
     integrity_order : [ EIA2, EIA1, EIA0 ]
     ciphering_order : [ EEA0, EEA1, EEA2 ]
@@ -176,7 +176,7 @@ amf:
     - plmn_id:
         mcc: 001
         mnc: 01
-      tac: 1
+      tac: 7
   plmn_support:
     - plmn_id:
         mcc: 001

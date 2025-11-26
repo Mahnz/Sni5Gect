@@ -2,6 +2,7 @@ FROM ubuntu:22.04 AS base
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ="Europe/Rome"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # General utilities
 RUN apt update && apt -y upgrade && apt -y install git nano vim wget curl iproute2 \
     cmake make ninja-build build-essential init gdb adb
@@ -71,6 +72,7 @@ RUN apt -y install sudo init python3-pip python3-dev software-properties-common 
         libfreetype6 graphviz libtbb12 libxss1 libnss3 libspandsp2 libsbc1 libbrotli1 libnghttp2-14 libasound2 \
         psmisc sshpass libpulse0 libasound2 libpcre2-dev libmaxminddb0 libopus0 libspeex1 bc tcpdump libgflags2.2 \
         libzstd1 libunwind8 libcap2 libspeexdsp1 libxtst6 libatk-bridge2.0-0 libusb-1.0-0 meson
+
 # Install llvm 15
 RUN wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && ./llvm.sh 15 && rm llvm.sh
 # RUN arch=$(dpkg --print-architecture) \
