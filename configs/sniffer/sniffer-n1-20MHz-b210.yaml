@@ -60,14 +60,14 @@ log:
   worker: INFO
   bc_worker: INFO
 
-exploit: build/modules/lib_dummy_exploit.so # exploit module to use
-# exploit:  build/modules/lib_identity_request.so
-# exploit:  build/modules/lib_dg_authentication_request_sniffer.so
-# exploit:  build/modules/lib_dg_authentication_replay.so
-# exploit:  build/modules/lib_dg_registration_reject.so
-# exploit:  build/modules/lib_mac_sch_mtk_rlc_crash.so
-# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_3.so
-# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_4.so
-# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_6.so
-# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_7.so
-# exploit:  build/modules/lib_plaintext_registration_accept.so
+exploit: build/modules/lib_dummy_exploit.so                               # Sniffing
+# exploit:  build/modules/lib_identity_request.so                         # Fingerprinting. Injects Identity Request and expects an Identity Response
+# exploit:  build/modules/lib_dg_authentication_request_sniffer.so        # Sniffs the Authentication Request message
+# exploit:  build/modules/lib_dg_authentication_replay.so                 # Authentication Replay Attack
+# exploit:  build/modules/lib_dg_registration_reject.so                   # Downgrade Attack, send Registration Reject to trigger immediate downgrade
+# exploit:  build/modules/lib_mac_sch_mtk_rlc_crash.so                    # 5Ghoul attacks: crash the OnePlus MTK modem
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_3.so            #    """
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_4.so            #    """
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_6.so            #    """
+# exploit:  build/modules/lib_mac_sch_mtk_rrc_setup_crash_7.so            #    """
+# exploit:  build/modules/lib_plaintext_registration_accept.so            # Authentication Bypass, only Pixel 7 Exynos modem

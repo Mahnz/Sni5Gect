@@ -25,35 +25,6 @@ RUN /usr/bin/uhd_images_downloader
 FROM uhd AS srsran_4g_base
 RUN apt -y install libfftw3-dev libmbedtls-dev libboost-program-options-dev libconfig++-dev libsctp-dev
 
-# Add srsRAN project
-# FROM uhd AS srsran5g
-# ARG BUILD_CORES=0
-# RUN apt -y install gcc g++ pkg-config libfftw3-dev libmbedtls-dev libsctp-dev libyaml-cpp-dev libgtest-dev
-# RUN git clone https://github.com/srsRAN/srsRAN_Project.git /root/srsran
-# WORKDIR /root/srsran
-# RUN CORES="${BUILD_CORES:-0}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
-#     git checkout release_24_10_1 && cmake -B build -G Ninja && ninja -C build -j "$CORES"
-
-# Add open5gs project
-# FROM base AS open5gs
-# ARG BUILD_CORES=0
-# RUN wget -qO- https://www.mongodb.org/static/pgp/server-8.0.asc | tee /etc/apt/trusted.gpg.d/server-8.0.asc && \
-#     echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-8.0.list && \
-#     apt update && apt install -y mongodb-mongosh
-# RUN apt -y install python3-pip python3-setuptools python3-wheel flex bison \
-#     libsctp-dev libgnutls28-dev libgcrypt-dev libssl-dev libmongoc-dev libbson-dev libyaml-dev libnghttp2-dev \
-#     libmicrohttpd-dev libcurl4-gnutls-dev libnghttp2-dev libtins-dev libtalloc-dev meson && \
-#     apt install -y --no-install-recommends libidn-dev
-# RUN git clone https://github.com/open5gs/open5gs /root/open5gs
-# WORKDIR /root/open5gs
-# RUN CORES="${BUILD_CORES:-0}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
-#     meson build --prefix=`pwd`/install && ninja -C build -j "$CORES"
-# RUN curl -fsSL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh && \
-#     bash nodesource_setup.sh && \
-#     apt install nodejs -y && \
-#     rm nodesource_setup.sh
-# RUN cd webui && npm install
-
 # Add wdissector
 FROM srsran_4g_base AS wdissector
 ARG BUILD_CORES=0
@@ -75,10 +46,6 @@ RUN apt -y install sudo init python3-pip python3-dev software-properties-common 
 
 # Install llvm 15
 RUN wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && ./llvm.sh 15 && rm llvm.sh
-# RUN arch=$(dpkg --print-architecture) \
-#     && wget https://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.1w-0+deb11u3_${arch}.deb \
-#     && dpkg -i libssl1.1_1.1.1w-0+deb11u3_${arch}.deb \
-#     && rm libssl1.1_1.1.1w-0+deb11u3_${arch}.deb
 
 # Clone and build wdissector
 RUN git clone https://github.com/asset-group/5ghoul-5g-nr-attacks /root/wdissector

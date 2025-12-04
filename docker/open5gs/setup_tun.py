@@ -2,10 +2,10 @@
 
 import click
 import ipaddress
-import iptc
+import subprocess
+import logging
 from pyroute2 import IPRoute
 from pyroute2.netlink import NetlinkError
-import subprocess
 
 
 def handle_ip_string(ctx, param, value):
@@ -17,22 +17,44 @@ def handle_ip_string(ctx, param, value):
 
 
 def iptables_add_masquerade(if_name, ip_range):
-    chain = iptc.Chain(iptc.Table(iptc.Table.NAT), "POSTROUTING")
-    rule = iptc.Rule()
-    rule.src = ip_range
-    rule.out_interface = if_name
-    target = iptc.Target(rule, "MASQUERADE")
-    rule.target = target
-    chain.insert_rule(rule)
+    # Use system iptables to avoid python-iptables backend issues (nft vs legacy)
+    cmd = [
+        "iptables",
+        "-t",
+        "nat",
+        "-A",
+        "POSTROUTING",
+        "-s",
+        ip_range,
+        "-o",
+        if_name,
+        "-j",
+        "MASQUERADE",
+    ]
+    logging.info("Adding iptables NAT MASQUERADE: %s", " ".join(cmd))
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        logging.error("Failed to add MASQUERADE rule: %s", e.stderr or e.stdout)
+        raise
 
 
 def iptables_allow_all(if_name):
-    chain = iptc.Chain(iptc.Table(iptc.Table.FILTER), "INPUT")
-    rule = iptc.Rule()
-    rule.in_interface = if_name
-    target = iptc.Target(rule, "ACCEPT")
-    rule.target = target
-    chain.insert_rule(rule)
+    cmd = [
+        "iptables",
+        "-A",
+        "INPUT",
+        "-i",
+        if_name,
+        "-j",
+        "ACCEPT",
+    ]
+    logging.info("Adding iptables INPUT ACCEPT: %s", " ".join(cmd))
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        logging.error("Failed to add INPUT ACCEPT rule: %s", e.stderr or e.stdout)
+        raise
 
 
 @click.command()
@@ -45,53 +67,51 @@ def iptables_allow_all(if_name):
 )
 def main(if_name, ip_range):
 
-    # Execute and Return the output of iptables -t nat -L
-    result = subprocess.run(
-        ["iptables", "-t", "nat", "-L"], capture_output=True, text=True
-    )
-    print("NAT table rules:")
-    print(result.stdout)
-    if result.stderr:
-        print("Errors:", result.stderr)
+    logging.basicConfig(level=logging.INFO, format="[setup_tun] %(levelname)s: %(message)s")
+    logging.info("Configuring TUN '%s' with range '%s'", if_name, ip_range.with_prefixlen)
 
-    for subnet in range(0, 256):
-        # Get the first IP address in the IP range and netmask prefix length
-        first_host = next(ip_range.hosts(), None)
-        if not first_host:
-            raise ValueError("Invalid IP range.")
-        first_ip_addr = first_host + (subnet * 256)
-        first_ip_addr = first_ip_addr.exploded
+    # Get the first usable host IP and netmask prefix length
+    host_addr = next(ip_range.hosts(), None)
+    if host_addr is None:
+        logging.error("Invalid IP range: %s", ip_range)
+        raise ValueError("Invalid IP range.")
 
-        ip_netmask = ip_range.prefixlen
+    first_ip_addr = str(host_addr)
+    ip_netmask = ip_range.prefixlen
 
-        ipr = IPRoute()
-        # create the tun interface
+    ipr = IPRoute()
+    # create the tun interface (if it already exists, ignore the error)
+    try:
+        logging.info("Creating TUN interface: %s", if_name)
         ipr.link("add", ifname=if_name, kind="tuntap", mode="tun")
-        # lookup the index
-        dev = ipr.link_lookup(ifname=if_name)[0]
-        # bring it down
-        ipr.link("set", index=dev, state="down")
-        # add primary IP address
+    except NetlinkError as e:
+        logging.info("TUN interface %s already exists or cannot be created: %s", if_name, e)
+
+    # lookup the index
+    dev = ipr.link_lookup(ifname=if_name)[0]
+    # bring it down
+    logging.info("Bringing interface down: index=%s", dev)
+    ipr.link("set", index=dev, state="down")
+    # add primary IP address (ignore if it already exists)
+    try:
+        logging.info("Assigning IP %s/%s to %s", first_ip_addr, ip_netmask, if_name)
         ipr.addr("add", index=dev, address=first_ip_addr, mask=ip_netmask)
-        # bring it up
-        ipr.link("set", index=dev, state="up")
+    except NetlinkError as e:
+        logging.info("IP address already present or failed to add: %s", e)
+    # bring it up
+    logging.info("Bringing interface up: index=%s", dev)
+    ipr.link("set", index=dev, state="up")
 
-        try:
-            ipr.route("add", dst=ip_range.with_prefixlen, gateway=first_ip_addr)
-        except NetlinkError:
-            pass
+    try:
+        logging.info("Adding route: dst=%s via %s", ip_range.with_prefixlen, first_ip_addr)
+        ipr.route("add", dst=ip_range.with_prefixlen, gateway=first_ip_addr)
+    except NetlinkError as e:
+        logging.info("Route exists or failed to add: %s", e)
 
-        # setup iptables (best-effort). If iptables backend/modules are not available
-        # inside the container, don't crash the entrypoint; just continue.
-        try:
-            iptables_add_masquerade(if_name, ip_range.with_prefixlen)
-            iptables_allow_all(if_name)
-        except Exception as e:
-            print(f"Failed to configure iptables rules: {e}")
-            print("Proceeding without container-managed NAT/ACCEPT rules. Ensure host/networking handles routing if needed.")
-        # 'iptables -t nat -A POSTROUTING -s ' + ip_range.with_prefixlen + ' ! -o ' + if_name + ' -j MASQUERADE'
-
-        # 'iptables -A INPUT -i ' + if_name + ' -j ACCEPT'
+    # setup iptables using system commands to avoid python-iptables issues
+    iptables_add_masquerade(if_name, ip_range.with_prefixlen)
+    iptables_allow_all(if_name)
+    logging.info("TUN setup completed successfully for %s", if_name)
 
 
 if __name__ == "__main__":

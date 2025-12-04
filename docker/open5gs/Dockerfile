@@ -54,6 +54,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
   iperf3 \
   libtalloc-dev \
   cmake \
+  # Utils
+  vim net-tools tcpdump jq \
   && rm -rf /var/lib/apt/lists/*
 
 ARG MONGO_MAJOR_VERSION=6
@@ -84,8 +86,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - \
   && apt-get install -y nodejs \
   && cd open5gs/webui \
   && npm ci --no-optional
-  ## Silence Mongoose 5.x deprecation warning for findOneAndUpdate()/findOneAndDelete()
-  # && sed -i "/mongoose.Promise = global.Promise;/a mongoose.set('useFindAndModify', false);" server/index.js
+
+## Silence Mongoose 5.x deprecation warning for findOneAndUpdate()/findOneAndDelete()
+# RUN sed -i "/mongoose.Promise = global.Promise;/a mongoose.set('useFindAndModify', false);" server/index.js
 
 # mongodb python prerequisites
 RUN python3 -m pip install pymongo click pyroute2 ipaddress python-iptables
@@ -93,7 +96,7 @@ RUN python3 -m pip install pymongo click pyroute2 ipaddress python-iptables
 FROM base AS open5gs
 
 WORKDIR /open5gs
-COPY open5gs-5gc.yml open5gs-5gc.yml.in
+# COPY open5gs-5gc.yml open5gs-5gc.yml.in
 # The wildcard for the subscriber_db.csv tries to copy "subscriber_db.csv" but will not fail if the file doesn't exist
 COPY open5gs_entrypoint.sh add_users.py setup_tun.py subscriber_db.cs[v] ./
 
