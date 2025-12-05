@@ -52,19 +52,19 @@ RUN git clone https://github.com/asset-group/5ghoul-5g-nr-attacks /root/wdissect
 WORKDIR /root/wdissector
 RUN ./scripts/apply_patches.sh 3rd-party
 RUN cd 3rd-party/ && git clone https://github.com/zeromq/libzmq.git --depth=1 && cd libzmq && \
-    ./autogen.sh && ./configure && CORES="${BUILD_CORES:-0}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
+    ./autogen.sh && ./configure && CORES="${BUILD_CORES}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
     make -j "$CORES" && make install && ldconfig
 RUN cd 3rd-party/ && git clone https://github.com/zeromq/czmq.git --depth=1 && cd czmq && \
-    ./autogen.sh && ./configure && CORES="${BUILD_CORES:-0}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
+    ./autogen.sh && ./configure && CORES="${BUILD_CORES}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
     make -j "$CORES" && make install && ldconfig
 RUN cd 3rd-party/ && git clone https://github.com/json-c/json-c.git --depth=1 && cd json-c && \
-    mkdir -p build && cd build && cmake ../ && CORES="${BUILD_CORES:-0}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
+    mkdir -p build && cd build && cmake ../ && CORES="${BUILD_CORES}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
     make -j "$CORES" && make install && ldconfig
 RUN curl https://raw.githubusercontent.com/jckarter/tbb/refs/heads/master/include/tbb/tbb_stddef.h -o /usr/include/tbb/tbb_stddef.h
 RUN sed -i 's/\blong[[:space:]]\+gettid()/__pid_t gettid()/g' /root/wdissector/src/MiscUtils.hpp && \
     sed -i 's/\bif\s*(\s*SWIG_EXIST\s*)/if(NOT SWIG_EXIST)/g' /root/wdissector/CMakeLists.txt && \
     sed -i 's/exit 1/# exit 1/' /root/wdissector/build.sh 
-RUN CORES="${BUILD_CORES:-0}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
+RUN CORES="${BUILD_CORES}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
     cd /root/wdissector && MAKEFLAGS="-j$CORES" CMAKE_BUILD_PARALLEL_LEVEL="$CORES" ./build.sh all
 
 FROM wdissector AS sni5gect
@@ -75,7 +75,7 @@ COPY . /root/sni5gect
 WORKDIR /root/sni5gect
 
 FROM sni5gect AS sni5gect-dev
-ARG BUILD_CORES=0
+ARG BUILD_CORES=4
 # # Install cuda
 # RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb && \
 #     dpkg -i cuda-keyring_1.1-1_all.deb && \
@@ -98,7 +98,7 @@ RUN . "/root/.miniconda/etc/profile.d/conda.sh" && conda activate base && \
 RUN apt install -y cutecom tmux
 
 # build
-RUN CORES="${BUILD_CORES:-0}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
+RUN CORES="${BUILD_CORES:-2}"; if [ "$CORES" -le 0 ]; then CORES="$(nproc)"; fi; \
     cmake -DCMAKE_BUILD_TYPE=Debug \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE \
         -DCMAKE_C_COMPILER=/usr/bin/clang-15 \

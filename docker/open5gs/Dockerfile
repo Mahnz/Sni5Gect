@@ -85,10 +85,9 @@ ARG NODE_MAJOR=20
 RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - \
   && apt-get install -y nodejs \
   && cd open5gs/webui \
-  && npm ci --no-optional
-
-## Silence Mongoose 5.x deprecation warning for findOneAndUpdate()/findOneAndDelete()
-# RUN sed -i "/mongoose.Promise = global.Promise;/a mongoose.set('useFindAndModify', false);" server/index.js
+  && npm ci --no-optional \
+  ## Silence Mongoose 5.x deprecation warning for findOneAndUpdate()/findOneAndDelete()
+  && sed -i "/mongoose.Promise = global.Promise;/a mongoose.set('useFindAndModify', false);" server/index.js
 
 # mongodb python prerequisites
 RUN python3 -m pip install pymongo click pyroute2 ipaddress python-iptables

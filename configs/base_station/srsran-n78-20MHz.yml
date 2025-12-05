@@ -17,7 +17,7 @@ cu_cp:
 
 ru_sdr:
   device_driver: uhd                                              # The RF driver name.
-  device_args: type=b200,serial=31BAD9E                           # Optionally pass arguments to the selected RF driver.
+  device_args: type=b200                                          # Optionally pass arguments to the selected RF driver.
   srate: 23.04                                                    # RF sample rate might need to be adjusted according to selected bandwidth.
   otw_format: sc12
   tx_gain: 80                                                     # Transmit gain of the RF might need to adjusted to the given situation.

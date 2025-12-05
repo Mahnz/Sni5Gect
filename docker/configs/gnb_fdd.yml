@@ -1,8 +1,7 @@
 
 cu_cp:
   amf:
-    # addr: 127.0.0.5
-    addr: 10.53.1.2
+    addr: 10.53.1.2   # 127.0.0.5
     port: 38412
     bind_addr: 127.0.0.1
     supported_tracking_areas:

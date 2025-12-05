@@ -41,8 +41,8 @@ smf:
       - address: 127.0.0.4
         port: 7777
     client:
-      # nrf:
-      #   - uri: http://127.0.0.10:7777
+      nrf:
+        - uri: http://127.0.0.10:7777
       scp:
         - uri: http://127.0.0.22:7777
   pfcp:
@@ -64,16 +64,13 @@ smf:
   session:
     - subnet: 10.45.0.0/16
       gateway: 10.45.0.1
-    - s_nssai: { sst: 1 }
-      dnn: srsapn
-      pdu_session_type: IPV4
-      ue_dns:
-        - 8.8.8.8
-        - 8.8.4.4
-  # session:
-  #   - subnet: 10.45.0.0/16
-  #     gateway: 10.45.0.1
-  #   - dnn: srsapn
+    # - s_nssai: { sst: 1 }
+    #   dnn: srsapn
+    #   pdu_session_type: IPV4
+    #   ue_dns:
+    #     - 8.8.8.8
+    #     - 8.8.4.4
+    - dnn: srsapn
   dns:
     - 8.8.8.8
     - 8.8.4.4
@@ -145,17 +142,17 @@ upf:
   pfcp:
     server:
       - address: 127.0.0.7
-  subnet:
-    - addr: 10.45.0.1/16
+        dnn: srsapn
+  # subnet:
+  #   - addr: 10.45.0.1/16
   metrics:
     server:
       - address: 127.0.0.7
         port: 9090
   gtpu:
     server:
-      - address: ${OPEN5GS_IP}
+      - address: ${OPEN5GS_IP}     # 127.0.0.7
         # advertise: ${UPF_ADVERTISE_IP}  # use only if you NAT across hosts
-      # - address: 127.0.0.7
   session:
     - subnet: ${UE_IP_RANGE}
       gateway: ${UE_GATEWAY_IP}
@@ -201,8 +198,8 @@ udm:
       - address: 127.0.0.12
         port: 7777
     client:
-      # nrf:
-      #   - uri: http://127.0.0.10:7777
+      nrf:
+        - uri: http://127.0.0.10:7777
       scp:
         - uri: http://127.0.0.22:7777
 
@@ -212,8 +209,8 @@ pcf:
       - address: 127.0.0.13
         port: 7777
     client:
-      # nrf:
-      #   - uri: http://127.0.0.10:7777
+      nrf:
+        - uri: http://127.0.0.10:7777
       scp:
         - uri: http://127.0.0.22:7777
   metrics:
