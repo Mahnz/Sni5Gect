@@ -64,12 +64,6 @@ smf:
   session:
     - subnet: 10.45.0.0/16
       gateway: 10.45.0.1
-    # - s_nssai: { sst: 1 }
-    #   dnn: srsapn
-    #   pdu_session_type: IPV4
-    #   ue_dns:
-    #     - 8.8.8.8
-    #     - 8.8.4.4
     - dnn: srsapn
   dns:
     - 8.8.8.8
@@ -89,9 +83,6 @@ smf:
       - module: /open5gs/build/subprojects/freeDiameter/extensions/dict_nas_mipv6.fdx
       - module: /open5gs/build/subprojects/freeDiameter/extensions/dict_dcca.fdx
       - module: /open5gs/build/subprojects/freeDiameter/extensions/dict_dcca_3gpp/dict_dcca_3gpp.fdx
-    # connect:
-    #   - identity: pcrf.localdomain
-    #     address: 127.0.0.9
 
 amf:
   sbi:
@@ -143,8 +134,6 @@ upf:
     server:
       - address: 127.0.0.7
         dnn: srsapn
-  # subnet:
-  #   - addr: 10.45.0.1/16
   metrics:
     server:
       - address: 127.0.0.7

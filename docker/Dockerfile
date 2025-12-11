@@ -43,7 +43,7 @@ ENV BUILD_JOBS=${BUILD_JOBS}
 
 # Adding the complete repo to the context, in /src folder
 # ADD . /src
-# An alternative could be to download the repo
+# Or download the full repo
 RUN apt update && apt-get install -y --no-install-recommends git git-lfs ca-certificates
 RUN git clone https://github.com/srsran/srsRAN_Project.git /src
 
@@ -112,7 +112,7 @@ ENV PATH=$PATH:/opt/uhd/${UHD_VERSION}/bin/:/opt/dpdk/${DPDK_VERSION}/bin/
 RUN /usr/local/etc/install_srsran_dependencies.sh run && \
     /usr/local/etc/install_uhd_dependencies.sh run && \
     /usr/local/etc/install_dpdk_dependencies.sh run && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends curl ntpdate && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends curl ntpdate iputils-ping net-tools && \
     apt-get autoremove && apt-get clean && rm -rf /var/lib/apt/lists/*
 # Crea directory logs
 RUN mkdir -p /logs && chmod 777 /logs
